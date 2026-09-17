@@ -1,0 +1,20 @@
+---
+source: src/ui/render.rs
+expression: "render_to_text(&state, width, height)"
+---
+┌ Browse · Code Points · U+0000–U+00FF ────────────────────┐
+│         0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F   │
+│ 000040  @  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O   │
+│ 000050  P  Q  R  S  T  U  V  W  X  Y  Z  [  \  ]  ^  _   │
+│ 000060  `  a  b  c  d  e  f  g  h  i  j  k  l  m  n  o   │
+│ 000070  p  q  r  s  t  u  v  w  x  y  z  {  |  }  ~  ·   │
+│ 000080  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·   │
+│ 000090  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·   │
+│ 0000A0  ·  ¡  ¢  £  ¤  ¥  ¦  §  ¨  ©  ª  «  ¬  ·  ®  ¯   │
+│ 0000B0  °  ±  ²  ³  ´  µ  ¶  ·  ¸  ¹  º  »  ¼  ½  ¾  ¿   │
+│ 0000C0  À  Á  Â  Ã  Ä  Å  Æ  Ç  È  É  Ê  Ë  Ì  Í  Î  Ï   │
+│ 0000D0  Ð  Ñ  Ò  Ó  Ô  Õ  Ö  ×  Ø  Ù  Ú  Û  Ü  Ý  Þ  ß   │
+│ 0000E0  à  á  â  ã  ä  å  æ  ç  è  é  ê  ë  ì  í  î  ï   │
+│ 0000F0  ð  ñ  ò  ó  ô  õ  ö  ÷  ø  ù  ú  û  ü  ý  þ  ÿ   │
+└──────────────────────────────────────────────────────────┘
+ h/l/k/j: Move  Enter: Inspect  Esc: Close  F1: Help

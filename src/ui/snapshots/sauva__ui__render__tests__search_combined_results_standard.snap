@@ -1,0 +1,34 @@
+---
+source: src/ui/render.rs
+expression: "render_to_text(&state, width, height)"
+---
+┌ Search ──────────────────────────────────────────────────┐┌ Selection Preview ───────────────────┐
+│ face                                                     ││ Character        龜                   │
+└──────────────────────────────────────────────────────────┘│ Code Point       U+FACE              │
+┌ Results · 198 ───────────────────────────────────────────┐│ Primary Name     CJK COMPATIBILITY   │
+│   龜   U+FACE    CJK COMPATIBILITY IDEOGRAPH-FACE        │││                  IDEOGRAPH-FACE      │
+│   💆   U+1F486   FACE MASSAGE                            │││ Block            CJK Compatibility   │
+│   😂   U+1F602   FACE WITH TEARS OF JOY                   ││                  Ideographs          │
+│   😋   U+1F60B   FACE SAVOURING DELICIOUS FOOD            ││ General Category Lo — Other Letter   │
+│   😓   U+1F613   FACE WITH COLD SWEAT                     ││                                      │
+│   😘   U+1F618   FACE THROWING A KISS                     ││                                      │
+│   😛   U+1F61B   FACE WITH STUCK-OUT TONGUE               ││                                      │
+│   😜   U+1F61C   FACE WITH STUCK-OUT TONGUE AND WINKING E ││                                      │
+│   😝   U+1F61D   FACE WITH STUCK-OUT TONGUE AND TIGHTLY-C ││                                      │
+│   😤   U+1F624   FACE WITH LOOK OF TRIUMPH                ││                                      │
+│   😮   U+1F62E   FACE WITH OPEN MOUTH                     ││                                      │
+│   😰   U+1F630   FACE WITH OPEN MOUTH AND COLD SWEAT      ││                                      │
+│   😱   U+1F631   FACE SCREAMING IN FEAR                   ││                                      │
+│   😶   U+1F636   FACE WITHOUT MOUTH                       ││                                      │
+│   😷   U+1F637   FACE WITH MEDICAL MASK                   ││                                      │
+│   🙄   U+1F644   FACE WITH ROLLING EYES                   ││                                      │
+│   🙅   U+1F645   FACE WITH NO GOOD GESTURE                ││                                      │
+│   🙆   U+1F646   FACE WITH OK GESTURE                     ││                                      │
+│   🤒   U+1F912   FACE WITH THERMOMETER                    ││                                      │
+│   🤕   U+1F915   FACE WITH HEAD-BANDAGE                   ││                                      │
+│   🤠   U+1F920   FACE WITH COWBOY HAT                     ││                                      │
+│   🤦   U+1F926   FACE PALM                                ││                                      │
+│   🤨   U+1F928   FACE WITH ONE EYEBROW RAISED             ││                                      │
+│   🤫   U+1F92B   FACE WITH FINGER COVERING CLOSED LIPS    ││                                      │
+└──────────────────────────────────────────────────────────┘└──────────────────────────────────────┘
+ ↑/↓: Move  Enter: Inspect  Esc: Close  C-c: Quit  F1: Help

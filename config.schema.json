@@ -1,0 +1,686 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "sauva Configuration Schema",
+  "description": "Schema for sauva's TOML configuration file.",
+  "type": "object",
+  "properties": {
+    "color": {
+      "$ref": "#/definitions/colorTheme"
+    },
+    "glyph_preview": {
+      "$ref": "#/definitions/glyphPreviewSettings"
+    },
+    "ui": {
+      "$ref": "#/definitions/uiSettings"
+    },
+    "keybindings": {
+      "$ref": "#/definitions/keybindings"
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "color": {
+      "description": "A canonical ANSI color name, an RGB value in #RRGGBB form, or an indexed color from 0 through 255.",
+      "type": "string",
+      "anyOf": [
+        {
+          "enum": [
+            "reset",
+            "black",
+            "red",
+            "green",
+            "yellow",
+            "blue",
+            "magenta",
+            "cyan",
+            "gray",
+            "darkgray",
+            "dark-gray",
+            "light-red",
+            "light-green",
+            "light-yellow",
+            "light-blue",
+            "light-magenta",
+            "light-cyan",
+            "white"
+          ]
+        },
+        {
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        {
+          "pattern": "^(?:[0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$"
+        }
+      ]
+    },
+    "rgbaColor": {
+      "description": "An RGB or RGBA color in #RRGGBB or #RRGGBBAA form.",
+      "type": "string",
+      "pattern": "^#[0-9A-Fa-f]{6}(?:[0-9A-Fa-f]{2})?$"
+    },
+    "glyphPreviewSettings": {
+      "description": "Fonts and colors used to render glyph preview images. Omitted properties keep their built-in defaults.",
+      "type": "object",
+      "properties": {
+        "font_families": {
+          "description": "Preferred normal font families in fallback order. Missing families and unsupported glyphs are skipped.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": ".*\\S.*"
+          },
+          "default": []
+        },
+        "emoji_font_families": {
+          "description": "Explicit emoji font families tried after the system default text face and before platform fallback.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": ".*\\S.*"
+          },
+          "default": []
+        },
+        "fg": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/rgbaColor"
+            }
+          ],
+          "default": "#f5f7fa"
+        },
+        "bg": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/rgbaColor"
+            }
+          ],
+          "default": "#00000000"
+        }
+      },
+      "additionalProperties": false
+    },
+    "selectionColors": {
+      "type": "object",
+      "properties": {
+        "fg": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "black"
+        },
+        "bg": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "cyan"
+        }
+      },
+      "additionalProperties": false
+    },
+    "inspectorColors": {
+      "type": "object",
+      "properties": {
+        "section_heading": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "cyan"
+        },
+        "field_label": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "darkgray"
+        },
+        "selection": {
+          "$ref": "#/definitions/selectionColors"
+        }
+      },
+      "additionalProperties": false
+    },
+    "keyValueColors": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "darkgray"
+        }
+      },
+      "additionalProperties": false
+    },
+    "listColors": {
+      "type": "object",
+      "properties": {
+        "selection": {
+          "$ref": "#/definitions/selectionColors"
+        }
+      },
+      "additionalProperties": false
+    },
+    "codePointTableColors": {
+      "type": "object",
+      "properties": {
+        "selection": {
+          "$ref": "#/definitions/selectionColors"
+        }
+      },
+      "additionalProperties": false
+    },
+    "searchMatchColors": {
+      "type": "object",
+      "properties": {
+        "fg": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "yellow"
+        },
+        "selected_fg": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "white"
+        }
+      },
+      "additionalProperties": false
+    },
+    "searchMessageColors": {
+      "type": "object",
+      "properties": {
+        "example_label": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "cyan"
+        },
+        "detail": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "darkgray"
+        }
+      },
+      "additionalProperties": false
+    },
+    "selectionPreviewColors": {
+      "type": "object",
+      "properties": {
+        "empty": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "darkgray"
+        }
+      },
+      "additionalProperties": false
+    },
+    "glyphPreviewColors": {
+      "type": "object",
+      "properties": {
+        "metadata_label": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "darkgray"
+        },
+        "status_heading": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "yellow"
+        },
+        "status_detail": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "darkgray"
+        }
+      },
+      "additionalProperties": false
+    },
+    "helpColors": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "yellow"
+        },
+        "link": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "blue"
+        },
+        "divider": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "darkgray"
+        }
+      },
+      "additionalProperties": false
+    },
+    "footerColors": {
+      "type": "object",
+      "properties": {
+        "short_help": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "darkgray"
+        },
+        "info": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "green"
+        },
+        "warning": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "yellow"
+        }
+      },
+      "additionalProperties": false
+    },
+    "colorTheme": {
+      "description": "Colors used by the application UI. Omitted properties keep their built-in defaults.",
+      "type": "object",
+      "properties": {
+        "fg": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "reset"
+        },
+        "bg": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "reset"
+        },
+        "inspector": {
+          "$ref": "#/definitions/inspectorColors"
+        },
+        "key_value": {
+          "$ref": "#/definitions/keyValueColors"
+        },
+        "list": {
+          "$ref": "#/definitions/listColors"
+        },
+        "code_point_table": {
+          "$ref": "#/definitions/codePointTableColors"
+        },
+        "search_match": {
+          "$ref": "#/definitions/searchMatchColors"
+        },
+        "search_message": {
+          "$ref": "#/definitions/searchMessageColors"
+        },
+        "selection_preview": {
+          "$ref": "#/definitions/selectionPreviewColors"
+        },
+        "glyph_preview": {
+          "$ref": "#/definitions/glyphPreviewColors"
+        },
+        "help": {
+          "$ref": "#/definitions/helpColors"
+        },
+        "footer": {
+          "$ref": "#/definitions/footerColors"
+        }
+      },
+      "additionalProperties": false
+    },
+    "uiSettings": {
+      "description": "Non-color presentation settings. Omitted properties keep their built-in defaults.",
+      "type": "object",
+      "properties": {
+        "selection_cursor": {
+          "description": "The cursor shown in the reserved leading cell of selected Inspector properties, list entries, and code point entries. It must be empty or occupy exactly one terminal cell.",
+          "type": "string",
+          "pattern": "^(?:|[^\\u0000-\\u001F\\u007F]+)$",
+          "default": ""
+        }
+      },
+      "additionalProperties": false
+    },
+    "key": {
+      "description": "A single non-whitespace character, a named key, or a unique combination of ctrl, alt, and shift followed by one character.",
+      "type": "string",
+      "oneOf": [
+        {
+          "enum": [
+            "space",
+            "enter",
+            "esc",
+            "tab",
+            "backspace",
+            "delete",
+            "left",
+            "right",
+            "up",
+            "down",
+            "home",
+            "end",
+            "pageup",
+            "pagedown",
+            "f1",
+            "f2",
+            "f3",
+            "f4",
+            "f5",
+            "f6",
+            "f7",
+            "f8",
+            "f9",
+            "f10",
+            "f11",
+            "f12"
+          ]
+        },
+        {
+          "pattern": "^[^\\s\\u0000-\\u001F\\u007F]$"
+        },
+        {
+          "pattern": "^(?:ctrl|alt|shift|ctrl-alt|ctrl-shift|alt-ctrl|alt-shift|shift-ctrl|shift-alt|ctrl-alt-shift|ctrl-shift-alt|alt-ctrl-shift|alt-shift-ctrl|shift-ctrl-alt|shift-alt-ctrl)-[^\\s\\u0000-\\u001F\\u007FA-Z]$"
+        }
+      ]
+    },
+    "keyArray": {
+      "description": "Keys replacing the built-in binding for one command. An empty array disables that command in this context.",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/key"
+      },
+      "uniqueItems": true
+    },
+    "globalKeybindings": {
+      "type": "object",
+      "properties": {
+        "quit": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "help": {
+          "$ref": "#/definitions/keyArray"
+        }
+      },
+      "additionalProperties": false
+    },
+    "inspectorKeybindings": {
+      "type": "object",
+      "properties": {
+        "quit": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "previous_code_point": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "next_code_point": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "move_up": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "move_down": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "page_up": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "page_down": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "first": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "last": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "copy_value": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "search": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "browse_planes": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "browse_ranges": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "browse_code_points": {
+          "$ref": "#/definitions/keyArray"
+        }
+      },
+      "additionalProperties": false
+    },
+    "searchKeybindings": {
+      "type": "object",
+      "properties": {
+        "previous_result": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "next_result": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "inspect_result": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "close": {
+          "$ref": "#/definitions/keyArray"
+        }
+      },
+      "additionalProperties": false
+    },
+    "browsePlaneKeybindings": {
+      "type": "object",
+      "properties": {
+        "quit": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "close": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "move_up": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "move_down": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "first": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "last": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "activate": {
+          "$ref": "#/definitions/keyArray"
+        }
+      },
+      "additionalProperties": false
+    },
+    "browseRangeKeybindings": {
+      "type": "object",
+      "properties": {
+        "quit": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "close": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "back": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "move_up": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "move_down": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "page_up": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "page_down": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "first": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "last": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "activate": {
+          "$ref": "#/definitions/keyArray"
+        }
+      },
+      "additionalProperties": false
+    },
+    "browseCodePointsKeybindings": {
+      "type": "object",
+      "properties": {
+        "quit": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "close": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "back": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "move_left": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "move_right": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "move_up": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "move_down": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "page_up": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "page_down": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "first": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "last": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "activate": {
+          "$ref": "#/definitions/keyArray"
+        }
+      },
+      "additionalProperties": false
+    },
+    "helpKeybindings": {
+      "type": "object",
+      "properties": {
+        "close": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "move_up": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "move_down": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "page_up": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "page_down": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "first": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "last": {
+          "$ref": "#/definitions/keyArray"
+        }
+      },
+      "additionalProperties": false
+    },
+    "keybindings": {
+      "description": "Per-context command bindings. Omitted commands keep their built-in bindings. Runtime validation additionally rejects normalized duplicates and conflicting bindings.",
+      "type": "object",
+      "properties": {
+        "global": {
+          "$ref": "#/definitions/globalKeybindings"
+        },
+        "inspector": {
+          "$ref": "#/definitions/inspectorKeybindings"
+        },
+        "search": {
+          "$ref": "#/definitions/searchKeybindings"
+        },
+        "browse_plane": {
+          "$ref": "#/definitions/browsePlaneKeybindings"
+        },
+        "browse_range": {
+          "$ref": "#/definitions/browseRangeKeybindings"
+        },
+        "browse_code_points": {
+          "$ref": "#/definitions/browseCodePointsKeybindings"
+        },
+        "help": {
+          "$ref": "#/definitions/helpKeybindings"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

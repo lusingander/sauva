@@ -1,0 +1,2 @@
+# The parser should report the physical source line.
+XYZ ; Lu

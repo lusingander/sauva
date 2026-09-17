@@ -1,0 +1,95 @@
+schema_version = 1
+unicode_version = "17.0.0"
+retrieved_on = "2026-09-10"
+license = "Unicode-3.0"
+license_file = "../UNICODE-LICENSE.txt"
+
+[[files]]
+path = "ReadMe.txt"
+source = "https://www.unicode.org/Public/17.0.0/ucd/ReadMe.txt"
+sha256 = "9fe1a90bd32659d7953616283dc2bffaa165518aae9ace026040c42c559ba606"
+size = 740
+
+[[files]]
+path = "DerivedName.txt"
+source = "https://www.unicode.org/Public/17.0.0/ucd/extracted/DerivedName.txt"
+sha256 = "019758bbe6c756c40fca6d505187ea660c5e195533e2ff2c841963a212c9d369"
+size = 1894051
+
+[[files]]
+path = "DerivedGeneralCategory.txt"
+source = "https://www.unicode.org/Public/17.0.0/ucd/extracted/DerivedGeneralCategory.txt"
+sha256 = "d62e5bab70ca74f099343f71224fa051cb1fdd61a1ab45c0488c44cfc0b6102e"
+size = 277514
+
+[[files]]
+path = "Blocks.txt"
+source = "https://www.unicode.org/Public/17.0.0/ucd/Blocks.txt"
+sha256 = "c0edefaf1a19771e830a82735472716af6bf3c3975f6c2a23ffbe2580fbbcb15"
+size = 11663
+
+[[files]]
+path = "Scripts.txt"
+source = "https://www.unicode.org/Public/17.0.0/ucd/Scripts.txt"
+sha256 = "9f5e50d3abaee7d6ce09480f325c706f485ae3240912527e651954d2d6b035bf"
+size = 192460
+
+[[files]]
+path = "DerivedAge.txt"
+source = "https://www.unicode.org/Public/17.0.0/ucd/DerivedAge.txt"
+sha256 = "f8ecdf768bdc210f201abd271d9bc587825618a86a7046a8146cc816393f1998"
+size = 138286
+
+[[files]]
+path = "DerivedCoreProperties.txt"
+source = "https://www.unicode.org/Public/17.0.0/ucd/DerivedCoreProperties.txt"
+sha256 = "24c7fed1195c482faaefd5c1e7eb821c5ee1fb6de07ecdbaa64b56a99da22c08"
+size = 1134783
+
+[[files]]
+path = "NameAliases.txt"
+source = "https://www.unicode.org/Public/17.0.0/ucd/NameAliases.txt"
+retrieved_on = "2026-09-12"
+sha256 = "793f6f1e4d15fd90f05ae66460191dc4d75d1fea90136a25f30dd6a4cb950eac"
+size = 16714
+
+[[files]]
+path = "EastAsianWidth.txt"
+source = "https://www.unicode.org/Public/17.0.0/ucd/EastAsianWidth.txt"
+retrieved_on = "2026-09-12"
+sha256 = "ea7ce50f3444a050333448dffef1cadd9325af55cbb764b4a2280faf52170a33"
+size = 201595
+
+[[files]]
+path = "DerivedCombiningClass.txt"
+source = "https://www.unicode.org/Public/17.0.0/ucd/extracted/DerivedCombiningClass.txt"
+retrieved_on = "2026-09-12"
+sha256 = "191463abfbd202703c6fd6776a92a23ac44ec65e0476a7f95aa91ca492cef29b"
+size = 182705
+
+[[files]]
+path = "DerivedBidiClass.txt"
+source = "https://www.unicode.org/Public/17.0.0/ucd/extracted/DerivedBidiClass.txt"
+retrieved_on = "2026-09-12"
+sha256 = "4867b4b7f0731ed1bfcd34cc6251211ff1542541fce0734b6fbda139ee80b3a4"
+size = 173433
+
+[[files]]
+path = "UnicodeData.txt"
+source = "https://www.unicode.org/Public/17.0.0/ucd/UnicodeData.txt"
+retrieved_on = "2026-09-12"
+sha256 = "2e1efc1dcb59c575eedf5ccae60f95229f706ee6d031835247d843c11d96470c"
+size = 2198209
+
+[[files]]
+path = "PropertyValueAliases.txt"
+source = "https://www.unicode.org/Public/17.0.0/ucd/PropertyValueAliases.txt"
+retrieved_on = "2026-09-12"
+sha256 = "64e9a5f76f7a1e8b5a47d6a1f9a26522a251208f5276bdfa1559dac7cf2e827a"
+size = 81858
+
+[[files]]
+path = "../UNICODE-LICENSE.txt"
+source = "https://www.unicode.org/license.txt"
+sha256 = "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96"
+size = 1995

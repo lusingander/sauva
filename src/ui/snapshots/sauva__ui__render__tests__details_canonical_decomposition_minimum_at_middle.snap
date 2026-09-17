@@ -1,0 +1,20 @@
+---
+source: src/ui/render.rs
+expression: "render_after_inspector_move(&state, width, height,\nInspectorMove::PageForward,)"
+---
+┌ Inspector ───────────────────────────────────────────────┐
+│   Code Point                 U+00E9                     ││
+│   Primary Name               LATIN SMALL LETTER E WITH  ││
+│                              ACUTE                      ││
+│   Aliases                    None                       ││
+│   Plane                      0 — Basic Multilingual      │
+│                              Plane                       │
+│   Block                      Latin-1 Supplement          │
+│                                                          │
+│ Classification                                           │
+│   General Category           Ll — Lowercase Letter       │
+│   Script                     Latin                       │
+│   Age                        1.1                         │
+│   East Asian Width           A — Ambiguous               │
+└──────────────────────────────────────────────────────────┘
+ h/l: Point  k/j: Field  y: Copy  q: Quit  F1: Help

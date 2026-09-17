@@ -1,0 +1,6 @@
+# @missing: 0000..10FFFF; Left_To_Right
+# @missing: 0590..05FF; Right_To_Left
+# @missing: 0600..06FF; Arabic_Letter
+0591; Nonspacing_Mark
+05D0; Right_To_Left
+0605; Arabic_Number

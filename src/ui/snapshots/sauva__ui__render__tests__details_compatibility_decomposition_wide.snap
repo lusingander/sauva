@@ -1,0 +1,44 @@
+---
+source: src/ui/render.rs
+expression: "render_to_text(&state, width, height)"
+---
+┌ Inspector ───────────────────────────────────────────────┐┌ Glyph Preview ───────────────────────────────────────────────────────────────┐
+│ Identity                                                 ││ Font     —                                                                   │
+│   Character                  ﬁ                           ││ Version  —                                                                   │
+│   Code Point                 U+FB01                      ││                                                                              │
+│   Primary Name               LATIN SMALL LIGATURE FI     ││                                                                              │
+│   Aliases                    None                        ││                                                                              │
+│   Plane                      0 — Basic Multilingual      ││                                                                              │
+│                              Plane                       ││                                                                              │
+│   Block                      Alphabetic Presentation     ││                                                                              │
+│                              Forms                       ││                                                                              │
+│                                                          ││                                                                              │
+│ Classification                                           ││                                                                              │
+│   General Category           Ll — Lowercase Letter       ││                                                                              │
+│   Script                     Latin                       ││                                                                              │
+│   Age                        1.1                         ││                                                                              │
+│   East Asian Width           N — Neutral                 ││                                                                              │
+│   Canonical Combining Class  0 — Not Reordered           ││                                                                              │
+│   Bidi Class                 L — Left To Right           ││                                                                              │
+│   Default Ignorable          No                          ││                                                                              │
+│                                                          ││                             Graphics unavailable                             │
+│ Encoding                                                 ││                      Use --graphics force to try anyway.                     │
+│   UTF-8                      EF AC 81                    ││                                                                              │
+│   UTF-16                     FB01                        ││                                                                              │
+│   HTML Decimal               &#64257;                    ││                                                                              │
+│   HTML Hex                   &#xFB01;                    ││                                                                              │
+│   Rust char                  '\u{FB01}'                  ││                                                                              │
+│   Unicode Escape             \uFB01                      ││                                                                              │
+│                                                          ││                                                                              │
+│ Normalization                                            ││                                                                              │
+│   Decomposition Type         Compatibility — compat      ││                                                                              │
+│   Decomposition              U+0066 LATIN SMALL LETTER F ││                                                                              │
+│                              U+0069 LATIN SMALL LETTER I ││                                                                              │
+│                                                          ││                                                                              │
+│ Data                                                     ││                                                                              │
+│   Unicode Version            17.0.0                      ││                                                                              │
+│                                                          ││                                                                              │
+│                                                          ││                                                                              │
+│                                                          ││                                                                              │
+└──────────────────────────────────────────────────────────┘└──────────────────────────────────────────────────────────────────────────────┘
+ h/l: Point  k/j: Field  C-u/C-d: Page  g/G: Ends  y: Copy  /: Search  p/r/c: Browse  q: Quit  F1: Help

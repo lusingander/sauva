@@ -1,0 +1,6 @@
+# Small UCD fixture used by parser tests.
+
+0041          ; Lu # LATIN CAPITAL LETTER A
+3400..4DBF    ; Lo # CJK Unified Ideographs Extension A
+# A normal comment is ignored.
+# @missing: 0000..10FFFF; InCB; None
