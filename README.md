@@ -115,6 +115,7 @@ bg = "#00000000"
 
 [ui]
 selection_cursor = "▸"
+input_cursor = { text = "|" }
 ```
 
 UI colors accept ANSI color names, `#RRGGBB`, or an indexed color from `0` to `255`. Glyph image colors accept `#RRGGBB` and `#RRGGBBAA`.
