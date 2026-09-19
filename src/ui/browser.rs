@@ -299,6 +299,7 @@ mod tests {
         let code_point = CodePoint::new(value).unwrap();
         let ui = UiSettings {
             selection_cursor: ">".to_owned(),
+            ..Default::default()
         };
         let cell = table_cell(code_point, selected, &ui);
 
