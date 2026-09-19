@@ -542,6 +542,7 @@ mod tests {
         let color_theme = test_color_theme();
         let ui = UiSettings {
             selection_cursor: ">".to_owned(),
+            ..Default::default()
         };
         let (width, height) = STANDARD_SIZE;
 
@@ -897,5 +898,44 @@ mod tests {
             .unwrap();
 
         terminal.backend_mut().assert_cursor_position((18, 1));
+    }
+
+    #[test]
+    fn text_input_cursor_hides_the_terminal_cursor_in_search_and_help() {
+        let mut state = fixtures::search_name_results();
+        let (width, height) = STANDARD_SIZE;
+        let backend = TestBackend::new(width, height);
+        let mut terminal = Terminal::new(backend).unwrap();
+        let ui = UiSettings {
+            input_cursor: crate::ui::settings::InputCursor::Text("|".to_owned()),
+            ..Default::default()
+        };
+
+        terminal
+            .draw(|frame| {
+                render(
+                    frame,
+                    &state,
+                    &ColorTheme::default(),
+                    &ui,
+                    &ResolvedKeymap::default(),
+                )
+            })
+            .unwrap();
+        assert!(!terminal.backend().cursor_visible());
+
+        update(&mut state, Action::ToggleHelp);
+        terminal
+            .draw(|frame| {
+                render(
+                    frame,
+                    &state,
+                    &ColorTheme::default(),
+                    &ui,
+                    &ResolvedKeymap::default(),
+                )
+            })
+            .unwrap();
+        assert!(!terminal.backend().cursor_visible());
     }
 }

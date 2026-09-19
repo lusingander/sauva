@@ -13,7 +13,7 @@ use crate::{
         layout,
         scrollbar::{self, ViewportScrollbar},
         selectable_list_line, selection_preview,
-        settings::UiSettings,
+        settings::{InputCursor, UiSettings},
         theme::ColorTheme,
     },
     unicode::UnicodeDatabase,
@@ -34,7 +34,7 @@ pub fn render(
         .search()
         .expect("the search view always has search state");
 
-    render_input(frame, layout.input, search.input());
+    render_input(frame, layout.input, search.input(), &ui.input_cursor);
     render_results(
         frame,
         layout.results,
@@ -60,22 +60,37 @@ pub fn render(
     }
 }
 
-fn render_input(frame: &mut Frame, area: Rect, input: &tui_input::Input) {
+fn render_input(frame: &mut Frame, area: Rect, input: &tui_input::Input, cursor: &InputCursor) {
     let width = area.width.saturating_sub(4).max(1);
-    let scroll = input.visual_scroll(usize::from(width));
+    let scroll = match cursor {
+        InputCursor::Native => input.visual_scroll(usize::from(width)),
+        InputCursor::Text(_) => input.visual_scroll(usize::from(width.saturating_sub(1).max(1))),
+    };
+    let content = match cursor {
+        InputCursor::Native => Line::raw(input.value()),
+        InputCursor::Text(text) => {
+            let byte_index = input
+                .value()
+                .char_indices()
+                .nth(input.cursor())
+                .map_or(input.value().len(), |(index, _)| index);
+            let (before, after) = input.value().split_at(byte_index);
+            Line::from(vec![Span::raw(before), Span::raw(text), Span::raw(after)])
+        }
+    };
     frame.render_widget(
-        Paragraph::new(input.value())
-            .scroll((0, scroll as u16))
-            .block(
-                Block::bordered()
-                    .title(" Search ")
-                    .padding(Padding::horizontal(1)),
-            ),
+        Paragraph::new(content).scroll((0, scroll as u16)).block(
+            Block::bordered()
+                .title(" Search ")
+                .padding(Padding::horizontal(1)),
+        ),
         area,
     );
 
-    let cursor = input.visual_cursor().max(scroll) - scroll;
-    frame.set_cursor_position((area.x + cursor as u16 + 2, area.y + 1));
+    if matches!(cursor, InputCursor::Native) {
+        let cursor = input.visual_cursor().max(scroll) - scroll;
+        frame.set_cursor_position((area.x + cursor as u16 + 2, area.y + 1));
+    }
 }
 
 fn render_results(
@@ -260,6 +275,7 @@ fn render_empty_preview(frame: &mut Frame, area: Rect, color_theme: &ColorTheme)
 
 #[cfg(test)]
 mod tests {
+    use ratatui::{Terminal, backend::TestBackend};
     use rstest::rstest;
 
     use super::*;
@@ -267,6 +283,63 @@ mod tests {
         search::{SearchDirectMatchKind, SearchNameMatchKind},
         unicode::CodePoint,
     };
+
+    fn rendered_input(input: &tui_input::Input, cursor: &InputCursor, width: u16) -> TestBackend {
+        let backend = TestBackend::new(width, 3);
+        let mut terminal = Terminal::new(backend).unwrap();
+        terminal
+            .draw(|frame| render_input(frame, frame.area(), input, cursor))
+            .unwrap();
+        terminal.backend().clone()
+    }
+
+    #[test]
+    fn text_cursor_is_inserted_without_hiding_input_characters() {
+        let input = tui_input::Input::new("abc".to_owned()).with_cursor(1);
+        let backend = rendered_input(&input, &InputCursor::Text("|".to_owned()), 12);
+        let buffer = backend.buffer();
+
+        assert!(!backend.cursor_visible());
+        for (x, symbol) in [(2, "a"), (3, "|"), (4, "b"), (5, "c")] {
+            assert_eq!(buffer[(x, 1)].symbol(), symbol);
+        }
+        assert_eq!(input.value(), "abc");
+    }
+
+    #[test]
+    fn text_cursor_handles_empty_and_wide_input() {
+        let empty = rendered_input(
+            &tui_input::Input::default(),
+            &InputCursor::Text("|".to_owned()),
+            12,
+        );
+        assert_eq!(empty.buffer()[(2, 1)].symbol(), "|");
+
+        let input = tui_input::Input::new("a界b".to_owned()).with_cursor(2);
+        let backend = rendered_input(&input, &InputCursor::Text("|".to_owned()), 12);
+        let buffer = backend.buffer();
+        assert_eq!(buffer[(2, 1)].symbol(), "a");
+        assert_eq!(buffer[(3, 1)].symbol(), "界");
+        assert_eq!(buffer[(5, 1)].symbol(), "|");
+        assert_eq!(buffer[(6, 1)].symbol(), "b");
+    }
+
+    #[test]
+    fn text_cursor_remains_visible_at_the_right_edge() {
+        let input = tui_input::Input::new("abcde".to_owned());
+        let backend = rendered_input(&input, &InputCursor::Text("|".to_owned()), 8);
+        let buffer = backend.buffer();
+        for (x, symbol) in [(2, "c"), (3, "d"), (4, "e"), (5, "|")] {
+            assert_eq!(buffer[(x, 1)].symbol(), symbol);
+        }
+
+        let wide_input = tui_input::Input::new("ab界c".to_owned()).with_cursor(3);
+        let backend = rendered_input(&wide_input, &InputCursor::Text("|".to_owned()), 8);
+        let buffer = backend.buffer();
+        assert_eq!(buffer[(2, 1)].symbol(), "b");
+        assert_eq!(buffer[(3, 1)].symbol(), "界");
+        assert_eq!(buffer[(5, 1)].symbol(), "|");
+    }
 
     #[rstest]
     #[case(0x2192, "> →   U+2192    RIGHTWARDS ARROW")]
@@ -292,6 +365,7 @@ mod tests {
                 &ColorTheme::default(),
                 &UiSettings {
                     selection_cursor: ">".to_owned(),
+                    ..Default::default()
                 },
             )
             .to_string(),

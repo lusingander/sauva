@@ -458,6 +458,68 @@ mod tests {
 
         assert_eq!(configured.ui().selection_cursor, ">");
         assert_eq!(defaults.ui().selection_cursor, "");
+        assert_eq!(
+            configured.ui().input_cursor,
+            crate::ui::settings::InputCursor::Native
+        );
+        assert_eq!(
+            defaults.ui().input_cursor,
+            crate::ui::settings::InputCursor::Native
+        );
+    }
+
+    #[test]
+    fn text_input_cursor_is_loaded_from_config() {
+        let directory = tempdir().unwrap();
+        let path = directory.path().join("config.toml");
+        fs::write(
+            &path,
+            r#"
+                [ui]
+                input_cursor = { text = "|" }
+            "#,
+        )
+        .unwrap();
+
+        let configured = load_config(Some(&ConfigFile::Explicit(path.clone()))).unwrap();
+        assert_eq!(
+            configured.ui().input_cursor,
+            crate::ui::settings::InputCursor::Text("|".to_owned())
+        );
+
+        fs::write(
+            &path,
+            r#"
+                [ui]
+                input_cursor = "native"
+            "#,
+        )
+        .unwrap();
+        let configured = load_config(Some(&ConfigFile::Explicit(path))).unwrap();
+        assert_eq!(
+            configured.ui().input_cursor,
+            crate::ui::settings::InputCursor::Native
+        );
+    }
+
+    #[test]
+    fn invalid_text_input_cursor_reports_its_setting() {
+        let directory = tempdir().unwrap();
+        let path = directory.path().join("config.toml");
+        fs::write(
+            &path,
+            r#"
+                [ui]
+                input_cursor = { text = "界" }
+            "#,
+        )
+        .unwrap();
+
+        let error = load_config(Some(&ConfigFile::Explicit(path.clone()))).unwrap_err();
+        let message = error.to_string();
+        assert!(matches!(error, ConfigError::Validate { .. }));
+        assert!(message.contains(&path.display().to_string()));
+        assert!(message.contains("ui.input_cursor"));
     }
 
     #[test]

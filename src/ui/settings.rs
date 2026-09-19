@@ -12,6 +12,16 @@ use umbra::optional;
 pub struct UiSettings {
     #[garde(custom(validate_selection_cursor))]
     pub selection_cursor: String,
+    #[garde(custom(validate_input_cursor))]
+    pub input_cursor: InputCursor,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum InputCursor {
+    #[default]
+    Native,
+    Text(String),
 }
 
 impl UiSettings {
@@ -36,6 +46,18 @@ fn validate_selection_cursor(value: &str, _: &()) -> garde::Result {
     Ok(())
 }
 
+fn validate_input_cursor(value: &InputCursor, _: &()) -> garde::Result {
+    let InputCursor::Text(text) = value else {
+        return Ok(());
+    };
+    if text.chars().any(char::is_control) || Line::from(text.as_str()).width() != 1 {
+        return Err(garde::Error::new(
+            "input cursor text must occupy exactly one terminal cell",
+        ));
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -50,6 +72,7 @@ mod tests {
         for selection_cursor in ["", ">", "▸", " "] {
             let settings = UiSettings {
                 selection_cursor: selection_cursor.to_owned(),
+                ..Default::default()
             };
 
             assert!(settings.validate().is_ok(), "{selection_cursor:?}");
@@ -61,6 +84,7 @@ mod tests {
         for selection_cursor in ["\n", "\u{301}", "界", ">>"] {
             let settings = UiSettings {
                 selection_cursor: selection_cursor.to_owned(),
+                ..Default::default()
             };
 
             assert!(settings.validate().is_err(), "{selection_cursor:?}");
@@ -72,10 +96,30 @@ mod tests {
         let hidden = UiSettings::default();
         let visible = UiSettings {
             selection_cursor: "▸".to_owned(),
+            ..Default::default()
         };
 
         assert_eq!(hidden.selection_marker(true), " ");
         assert_eq!(visible.selection_marker(false), " ");
         assert_eq!(visible.selection_marker(true), "▸");
+    }
+
+    #[test]
+    fn validates_text_input_cursor_width() {
+        assert!(UiSettings::default().validate().is_ok());
+        for text in ["|", "▏", " "] {
+            let settings = UiSettings {
+                input_cursor: InputCursor::Text(text.to_owned()),
+                ..Default::default()
+            };
+            assert!(settings.validate().is_ok(), "{text:?}");
+        }
+        for text in ["", "\n", "\u{301}", "界", "||"] {
+            let settings = UiSettings {
+                input_cursor: InputCursor::Text(text.to_owned()),
+                ..Default::default()
+            };
+            assert!(settings.validate().is_err(), "{text:?}");
+        }
     }
 }

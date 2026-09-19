@@ -385,6 +385,27 @@
       "description": "Non-color presentation settings. Omitted properties keep their built-in defaults.",
       "type": "object",
       "properties": {
+        "input_cursor": {
+          "description": "Cursor shown in the search input. Text mode inserts a visible one-cell character at the input position; runtime validation checks its terminal width.",
+          "oneOf": [
+            {
+              "const": "native"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^[^\\u0000-\\u001F\\u007F]+$"
+                }
+              },
+              "required": ["text"],
+              "additionalProperties": false
+            }
+          ],
+          "default": "native"
+        },
         "selection_cursor": {
           "description": "The cursor shown in the reserved leading cell of selected Inspector properties, list entries, and code point entries. It must be empty or occupy exactly one terminal cell.",
           "type": "string",
