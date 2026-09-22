@@ -13,6 +13,7 @@ mod inspector;
 mod keybindings;
 mod preview;
 mod search;
+mod sequence;
 mod terminal;
 mod ui;
 mod unicode;
