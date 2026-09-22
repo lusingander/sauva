@@ -100,6 +100,49 @@ fn searches_for_a_name_and_opens_the_result_in_the_inspector() -> termlens::Resu
 }
 
 #[test]
+fn reopens_search_and_corrects_a_query_with_no_results() -> termlens::Result<()> {
+    let mut terminal = spawn("off")?;
+    terminal.snapshot_after(|screen| screen.contains("LATIN CAPITAL LETTER A"))?;
+
+    terminal.send(Key::Char('/'))?;
+    terminal.wait_until(|screen| screen.contains("Search by Unicode name"))?;
+    terminal.send_str("rightwards arrox")?;
+    terminal.snapshot_after(|screen| {
+        screen.contains("rightwards arrox") && screen.contains("No matching characters")
+    })?;
+
+    terminal.send(Key::Esc)?;
+    terminal.snapshot_after(|screen| {
+        screen.contains("Identity") && screen.contains("LATIN CAPITAL LETTER A")
+    })?;
+    terminal.send(Key::Char('/'))?;
+    terminal.wait_until(|screen| {
+        screen.contains("Search")
+            && screen.contains("rightwards arrox")
+            && screen.contains("No matching characters")
+    })?;
+
+    terminal.send(Key::Backspace)?;
+    terminal.send(Key::Char('w'))?;
+    terminal.snapshot_after(|screen| {
+        screen.contains("rightwards arrow")
+            && screen.contains("U+2192")
+            && screen.contains("RIGHTWARDS ARROW")
+    })?;
+    terminal.send(Key::Enter)?;
+    terminal.snapshot_after(|screen| {
+        screen.contains("Identity")
+            && screen.contains("U+2192")
+            && screen.contains("RIGHTWARDS ARROW")
+    })?;
+
+    terminal.send(Key::Char('q'))?;
+    let status = terminal.wait_exit()?;
+    assert!(status.success(), "exit status: {status}");
+    Ok(())
+}
+
+#[test]
 fn browses_through_planes_and_ranges_to_inspect_a_code_point() -> termlens::Result<()> {
     let mut terminal = spawn("off")?;
     terminal.snapshot_after(|screen| screen.contains("LATIN CAPITAL LETTER A"))?;
