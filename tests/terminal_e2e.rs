@@ -136,11 +136,12 @@ fn reopens_search_and_corrects_a_query_with_no_results() -> termlens::Result<()>
         screen.contains("Identity") && screen.contains("LATIN CAPITAL LETTER A")
     })?;
     terminal.send(Key::Char('/'))?;
-    terminal.wait_until(|screen| {
+    let reopened = terminal.snapshot_after(|screen| {
         screen.contains("Search")
             && screen.contains("rightwards arrox")
             && screen.contains("No matching characters")
     })?;
+    insta::assert_snapshot!(reopened.with_styles());
 
     terminal.send(Key::Backspace)?;
     terminal.send(Key::Char('w'))?;
