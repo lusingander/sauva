@@ -159,6 +159,49 @@ fn reopens_search_and_corrects_a_query_with_no_results() -> termlens::Result<()>
 }
 
 #[test]
+fn keeps_the_search_result_selected_across_terminal_resizes() -> termlens::Result<()> {
+    let mut terminal = spawn("off")?;
+    terminal.snapshot_after(|screen| screen.contains("LATIN CAPITAL LETTER A"))?;
+
+    terminal.send(Key::Char('/'))?;
+    terminal.wait_until(|screen| screen.contains("Search by Unicode name"))?;
+    terminal.send_str("U+2192")?;
+    terminal.snapshot_after(|screen| {
+        screen.contains("Search")
+            && screen.contains("U+2192")
+            && screen.contains("RIGHTWARDS ARROW")
+    })?;
+
+    terminal.resize(60, 16)?;
+    let minimum = terminal.snapshot_after(|screen| {
+        screen.size() == (60, 16)
+            && screen.contains("Search")
+            && screen.contains("U+2192")
+            && screen.contains("RIGHTWARDS ARROW")
+    })?;
+    insta::assert_snapshot!(minimum.with_styles());
+
+    terminal.resize(100, 30)?;
+    terminal.snapshot_after(|screen| {
+        screen.size() == (100, 30)
+            && screen.contains("Selection Preview")
+            && screen.contains("U+2192")
+            && screen.contains("RIGHTWARDS ARROW")
+    })?;
+    terminal.send(Key::Enter)?;
+    terminal.snapshot_after(|screen| {
+        screen.contains("Identity")
+            && screen.contains("U+2192")
+            && screen.contains("RIGHTWARDS ARROW")
+    })?;
+
+    terminal.send(Key::Char('q'))?;
+    let status = terminal.wait_exit()?;
+    assert!(status.success(), "exit status: {status}");
+    Ok(())
+}
+
+#[test]
 fn browses_through_planes_and_ranges_to_inspect_a_code_point() -> termlens::Result<()> {
     let mut terminal = spawn("off")?;
     terminal.snapshot_after(|screen| screen.contains("LATIN CAPITAL LETTER A"))?;
