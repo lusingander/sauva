@@ -111,7 +111,7 @@ fn action_for_command(context: Context, command: Command) -> Option<Action> {
         (X::BrowseCodePoints, C::MoveLeft) => Some(Action::MoveBrowser(BrowseMove::Left)),
         (X::BrowseCodePoints, C::MoveRight) => Some(Action::MoveBrowser(BrowseMove::Right)),
         (X::BrowsePlane | X::BrowseRange | X::BrowseCodePoints, C::Activate) => Some(Action::AdvanceBrowser),
-        (X::BrowseRange | X::BrowseCodePoints, C::Back) => Some(Action::BackBrowser),
+        (X::BrowsePlane | X::BrowseRange | X::BrowseCodePoints, C::Back) => Some(Action::BackBrowser),
         (X::BrowsePlane | X::BrowseRange | X::BrowseCodePoints, C::Close) => Some(Action::CloseBrowser),
         _ => None,
     }
@@ -475,8 +475,8 @@ mod tests {
     #[rstest]
     #[case(BrowseLevel::Range, Some(Action::BackBrowser))]
     #[case(BrowseLevel::CodePointTable, Some(Action::BackBrowser))]
-    #[case(BrowseLevel::Plane, None)]
-    fn backspace_goes_back_from_range_and_table_but_not_plane(
+    #[case(BrowseLevel::Plane, Some(Action::BackBrowser))]
+    fn backspace_returns_to_the_previous_screen_or_inspector(
         #[case] level: BrowseLevel,
         #[case] expected: Option<Action>,
     ) {

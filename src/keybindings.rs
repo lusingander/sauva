@@ -370,6 +370,7 @@ keybinding_context!(SearchKeybindings, Context::Search, {
 keybinding_context!(BrowsePlaneKeybindings, Context::BrowsePlane, {
     quit => (Command::Quit, ["q"]),
     close => (Command::Close, ["esc"]),
+    back => (Command::Back, ["backspace"]),
     move_up => (Command::MoveUp, ["k", "up"]),
     move_down => (Command::MoveDown, ["j", "down"]),
     first => (Command::First, ["g"]),

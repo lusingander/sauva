@@ -30,6 +30,7 @@ pub enum BrowseTarget {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct BrowseState {
+    entry_level: BrowseLevel,
     level: BrowseLevel,
     cursor: CodePoint,
     plane_viewport: ListViewport,
@@ -40,6 +41,7 @@ pub struct BrowseState {
 impl BrowseState {
     pub const fn at(level: BrowseLevel, cursor: CodePoint) -> Self {
         Self {
+            entry_level: level,
             level,
             cursor,
             plane_viewport: ListViewport::new(),
@@ -104,9 +106,12 @@ impl BrowseState {
         BrowseTarget::Browser
     }
 
-    pub fn back(&mut self) {
+    pub fn back(&mut self) -> BrowseTarget {
+        if self.level == self.entry_level {
+            return BrowseTarget::Inspector;
+        }
         match self.level {
-            BrowseLevel::Plane => {}
+            BrowseLevel::Plane => return BrowseTarget::Inspector,
             BrowseLevel::Range => {
                 self.level = BrowseLevel::Plane;
                 self.ensure_current_item_visible();
@@ -116,6 +121,7 @@ impl BrowseState {
                 self.ensure_current_item_visible();
             }
         }
+        BrowseTarget::Browser
     }
 
     pub fn move_cursor(&mut self, movement: BrowseMove) -> bool {
@@ -244,12 +250,17 @@ mod tests {
         assert_eq!(state.level(), BrowseLevel::CodePointTable);
         assert_eq!(state.advance(), BrowseTarget::Inspector);
         assert_eq!(state.level(), BrowseLevel::CodePointTable);
-        state.back();
+        assert_eq!(state.back(), BrowseTarget::Browser);
         assert_eq!(state.level(), BrowseLevel::Range);
-        state.back();
+        assert_eq!(state.back(), BrowseTarget::Browser);
         assert_eq!(state.level(), BrowseLevel::Plane);
-        state.back();
+        assert_eq!(state.back(), BrowseTarget::Inspector);
         assert_eq!(state.level(), BrowseLevel::Plane);
+
+        let mut direct_range = browse_state_at(BrowseLevel::Range, 0x0041);
+        assert_eq!(direct_range.back(), BrowseTarget::Inspector);
+        let mut direct_table = browse_state_at(BrowseLevel::CodePointTable, 0x0041);
+        assert_eq!(direct_table.back(), BrowseTarget::Inspector);
     }
 
     #[test]
@@ -382,8 +393,6 @@ mod tests {
     }
 
     fn browse_state_at(level: BrowseLevel, value: u32) -> BrowseState {
-        let mut state = browse_state(value);
-        state.level = level;
-        state
+        BrowseState::at(level, CodePoint::new(value).unwrap())
     }
 }
