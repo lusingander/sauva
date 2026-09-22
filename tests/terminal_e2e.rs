@@ -100,6 +100,93 @@ fn searches_for_a_name_and_opens_the_result_in_the_inspector() -> termlens::Resu
 }
 
 #[test]
+fn browses_through_planes_and_ranges_to_inspect_a_code_point() -> termlens::Result<()> {
+    let mut terminal = spawn("off")?;
+    terminal.snapshot_after(|screen| screen.contains("LATIN CAPITAL LETTER A"))?;
+
+    terminal.send(Key::Char('p'))?;
+    terminal.wait_until(|screen| {
+        screen.contains("Browse · Planes") && screen.contains("Basic Multilingual Plane")
+    })?;
+    terminal.send(Key::Enter)?;
+    terminal.wait_until(|screen| {
+        screen.contains("Browse · Ranges · Plane 0") && screen.contains("U+0000–U+00FF")
+    })?;
+    terminal.send(Key::Enter)?;
+    terminal.wait_until(|screen| {
+        screen.contains("Browse · Code Points") && screen.contains("Selection Preview")
+    })?;
+    terminal.send(Key::Right)?;
+    let screen = terminal.snapshot_after(|screen| {
+        screen.contains("Browse · Code Points") && screen.contains("U+0042")
+    })?;
+    insta::assert_snapshot!(screen.with_styles());
+
+    terminal.send(Key::Enter)?;
+    terminal.snapshot_after(|screen| {
+        screen.contains("Identity")
+            && screen.contains("U+0042")
+            && screen.contains("LATIN CAPITAL LETTER B")
+    })?;
+
+    terminal.send(Key::Char('q'))?;
+    let status = terminal.wait_exit()?;
+    assert!(status.success(), "exit status: {status}");
+    Ok(())
+}
+
+#[test]
+fn backs_out_of_a_block_table_without_changing_the_inspected_code_point() -> termlens::Result<()> {
+    let mut terminal = spawn("off")?;
+    terminal.snapshot_after(|screen| screen.contains("LATIN CAPITAL LETTER A"))?;
+
+    terminal.send(Key::Char('b'))?;
+    terminal.wait_until(|screen| {
+        screen.contains("Browse · Blocks") && screen.contains("Basic Latin")
+    })?;
+    terminal.send(Key::Enter)?;
+    terminal.wait_until(|screen| screen.contains("Browse · Block Code Points"))?;
+    terminal.send(Key::Right)?;
+    terminal.wait_until(|screen| screen.contains("U+0042"))?;
+
+    terminal.send(Key::Backspace)?;
+    terminal.wait_until(|screen| screen.contains("Browse · Blocks"))?;
+    terminal.send(Key::Esc)?;
+    terminal.snapshot_after(|screen| {
+        screen.contains("Identity")
+            && screen.contains("U+0041")
+            && screen.contains("LATIN CAPITAL LETTER A")
+    })?;
+
+    terminal.send(Key::Char('q'))?;
+    let status = terminal.wait_exit()?;
+    assert!(status.success(), "exit status: {status}");
+    Ok(())
+}
+
+#[test]
+fn cancels_direct_code_point_browsing_without_changing_the_inspector() -> termlens::Result<()> {
+    let mut terminal = spawn("off")?;
+    terminal.snapshot_after(|screen| screen.contains("LATIN CAPITAL LETTER A"))?;
+
+    terminal.send(Key::Char('c'))?;
+    terminal.wait_until(|screen| screen.contains("Browse · Code Points"))?;
+    terminal.send(Key::Right)?;
+    terminal.wait_until(|screen| screen.contains("U+0042"))?;
+    terminal.send(Key::Esc)?;
+    terminal.snapshot_after(|screen| {
+        screen.contains("Identity")
+            && screen.contains("U+0041")
+            && screen.contains("LATIN CAPITAL LETTER A")
+    })?;
+
+    terminal.send(Key::Char('q'))?;
+    let status = terminal.wait_exit()?;
+    assert!(status.success(), "exit status: {status}");
+    Ok(())
+}
+
+#[test]
 fn redraws_across_the_minimum_terminal_size_boundary() -> termlens::Result<()> {
     let mut terminal = spawn("off")?;
     terminal.snapshot_after(|screen| screen.contains("LATIN CAPITAL LETTER A"))?;
