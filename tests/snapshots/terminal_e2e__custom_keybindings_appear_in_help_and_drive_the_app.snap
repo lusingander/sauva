@@ -1,15 +1,15 @@
 ---
 source: tests/terminal_e2e.rs
-expression: "help.mask_matching(env!(\"CARGO_PKG_VERSION\"), '▒').with_styles()"
+expression: help.with_styles()
 ---
 size: 100x30  cursor: hidden
 ┌ Help · Inspector ────────────────────────────────────────────────────────────────────────────────┐
 │                                                                                                  │
-│  sauva - Terminal Unicode Explorer                                                               │
+│  ▒▒▒▒▒ - ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒                                                               │
 │                                                                                                  │
 │  Version: ▒▒▒▒▒                                                                                  │
 │                                                                                                  │
-│  https://github.com/lusingander/sauva                                                            │
+│  ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒                                                            │
 │                                                                                                  │
 │ ──────────────────────────────────────────────────────────────────────────────────────────────── │
 │                                                                                                  │
