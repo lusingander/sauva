@@ -269,11 +269,12 @@ fn browses_through_planes_and_ranges_to_inspect_a_code_point() -> termlens::Resu
     insta::assert_snapshot!(screen.with_styles());
 
     terminal.send(Key::Enter)?;
-    terminal.snapshot_after(|screen| {
+    let inspector = terminal.snapshot_after(|screen| {
         screen.contains("Identity")
             && screen.contains("U+0042")
             && screen.contains("LATIN CAPITAL LETTER B")
     })?;
+    insta::assert_snapshot!("inspector_after_browse_selection", inspector.with_styles());
 
     terminal.send(Key::Char('q'))?;
     let status = terminal.wait_exit()?;
