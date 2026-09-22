@@ -1,0 +1,56 @@
+---
+source: tests/terminal_e2e.rs
+expression: help.with_styles()
+---
+size: 100x30  cursor: hidden
+┌ Help · Inspector ────────────────────────────────────────────────────────────────────────────────┐
+│                                                                                                  │
+│  ▒▒▒▒▒ - ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒                                                               │
+│                                                                                                  │
+│  Version: ▒▒▒▒▒                                                                                  │
+│                                                                                                  │
+│  ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒                                                            │
+│                                                                                                  │
+│ ──────────────────────────────────────────────────────────────────────────────────────────────── │
+│                                                                                                  │
+│  <h>  <Left>                  Previous code point                                                │
+│  <l>  <Right>                 Next code point                                                    │
+│  <k>  <Up>                    Select the previous property                                       │
+│  <j>  <Down>                  Select the next property                                           │
+│  <Ctrl-u>                     Move properties up one page                                        │
+│  <Ctrl-d>                     Move properties down one page                                      │
+│  <g>                          Select the first property                                          │
+│  <G>                          Select the last property                                           │
+│  <y>                          Copy the selected property value                                   │
+│  </>                          Open search                                                        │
+│  <p>                          Browse planes                                                      │
+│  <r>                          Browse ranges                                                      │
+│  <b>                          Browse blocks                                                      │
+│  <c>                          Browse code points                                                 │
+│  <x>  <Ctrl-c>                Quit                                                               │
+│  <F2>                         Open or close help                                                 │
+│                                                                                                  │
+│                                                                                                  │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+ k/j: Move  C-u/C-d: Page  g/G: Ends  Esc/F2: Close  C-c: Quit
+
+styles:
+6: 3-38 fg=4
+8: 2-97 fg=8
+10: 4 fg=3; 9-12 fg=3
+11: 4 fg=3; 9-13 fg=3
+12: 4 fg=3; 9-10 fg=3
+13: 4 fg=3; 9-12 fg=3
+14: 4-9 fg=3
+15: 4-9 fg=3
+16: 4 fg=3
+17: 4 fg=3
+18: 4 fg=3
+19: 4 fg=3
+20: 4 fg=3
+21: 4 fg=3
+22: 4 fg=3
+23: 4 fg=3
+24: 4 fg=3; 9-14 fg=3
+25: 4-5 fg=3
+29: 0-99 fg=8
