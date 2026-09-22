@@ -8,12 +8,15 @@ fn spawn(graphics: &str) -> termlens::Result<Terminal> {
 }
 
 #[test]
-fn applies_an_explicit_config_file_before_entering_the_terminal() -> termlens::Result<()> {
+fn custom_keybindings_appear_in_help_and_drive_the_app() -> termlens::Result<()> {
     let directory = tempdir()?;
     let path = directory.path().join("config.toml");
     fs::write(
         &path,
         r#"
+            [keybindings.global]
+            help = ["f2"]
+
             [keybindings.inspector]
             quit = ["x"]
         "#,
@@ -26,7 +29,20 @@ fn applies_an_explicit_config_file_before_entering_the_terminal() -> termlens::R
     )?;
     terminal.snapshot_after(|screen| screen.contains("LATIN CAPITAL LETTER A"))?;
 
+    terminal.send(Key::F(2))?;
+    terminal.snapshot_after(|screen| {
+        screen.contains("Help · Inspector") && screen.contains("<x>") && screen.contains("<F2>")
+    })?;
+    terminal.send(Key::F(2))?;
+    terminal.wait_until(|screen| {
+        screen.contains("Identity") && screen.contains("LATIN CAPITAL LETTER A")
+    })?;
+
     terminal.send(Key::Char('q'))?;
+    terminal.send(Key::F(2))?;
+    terminal.wait_until(|screen| screen.contains("Help · Inspector"))?;
+    terminal.send(Key::F(2))?;
+    terminal.wait_until(|screen| screen.contains("Identity"))?;
     terminal.send(Key::Char('x'))?;
     let status = terminal.wait_exit()?;
 
