@@ -107,6 +107,29 @@ Sleep 500ms
 Type "y"
 Sleep 1s
 
+# Browse block
+
+Type "b"
+Sleep 500ms
+
+Type "g"
+Sleep 500ms
+
+Type@200ms "jjj"
+Sleep 500ms
+
+Screenshot "./img/block.png"
+Sleep 100ms
+
+Enter
+Sleep 1s
+
+Screenshot "./img/block-code-points.png"
+Sleep 100ms
+
+Enter
+Sleep 500ms
+
 # Filter
 
 Type "/"

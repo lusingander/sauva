@@ -1,1 +1,5 @@
 # To prevent loading and overriding local environment config
+
+[ui]
+
+input_cursor = { text = "|" }
