@@ -133,11 +133,12 @@ These are the main built-in controls. The available controls depend on the curre
 | <kbd>F1</kbd> | Open or close contextual help |
 | <kbd>Ctrl+c</kbd> | Quit from any view |
 | <kbd>q</kbd> | Quit from the Inspector or Browse view |
-| <kbd>Esc</kbd> | Close Search or Browse; quit from the Inspector |
+| <kbd>Esc</kbd> | Cancel Search or Browse; quit from the Inspector |
 | <kbd>h</kbd> <kbd>j</kbd> <kbd>k</kbd> <kbd>l</kbd> or arrow keys | Move the selection |
 | <kbd>/</kbd> | Search by character, code point, or Unicode name |
-| <kbd>p</kbd> <kbd>r</kbd> <kbd>c</kbd> | Browse planes, ranges, or code points |
-| <kbd>Enter</kbd> | Open the selected item |
+| <kbd>p</kbd> <kbd>r</kbd> <kbd>b</kbd> <kbd>c</kbd> | Browse planes, ranges, blocks, or code points |
+| <kbd>Enter</kbd> | Open the selected item; confirm a code point from the table |
+| <kbd>Backspace</kbd> | Return to the previous Browse screen, or cancel from the first screen |
 | <kbd>y</kbd> | Copy the selected Inspector value |
 
 Press <kbd>F1</kbd> to view all controls for the current screen.

@@ -6,7 +6,7 @@ use serde::Deserialize;
 use tui_input::backend::crossterm::to_input_request;
 use umbra::optional;
 
-const ALL_COMMANDS: [Command; 23] = [
+const ALL_COMMANDS: [Command; 24] = [
     Command::Quit,
     Command::Help,
     Command::Close,
@@ -24,6 +24,7 @@ const ALL_COMMANDS: [Command; 23] = [
     Command::OpenSearch,
     Command::BrowsePlanes,
     Command::BrowseRanges,
+    Command::BrowseBlocks,
     Command::BrowseCodePoints,
     Command::PreviousResult,
     Command::NextResult,
@@ -39,6 +40,7 @@ pub enum Context {
     Search,
     BrowsePlane,
     BrowseRange,
+    BrowseBlock,
     BrowseCodePoints,
     Help,
 }
@@ -51,6 +53,7 @@ impl Context {
             Self::Search => "search",
             Self::BrowsePlane => "browse_plane",
             Self::BrowseRange => "browse_range",
+            Self::BrowseBlock => "browse_block",
             Self::BrowseCodePoints => "browse_code_points",
             Self::Help => "help",
         }
@@ -76,6 +79,7 @@ pub enum Command {
     OpenSearch,
     BrowsePlanes,
     BrowseRanges,
+    BrowseBlocks,
     BrowseCodePoints,
     PreviousResult,
     NextResult,
@@ -122,6 +126,7 @@ impl Command {
             Self::OpenSearch => "search",
             Self::BrowsePlanes => "browse_planes",
             Self::BrowseRanges => "browse_ranges",
+            Self::BrowseBlocks => "browse_blocks",
             Self::BrowseCodePoints => "browse_code_points",
             Self::PreviousResult => "previous_result",
             Self::NextResult => "next_result",
@@ -282,6 +287,9 @@ pub struct Keybindings {
     browse_range: BrowseRangeKeybindings,
     #[garde(dive)]
     #[nested]
+    browse_block: BrowseBlockKeybindings,
+    #[garde(dive)]
+    #[nested]
     browse_code_points: BrowseCodePointsKeybindings,
     #[garde(dive)]
     #[nested]
@@ -296,6 +304,7 @@ impl Keybindings {
         self.search.append_bindings(&mut bindings);
         self.browse_plane.append_bindings(&mut bindings);
         self.browse_range.append_bindings(&mut bindings);
+        self.browse_block.append_bindings(&mut bindings);
         self.browse_code_points.append_bindings(&mut bindings);
         self.help.append_bindings(&mut bindings);
         bindings
@@ -357,6 +366,7 @@ keybinding_context!(InspectorKeybindings, Context::Inspector, {
     search => (Command::OpenSearch, ["/"]),
     browse_planes => (Command::BrowsePlanes, ["p"]),
     browse_ranges => (Command::BrowseRanges, ["r"]),
+    browse_blocks => (Command::BrowseBlocks, ["b"]),
     browse_code_points => (Command::BrowseCodePoints, ["c"]),
 });
 
@@ -370,6 +380,7 @@ keybinding_context!(SearchKeybindings, Context::Search, {
 keybinding_context!(BrowsePlaneKeybindings, Context::BrowsePlane, {
     quit => (Command::Quit, ["q"]),
     close => (Command::Close, ["esc"]),
+    back => (Command::Back, ["backspace"]),
     move_up => (Command::MoveUp, ["k", "up"]),
     move_down => (Command::MoveDown, ["j", "down"]),
     first => (Command::First, ["g"]),
@@ -378,6 +389,19 @@ keybinding_context!(BrowsePlaneKeybindings, Context::BrowsePlane, {
 });
 
 keybinding_context!(BrowseRangeKeybindings, Context::BrowseRange, {
+    quit => (Command::Quit, ["q"]),
+    close => (Command::Close, ["esc"]),
+    back => (Command::Back, ["backspace"]),
+    move_up => (Command::MoveUp, ["k", "up"]),
+    move_down => (Command::MoveDown, ["j", "down"]),
+    page_up => (Command::PageUp, ["ctrl-u"]),
+    page_down => (Command::PageDown, ["ctrl-d"]),
+    first => (Command::First, ["g"]),
+    last => (Command::Last, ["G"]),
+    activate => (Command::Activate, ["enter"]),
+});
+
+keybinding_context!(BrowseBlockKeybindings, Context::BrowseBlock, {
     quit => (Command::Quit, ["q"]),
     close => (Command::Close, ["esc"]),
     back => (Command::Back, ["backspace"]),
@@ -693,6 +717,7 @@ impl ResolvedKeymap {
             Context::Search,
             Context::BrowsePlane,
             Context::BrowseRange,
+            Context::BrowseBlock,
             Context::BrowseCodePoints,
             Context::Help,
         ] {
@@ -809,6 +834,22 @@ mod tests {
     }
 
     #[test]
+    fn block_browser_bindings_can_be_customized() {
+        let keymap =
+            configured("[inspector]\nbrowse_blocks = ['B']\n[browse_block]\nmove_down = ['n']")
+                .unwrap();
+
+        assert_eq!(
+            keymap.resolve(Context::Inspector, plain('B')),
+            Some(Command::BrowseBlocks)
+        );
+        assert_eq!(
+            keymap.resolve(Context::BrowseBlock, plain('n')),
+            Some(Command::MoveDown)
+        );
+    }
+
+    #[test]
     fn defaults_prefer_vim_keys_for_directional_commands() {
         let keymap = ResolvedKeymap::default();
 
@@ -816,6 +857,7 @@ mod tests {
             Context::Inspector,
             Context::BrowsePlane,
             Context::BrowseRange,
+            Context::BrowseBlock,
             Context::BrowseCodePoints,
             Context::Help,
         ] {

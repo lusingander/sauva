@@ -24,10 +24,10 @@ expression: "render_to_text(&state, width, height)"
 │  </>                          Open search                                                        │
 │  <p>                          Browse planes                                                      │
 │  <r>                          Browse ranges                                                      │
+│  <b>                          Browse blocks                                                      │
 │  <c>                          Browse code points                                                 │
 │  <q>  <Esc>  <Ctrl-c>         Quit                                                               │
 │  <F1>                         Open or close help                                                 │
-│                                                                                                  │
 │                                                                                                  │
 │                                                                                                  │
 └──────────────────────────────────────────────────────────────────────────────────────────────────┘

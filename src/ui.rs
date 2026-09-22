@@ -83,11 +83,17 @@ mod tests {
         let browse =
             glyph_preview_request(Rect::new(0, 0, 100, 30), &fixtures::browse_code_points())
                 .expect("a selected code point has an inline glyph preview");
+        let block = glyph_preview_request(
+            Rect::new(0, 0, 100, 30),
+            &fixtures::browse_block_code_points_short(),
+        )
+        .expect("a block table selection has an inline glyph preview");
 
         assert_eq!(search.code_point.value(), 0x2192);
         assert_eq!(search.placeholder, Rect::new(62, 7, 36, 21));
         assert_eq!(browse.code_point.value(), 0x0041);
         assert_eq!(browse.placeholder, Rect::new(62, 9, 36, 19));
+        assert_eq!(block.code_point.value(), 0x2ff5);
     }
 
     #[test]

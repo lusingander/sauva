@@ -519,6 +519,9 @@
         "browse_ranges": {
           "$ref": "#/definitions/keyArray"
         },
+        "browse_blocks": {
+          "$ref": "#/definitions/keyArray"
+        },
         "browse_code_points": {
           "$ref": "#/definitions/keyArray"
         }
@@ -552,6 +555,9 @@
         "close": {
           "$ref": "#/definitions/keyArray"
         },
+        "back": {
+          "$ref": "#/definitions/keyArray"
+        },
         "move_up": {
           "$ref": "#/definitions/keyArray"
         },
@@ -571,6 +577,42 @@
       "additionalProperties": false
     },
     "browseRangeKeybindings": {
+      "type": "object",
+      "properties": {
+        "quit": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "close": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "back": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "move_up": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "move_down": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "page_up": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "page_down": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "first": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "last": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "activate": {
+          "$ref": "#/definitions/keyArray"
+        }
+      },
+      "additionalProperties": false
+    },
+    "browseBlockKeybindings": {
       "type": "object",
       "properties": {
         "quit": {
@@ -693,6 +735,9 @@
         },
         "browse_range": {
           "$ref": "#/definitions/browseRangeKeybindings"
+        },
+        "browse_block": {
+          "$ref": "#/definitions/browseBlockKeybindings"
         },
         "browse_code_points": {
           "$ref": "#/definitions/browseCodePointsKeybindings"

@@ -759,6 +759,38 @@ mod tests {
     }
 
     #[test]
+    fn browse_blocks_standard() {
+        let state = fixtures::browse_blocks();
+        let (width, height) = STANDARD_SIZE;
+
+        insta::assert_snapshot!(render_to_text(&state, width, height));
+    }
+
+    #[test]
+    fn browse_blocks_from_gap_minimum() {
+        let state = fixtures::browse_blocks_from_gap();
+        let (width, height) = MINIMUM_SIZE;
+
+        insta::assert_snapshot!(render_to_text(&state, width, height));
+    }
+
+    #[test]
+    fn browse_block_code_points_short_minimum() {
+        let state = fixtures::browse_block_code_points_short();
+        let (width, height) = MINIMUM_SIZE;
+
+        insta::assert_snapshot!(render_to_text(&state, width, height));
+    }
+
+    #[test]
+    fn browse_block_code_points_long_end_wide() {
+        let state = fixtures::browse_block_code_points_long_end();
+        let (width, height) = WIDE_SIZE;
+
+        insta::assert_snapshot!(render_to_text(&state, width, height));
+    }
+
+    #[test]
     fn browse_code_points_standard() {
         let state = fixtures::browse_code_points();
         let (width, height) = STANDARD_SIZE;

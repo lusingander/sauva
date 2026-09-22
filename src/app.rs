@@ -283,45 +283,57 @@ pub fn update(state: &mut AppState, action: Action) {
             .inspector
             .resize_viewport(viewport_height, document_height, field_ranges),
         Action::OpenBrowser(level) if state.view == View::Inspector => {
+            let previous_preview = state.preview_code_point();
             state.browse = Some(BrowseState::at(level, state.selected));
             state.view = View::Browser;
+            refresh_preview_for_change(state, previous_preview);
         }
         Action::OpenBrowser(_) => {}
         Action::AdvanceBrowser if state.view == View::Browser => {
-            let browse = state
-                .browse
-                .as_mut()
-                .expect("the browser view always has browse state");
-            let target = browse.advance();
-            let selected = (browse.level() == BrowseLevel::CodePointTable).then(|| browse.cursor());
+            let previous_preview = state.preview_code_point();
+            let (target, cursor) = {
+                let browse = state
+                    .browse
+                    .as_mut()
+                    .expect("the browser view always has browse state");
+                (browse.advance(), browse.cursor())
+            };
             if target == BrowseTarget::Inspector {
+                select_code_point(state, cursor);
                 state.view = View::Inspector;
+                state.browse = None;
             }
-            if let Some(selected) = selected {
-                select_code_point(state, selected);
-            }
+            refresh_preview_for_change(state, previous_preview);
         }
         Action::AdvanceBrowser => {}
         Action::BackBrowser if state.view == View::Browser => {
+            let previous_preview = state.preview_code_point();
             let browse = state
                 .browse
                 .as_mut()
                 .expect("the browser view always has browse state");
-            browse.back();
+            if browse.back() == BrowseTarget::Inspector {
+                state.view = View::Inspector;
+                state.browse = None;
+            }
+            refresh_preview_for_change(state, previous_preview);
         }
         Action::BackBrowser => {}
-        Action::CloseBrowser if state.view == View::Browser => state.view = View::Inspector,
+        Action::CloseBrowser if state.view == View::Browser => {
+            let previous_preview = state.preview_code_point();
+            state.view = View::Inspector;
+            state.browse = None;
+            refresh_preview_for_change(state, previous_preview);
+        }
         Action::CloseBrowser => {}
         Action::MoveBrowser(movement) if state.view == View::Browser => {
+            let previous_preview = state.preview_code_point();
             let browse = state
                 .browse
                 .as_mut()
                 .expect("the browser view always has browse state");
             browse.move_cursor(movement);
-            let selected = (browse.level() == BrowseLevel::CodePointTable).then(|| browse.cursor());
-            if let Some(selected) = selected {
-                select_code_point(state, selected);
-            }
+            refresh_preview_for_change(state, previous_preview);
         }
         Action::MoveBrowser(_) => {}
         Action::ResizeBrowserViewport(height) => {
@@ -375,6 +387,12 @@ pub fn update(state: &mut AppState, action: Action) {
 fn select_code_point(state: &mut AppState, code_point: CodePoint) {
     if state.selected != code_point {
         state.selected = code_point;
+        state.glyph_preview.selection_changed();
+    }
+}
+
+fn refresh_preview_for_change(state: &mut AppState, previous: Option<CodePoint>) {
+    if state.preview_code_point() != previous {
         state.glyph_preview.selection_changed();
     }
 }
@@ -633,7 +651,7 @@ mod tests {
     }
 
     #[test]
-    fn entering_and_moving_in_the_table_updates_the_shared_selection() {
+    fn table_movement_is_tentative_until_enter() {
         let mut state = AppState::with_selected(CodePoint::new(0x0041).unwrap());
         resize_inspector(&mut state, 5, 20);
         update(&mut state, Action::MoveInspector(InspectorMove::Last));
@@ -642,13 +660,102 @@ mod tests {
         update(&mut state, Action::MoveBrowser(BrowseMove::Down));
 
         update(&mut state, Action::AdvanceBrowser);
-        assert_eq!(state.selected().value(), 0x0141);
+        assert_eq!(state.selected().value(), 0x0041);
+        assert_eq!(state.preview_code_point().unwrap().value(), 0x0141);
         assert_eq!(state.inspector().selected_index(), 19);
         assert_eq!(state.inspector().offset(), 15);
 
         update(&mut state, Action::MoveBrowser(BrowseMove::Right));
         assert_eq!(state.browse().unwrap().cursor().value(), 0x0142);
+        assert_eq!(state.selected().value(), 0x0041);
+        update(&mut state, Action::AdvanceBrowser);
         assert_eq!(state.selected().value(), 0x0142);
+        assert_eq!(state.view(), View::Inspector);
+    }
+
+    #[test]
+    fn closing_or_backing_out_of_browse_discards_the_tentative_selection() {
+        let original = CodePoint::new(0x0041).unwrap();
+        let mut state = AppState::with_selected(original);
+        update(&mut state, Action::OpenBrowser(BrowseLevel::CodePointTable));
+        update(&mut state, Action::MoveBrowser(BrowseMove::Right));
+        assert_eq!(state.preview_code_point().unwrap().value(), 0x0042);
+        update(&mut state, Action::CloseBrowser);
+        assert_eq!(state.selected(), original);
+        assert_eq!(state.preview_code_point(), Some(original));
+
+        update(&mut state, Action::OpenBrowser(BrowseLevel::CodePointTable));
+        update(&mut state, Action::MoveBrowser(BrowseMove::Right));
+        update(&mut state, Action::BackBrowser);
+        assert_eq!(state.view(), View::Inspector);
+        assert_eq!(state.selected(), original);
+        assert_eq!(state.preview_code_point(), Some(original));
+    }
+
+    #[test]
+    fn moving_a_tentative_cursor_invalidates_its_glyph_preview() {
+        use crate::{
+            glyph::CanvasSize,
+            graphics::{GraphicsAvailability, GraphicsProtocol},
+            preview::{GlyphPreviewGeometry, GlyphPreviewStatus},
+        };
+
+        let mut state = AppState::new();
+        update(&mut state, Action::OpenBrowser(BrowseLevel::CodePointTable));
+        update(
+            &mut state,
+            Action::UpdateGlyphPreview(GlyphPreviewUpdate::Configure {
+                availability: GraphicsAvailability::Available(GraphicsProtocol::Kitty),
+                image_id: None,
+            }),
+        );
+        update(
+            &mut state,
+            Action::UpdateGlyphPreview(GlyphPreviewUpdate::Prepared {
+                image_id: None,
+                geometry: GlyphPreviewGeometry::new(10, 4, CanvasSize::new(80, 64).unwrap()),
+                status: GlyphPreviewStatus::Ready,
+                font: None,
+            }),
+        );
+
+        update(&mut state, Action::MoveBrowser(BrowseMove::Right));
+        assert_eq!(state.glyph_preview().status(), GlyphPreviewStatus::Pending);
+        assert_eq!(state.selected().value(), 0x0041);
+    }
+
+    #[test]
+    fn backing_from_a_table_preserves_its_tentative_cursor_in_the_previous_list() {
+        let original = CodePoint::new(0x0041).unwrap();
+        let mut state = AppState::with_selected(original);
+        update(&mut state, Action::OpenBrowser(BrowseLevel::Range));
+        update(&mut state, Action::MoveBrowser(BrowseMove::Down));
+        update(&mut state, Action::AdvanceBrowser);
+        update(&mut state, Action::MoveBrowser(BrowseMove::Right));
+        update(&mut state, Action::BackBrowser);
+
+        assert_eq!(state.browse().unwrap().level(), BrowseLevel::Range);
+        assert_eq!(state.browse().unwrap().cursor().value(), 0x0142);
+        assert_eq!(state.selected(), original);
+    }
+
+    #[test]
+    fn block_browse_from_an_unmapped_code_point_commits_only_on_table_enter() {
+        let original = CodePoint::new(0x2fe0).unwrap();
+        let mut state = AppState::with_selected(original);
+        update(&mut state, Action::OpenBrowser(BrowseLevel::Block));
+        assert_eq!(state.browse().unwrap().cursor().value(), 0x2ff0);
+        assert_eq!(state.selected(), original);
+        update(&mut state, Action::AdvanceBrowser);
+        assert_eq!(state.preview_code_point().unwrap().value(), 0x2ff0);
+        update(&mut state, Action::MoveBrowser(BrowseMove::Right));
+        update(&mut state, Action::BackBrowser);
+        assert_eq!(state.browse().unwrap().level(), BrowseLevel::Block);
+        assert_eq!(state.selected(), original);
+        update(&mut state, Action::AdvanceBrowser);
+        update(&mut state, Action::AdvanceBrowser);
+        assert_eq!(state.view(), View::Inspector);
+        assert_eq!(state.selected().value(), 0x2ff1);
     }
 
     #[test]
@@ -663,16 +770,25 @@ mod tests {
         update(&mut state, Action::AdvanceBrowser);
         assert_eq!(state.view(), View::Inspector);
 
-        update(&mut state, Action::OpenBrowser(BrowseLevel::CodePointTable));
+        update(&mut state, Action::OpenBrowser(BrowseLevel::Plane));
+        update(&mut state, Action::AdvanceBrowser);
+        update(&mut state, Action::AdvanceBrowser);
         update(&mut state, Action::BackBrowser);
         assert_eq!(state.browse().unwrap().level(), BrowseLevel::Range);
         update(&mut state, Action::BackBrowser);
         assert_eq!(state.browse().unwrap().level(), BrowseLevel::Plane);
         update(&mut state, Action::BackBrowser);
-        assert_eq!(state.view(), View::Browser);
-        assert_eq!(state.browse().unwrap().level(), BrowseLevel::Plane);
+        assert_eq!(state.view(), View::Inspector);
 
-        update(&mut state, Action::CloseBrowser);
+        update(&mut state, Action::OpenBrowser(BrowseLevel::CodePointTable));
+        update(&mut state, Action::BackBrowser);
+        assert_eq!(state.view(), View::Inspector);
+
+        update(&mut state, Action::OpenBrowser(BrowseLevel::Range));
+        update(&mut state, Action::AdvanceBrowser);
+        update(&mut state, Action::BackBrowser);
+        assert_eq!(state.browse().unwrap().level(), BrowseLevel::Range);
+        update(&mut state, Action::BackBrowser);
         assert_eq!(state.view(), View::Inspector);
     }
 
@@ -681,8 +797,9 @@ mod tests {
         let mut state = AppState::new();
         update(&mut state, Action::OpenBrowser(BrowseLevel::CodePointTable));
         update(&mut state, Action::MoveBrowser(BrowseMove::Right));
-        assert_eq!(state.selected().value(), 0x0042);
+        assert_eq!(state.selected().value(), 0x0041);
         update(&mut state, Action::AdvanceBrowser);
+        assert_eq!(state.selected().value(), 0x0042);
 
         update(&mut state, Action::OpenSearch);
         edit_search_query(&mut state, "→");
