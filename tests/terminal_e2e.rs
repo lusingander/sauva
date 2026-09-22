@@ -30,9 +30,13 @@ fn custom_keybindings_appear_in_help_and_drive_the_app() -> termlens::Result<()>
     terminal.snapshot_after(|screen| screen.contains("LATIN CAPITAL LETTER A"))?;
 
     terminal.send(Key::F(2))?;
-    terminal.snapshot_after(|screen| {
+    let help = terminal.snapshot_after(|screen| {
         screen.contains("Help · Inspector") && screen.contains("<x>") && screen.contains("<F2>")
     })?;
+    insta::assert_snapshot!(
+        help.mask_matching(env!("CARGO_PKG_VERSION"), '▒')
+            .with_styles()
+    );
     terminal.send(Key::F(2))?;
     terminal.wait_until(|screen| {
         screen.contains("Identity") && screen.contains("LATIN CAPITAL LETTER A")
