@@ -202,6 +202,45 @@ fn keeps_the_search_result_selected_across_terminal_resizes() -> termlens::Resul
 }
 
 #[test]
+fn search_help_does_not_edit_the_query_or_lose_the_result() -> termlens::Result<()> {
+    let mut terminal = spawn("off")?;
+    terminal.snapshot_after(|screen| screen.contains("LATIN CAPITAL LETTER A"))?;
+
+    terminal.send(Key::Char('/'))?;
+    terminal.wait_until(|screen| screen.contains("Search by Unicode name"))?;
+    terminal.send_str("U+2192")?;
+    terminal.wait_until(|screen| {
+        screen.contains("Results · 1") && screen.contains("RIGHTWARDS ARROW")
+    })?;
+
+    terminal.send(Key::F(1))?;
+    terminal.snapshot_after(|screen| {
+        screen.contains("Help · Search") && screen.contains("Inspect the selected result")
+    })?;
+    terminal.send(Key::Char('x'))?;
+    terminal.send(Key::F(1))?;
+    let screen = terminal.snapshot_after(|screen| {
+        screen.contains("Search")
+            && screen.contains("Results · 1")
+            && screen.contains("U+2192")
+            && screen.contains("RIGHTWARDS ARROW")
+    })?;
+    assert!(!screen.contains("U+2192x"), "{screen}");
+
+    terminal.send(Key::Enter)?;
+    terminal.snapshot_after(|screen| {
+        screen.contains("Identity")
+            && screen.contains("U+2192")
+            && screen.contains("RIGHTWARDS ARROW")
+    })?;
+
+    terminal.send(Key::Char('q'))?;
+    let status = terminal.wait_exit()?;
+    assert!(status.success(), "exit status: {status}");
+    Ok(())
+}
+
+#[test]
 fn browses_through_planes_and_ranges_to_inspect_a_code_point() -> termlens::Result<()> {
     let mut terminal = spawn("off")?;
     terminal.snapshot_after(|screen| screen.contains("LATIN CAPITAL LETTER A"))?;
