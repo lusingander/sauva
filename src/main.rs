@@ -34,7 +34,7 @@ fn main() -> ExitCode {
 fn run() -> Result<(), Box<dyn Error>> {
     let options = cli::parse();
     let config = config::load()?;
-    let mut state = initial_state(options.demo(), options.initial_code_point());
+    let mut state = initial_state(options.demo(), options.target());
 
     terminal::run(
         &mut state,
@@ -47,13 +47,15 @@ fn run() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn initial_state(
-    demo: Option<cli::Demo>,
-    initial_code_point: Option<unicode::CodePoint>,
-) -> app::AppState {
-    debug_assert!(demo.is_none() || initial_code_point.is_none());
-    if let Some(code_point) = initial_code_point {
-        return app::AppState::with_selected(code_point);
+fn initial_state(demo: Option<cli::Demo>, target: Option<&cli::LaunchTarget>) -> app::AppState {
+    debug_assert!(demo.is_none() || target.is_none());
+    if let Some(target) = target {
+        return match target {
+            cli::LaunchTarget::CodePoint(code_point) => app::AppState::with_selected(*code_point),
+            cli::LaunchTarget::Sequence(code_points) => {
+                app::AppState::with_sequence(code_points.clone())
+            }
+        };
     }
 
     match demo {
@@ -94,14 +96,24 @@ fn initial_state(
 
 #[cfg(test)]
 mod tests {
-    use crate::{initial_state, unicode::CodePoint};
+    use crate::{cli::LaunchTarget, initial_state, unicode::CodePoint};
 
     #[test]
     fn initial_code_point_selects_the_inspected_value() {
         let code_point = CodePoint::new(0x2192).unwrap();
 
-        let state = initial_state(None, Some(code_point));
+        let state = initial_state(None, Some(&LaunchTarget::CodePoint(code_point)));
 
         assert_eq!(state.selected(), code_point);
+    }
+
+    #[test]
+    fn initial_sequence_opens_the_sequence_view() {
+        let code_points = "A→B".chars().map(CodePoint::from).collect::<Vec<_>>();
+
+        let state = initial_state(None, Some(&LaunchTarget::Sequence(code_points)));
+
+        assert_eq!(state.view(), crate::app::View::Sequence);
+        assert_eq!(state.sequence().unwrap().selected().value(), 0x0041);
     }
 }

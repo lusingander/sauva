@@ -12,7 +12,7 @@ use crate::{
     ui::{
         browser, glyph_preview, help, inspector,
         layout::{MINIMUM_SIZE, calculate},
-        search,
+        search, sequence,
         settings::UiSettings,
         theme::ColorTheme,
     },
@@ -45,6 +45,7 @@ pub fn render(
             }
             View::Browser => browser::render(frame, layout.main, state, color_theme, ui),
             View::Search => search::render(frame, layout.main, state, color_theme, ui),
+            View::Sequence => sequence::render(frame, layout.main, state, color_theme, ui),
         }
     }
     render_footer(frame, layout.footer, state, keymap, color_theme);
@@ -89,7 +90,7 @@ fn render_footer(
     } else {
         context_for_state(state)
     };
-    let text = help::footer(context, area.width, keymap);
+    let text = help::footer(context, state.sequence().is_some(), area.width, keymap);
     frame.render_widget(
         Paragraph::new(text).style(Style::new().fg(color_theme.footer.short_help)),
         area,

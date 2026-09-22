@@ -62,7 +62,7 @@ pub fn render(
     frame.render_widget(
         Paragraph::new(lines).block(
             Block::bordered()
-                .title(" Inspector ")
+                .title(inspector_title(state))
                 .padding(Padding::horizontal(1)),
         ),
         area,
@@ -71,6 +71,19 @@ pub fn render(
         ViewportScrollbar::new(document.lines.len(), start..end).style(color_theme.base_style()),
         scrollbar::area_after(content),
     );
+}
+
+fn inspector_title(state: &AppState) -> String {
+    state.sequence().map_or_else(
+        || " Inspector ".to_owned(),
+        |sequence| {
+            format!(
+                " Inspector · from Sequence {}/{} ",
+                sequence.selected_index() + 1,
+                sequence.code_points().len()
+            )
+        },
+    )
 }
 
 fn content_area(area: Rect) -> Rect {

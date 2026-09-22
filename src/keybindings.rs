@@ -6,7 +6,7 @@ use serde::Deserialize;
 use tui_input::backend::crossterm::to_input_request;
 use umbra::optional;
 
-const ALL_COMMANDS: [Command; 24] = [
+const ALL_COMMANDS: [Command; 25] = [
     Command::Quit,
     Command::Help,
     Command::Close,
@@ -31,6 +31,7 @@ const ALL_COMMANDS: [Command; 24] = [
     Command::InspectResult,
     Command::Activate,
     Command::Back,
+    Command::ReturnToSequence,
 ];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -38,6 +39,7 @@ pub enum Context {
     Global,
     Inspector,
     Search,
+    Sequence,
     BrowsePlane,
     BrowseRange,
     BrowseBlock,
@@ -51,6 +53,7 @@ impl Context {
             Self::Global => "global",
             Self::Inspector => "inspector",
             Self::Search => "search",
+            Self::Sequence => "sequence",
             Self::BrowsePlane => "browse_plane",
             Self::BrowseRange => "browse_range",
             Self::BrowseBlock => "browse_block",
@@ -86,6 +89,7 @@ pub enum Command {
     InspectResult,
     Activate,
     Back,
+    ReturnToSequence,
 }
 
 impl Command {
@@ -133,6 +137,7 @@ impl Command {
             Self::InspectResult => "inspect_result",
             Self::Activate => "activate",
             Self::Back => "back",
+            Self::ReturnToSequence => "return_to_sequence",
         }
     }
 }
@@ -281,6 +286,9 @@ pub struct Keybindings {
     search: SearchKeybindings,
     #[garde(dive)]
     #[nested]
+    sequence: SequenceKeybindings,
+    #[garde(dive)]
+    #[nested]
     browse_plane: BrowsePlaneKeybindings,
     #[garde(dive)]
     #[nested]
@@ -302,6 +310,7 @@ impl Keybindings {
         self.global.append_bindings(&mut bindings);
         self.inspector.append_bindings(&mut bindings);
         self.search.append_bindings(&mut bindings);
+        self.sequence.append_bindings(&mut bindings);
         self.browse_plane.append_bindings(&mut bindings);
         self.browse_range.append_bindings(&mut bindings);
         self.browse_block.append_bindings(&mut bindings);
@@ -368,6 +377,7 @@ keybinding_context!(InspectorKeybindings, Context::Inspector, {
     browse_ranges => (Command::BrowseRanges, ["r"]),
     browse_blocks => (Command::BrowseBlocks, ["b"]),
     browse_code_points => (Command::BrowseCodePoints, ["c"]),
+    return_to_sequence => (Command::ReturnToSequence, ["backspace"]),
 });
 
 keybinding_context!(SearchKeybindings, Context::Search, {
@@ -375,6 +385,15 @@ keybinding_context!(SearchKeybindings, Context::Search, {
     next_result => (Command::NextResult, ["down", "ctrl-n"]),
     inspect_result => (Command::InspectResult, ["enter"]),
     close => (Command::Close, ["esc"]),
+});
+
+keybinding_context!(SequenceKeybindings, Context::Sequence, {
+    quit => (Command::Quit, ["q", "esc"]),
+    move_up => (Command::MoveUp, ["k", "up"]),
+    move_down => (Command::MoveDown, ["j", "down"]),
+    first => (Command::First, ["g"]),
+    last => (Command::Last, ["G"]),
+    activate => (Command::Activate, ["enter"]),
 });
 
 keybinding_context!(BrowsePlaneKeybindings, Context::BrowsePlane, {
@@ -715,6 +734,7 @@ impl ResolvedKeymap {
         for context in [
             Context::Inspector,
             Context::Search,
+            Context::Sequence,
             Context::BrowsePlane,
             Context::BrowseRange,
             Context::BrowseBlock,

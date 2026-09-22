@@ -5,6 +5,7 @@ use crate::help::{HelpMove, HelpState};
 use crate::inspector::{InspectorField, InspectorFieldId, InspectorMove, InspectorState};
 use crate::preview::{GlyphPreviewState, GlyphPreviewUpdate};
 use crate::search::{SearchMove, SearchState};
+use crate::sequence::{SequenceMove, SequenceState};
 use crate::unicode::CodePoint;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -37,6 +38,10 @@ pub enum Action {
     EditSearch(InputRequest),
     MoveSearch(SearchMove),
     ResizeSearchViewport(usize),
+    MoveSequence(SequenceMove),
+    ResizeSequenceViewport(usize),
+    InspectSequenceCodePoint,
+    ReturnToSequence,
     UpdateGlyphPreview(GlyphPreviewUpdate),
     ShowFooterStatus(FooterStatus),
 }
@@ -49,6 +54,7 @@ impl Action {
                 | Self::ResizeInspectorViewport { .. }
                 | Self::ResizeBrowserViewport(_)
                 | Self::ResizeSearchViewport(_)
+                | Self::ResizeSequenceViewport(_)
                 | Self::UpdateGlyphPreview(_)
                 | Self::ShowFooterStatus(_)
         )
@@ -66,6 +72,7 @@ pub enum View {
     Inspector,
     Browser,
     Search,
+    Sequence,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -138,6 +145,7 @@ pub struct AppState {
     inspector: InspectorState,
     browse: Option<BrowseState>,
     search: Option<SearchState>,
+    sequence: Option<SequenceState>,
     help: HelpState,
     glyph_preview: GlyphPreviewState,
     clipboard_request: Option<ClipboardRequest>,
@@ -154,6 +162,7 @@ impl AppState {
             inspector: InspectorState::new(),
             browse: None,
             search: None,
+            sequence: None,
             help: HelpState::new(),
             glyph_preview: GlyphPreviewState::new(),
             clipboard_request: None,
@@ -164,6 +173,15 @@ impl AppState {
     pub fn with_selected(selected: CodePoint) -> Self {
         let mut state = Self::new();
         state.selected = selected;
+        state
+    }
+
+    pub fn with_sequence(code_points: Vec<CodePoint>) -> Self {
+        let sequence = SequenceState::new(code_points);
+        let selected = sequence.selected();
+        let mut state = Self::with_selected(selected);
+        state.view = View::Sequence;
+        state.sequence = Some(sequence);
         state
     }
 
@@ -189,6 +207,10 @@ impl AppState {
 
     pub fn search(&self) -> Option<&SearchState> {
         self.search.as_ref()
+    }
+
+    pub fn sequence(&self) -> Option<&SequenceState> {
+        self.sequence.as_ref()
     }
 
     pub const fn help(&self) -> HelpState {
@@ -222,6 +244,7 @@ impl AppState {
                 .as_ref()
                 .and_then(SearchState::selected_result)
                 .map(|result| result.code_point()),
+            View::Sequence => self.sequence.as_ref().map(SequenceState::selected),
         }
     }
 }
@@ -379,6 +402,37 @@ pub fn update(state: &mut AppState, action: Action) {
                 search.resize_viewport(height);
             }
         }
+        Action::MoveSequence(movement) if state.view == View::Sequence => {
+            let previous_preview = state.preview_code_point();
+            state
+                .sequence
+                .as_mut()
+                .expect("the sequence view always has sequence state")
+                .move_selection(movement);
+            refresh_preview_for_change(state, previous_preview);
+        }
+        Action::MoveSequence(_) => {}
+        Action::ResizeSequenceViewport(height) => {
+            if let Some(sequence) = state.sequence.as_mut() {
+                sequence.resize_viewport(height);
+            }
+        }
+        Action::InspectSequenceCodePoint if state.view == View::Sequence => {
+            let selected = state
+                .sequence
+                .as_ref()
+                .expect("the sequence view always has sequence state")
+                .selected();
+            select_code_point(state, selected);
+            state.view = View::Inspector;
+        }
+        Action::InspectSequenceCodePoint => {}
+        Action::ReturnToSequence if state.view == View::Inspector && state.sequence.is_some() => {
+            let previous_preview = state.preview_code_point();
+            state.view = View::Sequence;
+            refresh_preview_for_change(state, previous_preview);
+        }
+        Action::ReturnToSequence => {}
         Action::UpdateGlyphPreview(update) => state.glyph_preview.apply(update),
         Action::ShowFooterStatus(status) => state.footer_status = Some(status),
     }
@@ -825,6 +879,63 @@ mod tests {
         assert_eq!(state.selected(), selected);
         assert_eq!(state.search().unwrap().input().value(), "");
         assert_eq!(state.search().unwrap().selected_result(), None);
+    }
+
+    #[test]
+    fn sequence_selection_opens_the_inspector_and_returns_to_the_same_position() {
+        let mut state =
+            AppState::with_sequence("A→B".chars().map(CodePoint::from).collect::<Vec<_>>());
+        update(&mut state, Action::ResizeSequenceViewport(2));
+        update(&mut state, Action::MoveSequence(SequenceMove::Next));
+
+        update(&mut state, Action::InspectSequenceCodePoint);
+        assert_eq!(state.view(), View::Inspector);
+        assert_eq!(state.selected().value(), 0x2192);
+
+        update(&mut state, Action::MoveCodePoint(CodePointMove::Next));
+        assert_eq!(state.selected().value(), 0x2193);
+        update(&mut state, Action::ReturnToSequence);
+
+        assert_eq!(state.view(), View::Sequence);
+        assert_eq!(state.sequence().unwrap().selected_index(), 1);
+        assert_eq!(state.preview_code_point().unwrap().value(), 0x2192);
+    }
+
+    #[test]
+    fn search_from_a_sequence_inspector_does_not_change_the_sequence_position() {
+        let mut state =
+            AppState::with_sequence("A→B".chars().map(CodePoint::from).collect::<Vec<_>>());
+        update(&mut state, Action::MoveSequence(SequenceMove::Next));
+        update(&mut state, Action::InspectSequenceCodePoint);
+        update(&mut state, Action::OpenSearch);
+        edit_search_query(&mut state, "Ω");
+        update(&mut state, Action::InspectSearchResult);
+
+        assert_eq!(state.view(), View::Inspector);
+        assert_eq!(state.selected().value(), 0x03a9);
+        assert_eq!(state.sequence().unwrap().selected_index(), 1);
+
+        update(&mut state, Action::ReturnToSequence);
+        assert_eq!(state.view(), View::Sequence);
+        assert_eq!(state.preview_code_point().unwrap().value(), 0x2192);
+    }
+
+    #[test]
+    fn browse_from_a_sequence_inspector_returns_through_the_inspector() {
+        let mut state =
+            AppState::with_sequence("AB".chars().map(CodePoint::from).collect::<Vec<_>>());
+        update(&mut state, Action::InspectSequenceCodePoint);
+        update(&mut state, Action::OpenBrowser(BrowseLevel::CodePointTable));
+        update(&mut state, Action::MoveBrowser(BrowseMove::Right));
+        update(&mut state, Action::AdvanceBrowser);
+
+        assert_eq!(state.view(), View::Inspector);
+        assert_eq!(state.selected().value(), 0x0042);
+        assert_eq!(state.sequence().unwrap().selected_index(), 0);
+
+        update(&mut state, Action::ReturnToSequence);
+        assert_eq!(state.view(), View::Sequence);
+        assert_eq!(state.preview_code_point().unwrap().value(), 0x0041);
     }
 
     #[test]
