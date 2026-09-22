@@ -1,0 +1,20 @@
+---
+source: src/ui/render.rs
+expression: "render_to_text(&state, width, height)"
+---
+┌ Browse · Block Code Points · U+2FF0–U+2FFF ──────────────┐
+│         0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F   │
+│ 002FF0  ⿰  ⿱  ⿲  ⿳  ⿴  ⿵  ⿶  ⿷  ⿸  ⿹  ⿺  ⿻  ⿼  ⿽  ⿾  ⿿   │
+│                                                          │
+│                                                          │
+│                                                          │
+│                                                          │
+│                                                          │
+│                                                          │
+│                                                          │
+│                                                          │
+│                                                          │
+│                                                          │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
+ h/l/k/j: Move  Enter: Inspect  Esc: Close  F1: Help

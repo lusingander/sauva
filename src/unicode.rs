@@ -9,7 +9,7 @@ pub mod plane;
 mod properties;
 
 pub use code_point::{CodePoint, CodePointStructure, InvalidCodePoint};
-pub use database::{GeneralCategory, UnicodeDatabase, UnicodeRecord};
+pub use database::{GeneralCategory, UnicodeBlock, UnicodeDatabase, UnicodeRecord};
 pub use decomposition::Decomposition;
 pub use decomposition::DecompositionType;
 pub use display::{DisplayKind, DisplayRepresentation};

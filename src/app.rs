@@ -740,6 +740,25 @@ mod tests {
     }
 
     #[test]
+    fn block_browse_from_an_unmapped_code_point_commits_only_on_table_enter() {
+        let original = CodePoint::new(0x2fe0).unwrap();
+        let mut state = AppState::with_selected(original);
+        update(&mut state, Action::OpenBrowser(BrowseLevel::Block));
+        assert_eq!(state.browse().unwrap().cursor().value(), 0x2ff0);
+        assert_eq!(state.selected(), original);
+        update(&mut state, Action::AdvanceBrowser);
+        assert_eq!(state.preview_code_point().unwrap().value(), 0x2ff0);
+        update(&mut state, Action::MoveBrowser(BrowseMove::Right));
+        update(&mut state, Action::BackBrowser);
+        assert_eq!(state.browse().unwrap().level(), BrowseLevel::Block);
+        assert_eq!(state.selected(), original);
+        update(&mut state, Action::AdvanceBrowser);
+        update(&mut state, Action::AdvanceBrowser);
+        assert_eq!(state.view(), View::Inspector);
+        assert_eq!(state.selected().value(), 0x2ff1);
+    }
+
+    #[test]
     fn browser_enter_and_back_actions_follow_the_hierarchy() {
         let mut state = AppState::new();
         update(&mut state, Action::OpenBrowser(BrowseLevel::Plane));

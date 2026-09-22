@@ -58,6 +58,7 @@ pub enum Demo {
     Surrogate,
     BrowsePlanes,
     BrowseRanges,
+    BrowseBlocks,
     BrowseCodePoints,
     BrowseSpecial,
     #[value(name = "browse-plane-16-end")]

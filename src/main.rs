@@ -62,6 +62,7 @@ fn initial_state(
         Some(cli::Demo::Surrogate) => fixtures::surrogate(),
         Some(cli::Demo::BrowsePlanes) => fixtures::browse_planes(),
         Some(cli::Demo::BrowseRanges) => fixtures::browse_ranges(),
+        Some(cli::Demo::BrowseBlocks) => fixtures::browse_blocks(),
         Some(cli::Demo::BrowseCodePoints) => fixtures::browse_code_points(),
         Some(cli::Demo::BrowseSpecial) => fixtures::browse_special(),
         Some(cli::Demo::BrowsePlane16End) => fixtures::browse_plane_16_end(),

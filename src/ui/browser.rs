@@ -7,7 +7,7 @@ use ratatui::{
 
 use crate::{
     app::AppState,
-    browser::BrowseLevel,
+    browser::{BrowseLevel, BrowseState},
     ui::{
         key_value::{self, KeyValue},
         layout::browser,
@@ -62,11 +62,26 @@ pub fn render(
                 render_range_context(frame, context, browse.cursor(), color_theme);
             }
         }
+        BrowseLevel::Block => {
+            render_block_navigator(
+                frame,
+                layout.navigator,
+                browse,
+                browse
+                    .visible_list_items()
+                    .expect("the block level has a list viewport"),
+                color_theme,
+                ui,
+            );
+            if let Some(context) = layout.context {
+                render_block_context(frame, context, browse, color_theme);
+            }
+        }
         BrowseLevel::CodePointTable => {
             render_code_point_table(
                 frame,
                 layout.navigator,
-                browse.cursor(),
+                browse,
                 browse
                     .visible_table_rows()
                     .expect("the code point table level has a row viewport"),
@@ -84,6 +99,73 @@ pub fn render(
             }
         }
     }
+}
+
+fn render_block_navigator(
+    frame: &mut Frame,
+    area: Rect,
+    browse: &BrowseState,
+    visible_items: std::ops::Range<usize>,
+    color_theme: &ColorTheme,
+    ui: &UiSettings,
+) {
+    let selected = browse
+        .selected_block()
+        .expect("the block level has a selected block");
+    let block = Block::bordered()
+        .title(" Browse · Blocks ")
+        .padding(Padding::horizontal(1));
+    let content = block.inner(area);
+    let rows = visible_items
+        .clone()
+        .map(|index| {
+            let item = UnicodeDatabase::block(index).expect("the viewport contains valid blocks");
+            let is_selected = item == selected;
+            let marker = ui.selection_marker(is_selected);
+            selectable_list_line(
+                Line::from(format!(
+                    "{marker} {:06X}–{:06X}  {}",
+                    item.start().value(),
+                    item.end().value(),
+                    item.name()
+                )),
+                is_selected,
+                content.width,
+                color_theme.list.selection,
+            )
+        })
+        .collect::<Vec<_>>();
+
+    frame.render_widget(Paragraph::new(rows).block(block), area);
+    frame.render_widget(
+        ViewportScrollbar::new(UnicodeDatabase::blocks().len(), visible_items)
+            .style(color_theme.base_style()),
+        scrollbar::area_after(content),
+    );
+}
+
+fn render_block_context(
+    frame: &mut Frame,
+    area: Rect,
+    browse: &BrowseState,
+    color_theme: &ColorTheme,
+) {
+    let block = browse
+        .selected_block()
+        .expect("the block level has a selected block");
+    let start = block.start().to_string();
+    let end = block.end().to_string();
+    let size = (block.end().value() - block.start().value() + 1).to_string();
+    let plane = block.start().plane().to_string();
+    let entries = [
+        KeyValue::new("Name", block.name()),
+        KeyValue::new("Plane", &plane),
+        KeyValue::new("Start", &start),
+        KeyValue::new("End", &end),
+        KeyValue::new("Size", &size),
+    ];
+
+    key_value::render(frame, area, " Block Context ", 7, &entries, color_theme);
 }
 
 fn render_plane_navigator(
@@ -218,20 +300,23 @@ fn render_range_context(
 fn render_code_point_table(
     frame: &mut Frame,
     area: Rect,
-    cursor: CodePoint,
+    browse: &BrowseState,
     visible_rows: std::ops::Range<usize>,
     color_theme: &ColorTheme,
     ui: &UiSettings,
 ) {
-    let range = PlaneRange::for_code_point(cursor);
+    let cursor = browse.cursor();
+    let (page_start, page_end) = browse
+        .table_page()
+        .expect("the code point table has a visible page");
     let mut rows = Vec::with_capacity(visible_rows.len() + 1);
     rows.push(Line::from(table_column_header()));
     rows.extend(visible_rows.map(|row| {
-        let row_start = range.start().value() + row as u32 * 16;
+        let row_start = page_start.value() + row as u32 * 16;
         let mut spans = vec![Span::raw(format!("{row_start:06X} "))];
         for column in 0..16 {
-            let offset = (row * 16 + column) as u8;
-            let code_point = range.code_point(offset);
+            let code_point = CodePoint::new(row_start + column as u32)
+                .expect("table pages contain valid code points");
             let selected = code_point == cursor;
             let cell = table_cell(code_point, selected, ui);
             spans.push(if selected {
@@ -243,7 +328,11 @@ fn render_code_point_table(
         Line::from(spans)
     }));
 
-    let title = format!(" Browse · Code Points · {}–{} ", range.start(), range.end());
+    let title = if browse.is_block_table() {
+        format!(" Browse · Block Code Points · {page_start}–{page_end} ")
+    } else {
+        format!(" Browse · Code Points · {page_start}–{page_end} ")
+    };
     frame.render_widget(
         Paragraph::new(rows).block(
             Block::bordered()

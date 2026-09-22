@@ -65,6 +65,7 @@ pub fn context_for_state(state: &AppState) -> Context {
         {
             BrowseLevel::Plane => Context::BrowsePlane,
             BrowseLevel::Range => Context::BrowseRange,
+            BrowseLevel::Block => Context::BrowseBlock,
             BrowseLevel::CodePointTable => Context::BrowseCodePoints,
         },
     }
@@ -97,22 +98,23 @@ fn action_for_command(context: Context, command: Command) -> Option<Action> {
         (X::Inspector, C::OpenSearch) => Some(Action::OpenSearch),
         (X::Inspector, C::BrowsePlanes) => Some(Action::OpenBrowser(BrowseLevel::Plane)),
         (X::Inspector, C::BrowseRanges) => Some(Action::OpenBrowser(BrowseLevel::Range)),
+        (X::Inspector, C::BrowseBlocks) => Some(Action::OpenBrowser(BrowseLevel::Block)),
         (X::Inspector, C::BrowseCodePoints) => Some(Action::OpenBrowser(BrowseLevel::CodePointTable)),
         (X::Search, C::PreviousResult) => Some(Action::MoveSearch(SearchMove::Previous)),
         (X::Search, C::NextResult) => Some(Action::MoveSearch(SearchMove::Next)),
         (X::Search, C::InspectResult) => Some(Action::InspectSearchResult),
         (X::Search, C::Close) => Some(Action::CloseSearch),
-        (X::BrowsePlane | X::BrowseRange | X::BrowseCodePoints, C::MoveUp) => Some(Action::MoveBrowser(BrowseMove::Up)),
-        (X::BrowsePlane | X::BrowseRange | X::BrowseCodePoints, C::MoveDown) => Some(Action::MoveBrowser(BrowseMove::Down)),
-        (X::BrowsePlane | X::BrowseRange | X::BrowseCodePoints, C::First) => Some(Action::MoveBrowser(BrowseMove::First)),
-        (X::BrowsePlane | X::BrowseRange | X::BrowseCodePoints, C::Last) => Some(Action::MoveBrowser(BrowseMove::Last)),
-        (X::BrowseRange | X::BrowseCodePoints, C::PageUp) => Some(Action::MoveBrowser(BrowseMove::LargeBackward)),
-        (X::BrowseRange | X::BrowseCodePoints, C::PageDown) => Some(Action::MoveBrowser(BrowseMove::LargeForward)),
+        (X::BrowsePlane | X::BrowseRange | X::BrowseBlock | X::BrowseCodePoints, C::MoveUp) => Some(Action::MoveBrowser(BrowseMove::Up)),
+        (X::BrowsePlane | X::BrowseRange | X::BrowseBlock | X::BrowseCodePoints, C::MoveDown) => Some(Action::MoveBrowser(BrowseMove::Down)),
+        (X::BrowsePlane | X::BrowseRange | X::BrowseBlock | X::BrowseCodePoints, C::First) => Some(Action::MoveBrowser(BrowseMove::First)),
+        (X::BrowsePlane | X::BrowseRange | X::BrowseBlock | X::BrowseCodePoints, C::Last) => Some(Action::MoveBrowser(BrowseMove::Last)),
+        (X::BrowseRange | X::BrowseBlock | X::BrowseCodePoints, C::PageUp) => Some(Action::MoveBrowser(BrowseMove::LargeBackward)),
+        (X::BrowseRange | X::BrowseBlock | X::BrowseCodePoints, C::PageDown) => Some(Action::MoveBrowser(BrowseMove::LargeForward)),
         (X::BrowseCodePoints, C::MoveLeft) => Some(Action::MoveBrowser(BrowseMove::Left)),
         (X::BrowseCodePoints, C::MoveRight) => Some(Action::MoveBrowser(BrowseMove::Right)),
-        (X::BrowsePlane | X::BrowseRange | X::BrowseCodePoints, C::Activate) => Some(Action::AdvanceBrowser),
-        (X::BrowsePlane | X::BrowseRange | X::BrowseCodePoints, C::Back) => Some(Action::BackBrowser),
-        (X::BrowsePlane | X::BrowseRange | X::BrowseCodePoints, C::Close) => Some(Action::CloseBrowser),
+        (X::BrowsePlane | X::BrowseRange | X::BrowseBlock | X::BrowseCodePoints, C::Activate) => Some(Action::AdvanceBrowser),
+        (X::BrowsePlane | X::BrowseRange | X::BrowseBlock | X::BrowseCodePoints, C::Back) => Some(Action::BackBrowser),
+        (X::BrowsePlane | X::BrowseRange | X::BrowseBlock | X::BrowseCodePoints, C::Close) => Some(Action::CloseBrowser),
         _ => None,
     }
 }
@@ -164,6 +166,7 @@ mod tests {
     #[rstest]
     #[case('p', BrowseLevel::Plane)]
     #[case('r', BrowseLevel::Range)]
+    #[case('b', BrowseLevel::Block)]
     #[case('c', BrowseLevel::CodePointTable)]
     fn browser_shortcuts_open_the_requested_level(#[case] key: char, #[case] level: BrowseLevel) {
         let state = AppState::new();
@@ -178,7 +181,6 @@ mod tests {
     }
 
     #[rstest]
-    #[case('b')]
     #[case('o')]
     fn former_shortcuts_are_unassigned(#[case] key: char) {
         let state = AppState::new();
@@ -474,6 +476,7 @@ mod tests {
 
     #[rstest]
     #[case(BrowseLevel::Range, Some(Action::BackBrowser))]
+    #[case(BrowseLevel::Block, Some(Action::BackBrowser))]
     #[case(BrowseLevel::CodePointTable, Some(Action::BackBrowser))]
     #[case(BrowseLevel::Plane, Some(Action::BackBrowser))]
     fn backspace_returns_to_the_previous_screen_or_inspector(
@@ -552,6 +555,18 @@ mod tests {
         KeyCode::Right,
         KeyModifiers::NONE,
         None
+    )]
+    #[case::block_down(
+        BrowseLevel::Block,
+        KeyCode::Down,
+        KeyModifiers::NONE,
+        Some(BrowseMove::Down)
+    )]
+    #[case::block_forward(
+        BrowseLevel::Block,
+        KeyCode::Char('d'),
+        KeyModifiers::CONTROL,
+        Some(BrowseMove::LargeForward)
     )]
     #[case::table_left(
         BrowseLevel::CodePointTable,

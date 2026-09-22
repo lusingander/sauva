@@ -11,6 +11,33 @@ use crate::unicode::{
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct UnicodeDatabase;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct UnicodeBlock {
+    index: usize,
+}
+
+impl UnicodeBlock {
+    pub const fn index(self) -> usize {
+        self.index
+    }
+
+    pub fn start(self) -> CodePoint {
+        CodePoint::new(BLOCKS[self.index].0).expect("generated block starts are valid code points")
+    }
+
+    pub fn end(self) -> CodePoint {
+        CodePoint::new(BLOCKS[self.index].1).expect("generated block ends are valid code points")
+    }
+
+    pub const fn name(self) -> &'static str {
+        BLOCKS[self.index].2
+    }
+
+    pub fn contains(self, code_point: CodePoint) -> bool {
+        self.start() <= code_point && code_point <= self.end()
+    }
+}
+
 impl UnicodeDatabase {
     pub const fn version() -> &'static str {
         UNICODE_VERSION
@@ -21,7 +48,7 @@ impl UnicodeDatabase {
             code_point,
             primary_name: primary_name(code_point.value()),
             general_category: general_category(code_point.value()),
-            block: range_value(BLOCKS, code_point.value()),
+            block: Self::block_containing(code_point).map(UnicodeBlock::name),
             script: range_value(SCRIPTS, code_point.value()).unwrap_or("Unknown"),
             age: range_value(AGES, code_point.value()),
             default_ignorable: range_contains(DEFAULT_IGNORABLES, code_point.value()),
@@ -58,6 +85,23 @@ impl UnicodeDatabase {
                 CodePoint::new(value).expect("generated primary names contain valid code points");
             (code_point, name)
         })
+    }
+
+    pub fn blocks() -> impl ExactSizeIterator<Item = UnicodeBlock> {
+        (0..BLOCKS.len()).map(|index| UnicodeBlock { index })
+    }
+
+    pub fn block(index: usize) -> Option<UnicodeBlock> {
+        (index < BLOCKS.len()).then_some(UnicodeBlock { index })
+    }
+
+    pub fn block_at_or_after(code_point: CodePoint) -> Option<UnicodeBlock> {
+        let index = BLOCKS.partition_point(|&(_, end, _)| end < code_point.value());
+        Self::block(index)
+    }
+
+    pub fn block_containing(code_point: CodePoint) -> Option<UnicodeBlock> {
+        Self::block_at_or_after(code_point).filter(|block| block.contains(code_point))
     }
 
     pub fn block_names_in_range(
@@ -730,6 +774,43 @@ mod tests {
 
         assert_eq!(record.block(), block);
         assert_eq!(record.script(), script);
+    }
+
+    #[test]
+    fn exposes_named_blocks_in_code_point_order() {
+        let mut blocks = UnicodeDatabase::blocks();
+        assert_eq!(blocks.len(), 346);
+        let first = blocks.next().unwrap();
+        assert_eq!(first.index(), 0);
+        assert_eq!(first.name(), "Basic Latin");
+        assert_eq!(first.start().value(), 0x0000);
+        assert_eq!(first.end().value(), 0x007f);
+
+        let last = blocks.last().unwrap();
+        assert_eq!(last.name(), "Supplementary Private Use Area-B");
+        assert_eq!(last.end().value(), CodePoint::MAX_VALUE);
+        assert_eq!(UnicodeDatabase::block(346), None);
+    }
+
+    #[test]
+    fn distinguishes_block_membership_from_the_next_named_block() {
+        let member = CodePoint::new(0x2fdf).unwrap();
+        let gap = CodePoint::new(0x2fe0).unwrap();
+        let next = CodePoint::new(0x2ff0).unwrap();
+        let current_block = UnicodeDatabase::block_containing(member).unwrap();
+
+        assert_eq!(current_block.name(), "Kangxi Radicals");
+        assert!(current_block.contains(member));
+        assert!(!current_block.contains(gap));
+        assert_eq!(UnicodeDatabase::block_containing(gap), None);
+        assert_eq!(
+            UnicodeDatabase::block_at_or_after(gap).unwrap().name(),
+            "Ideographic Description Characters"
+        );
+        assert_eq!(
+            UnicodeDatabase::block_containing(next),
+            UnicodeDatabase::block_at_or_after(gap)
+        );
     }
 
     #[test]

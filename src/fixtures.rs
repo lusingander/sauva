@@ -204,6 +204,30 @@ pub fn browse_ranges() -> AppState {
     browse(0x0041, BrowseLevel::Range)
 }
 
+pub fn browse_blocks() -> AppState {
+    browse(0x0041, BrowseLevel::Block)
+}
+
+#[cfg(test)]
+pub fn browse_blocks_from_gap() -> AppState {
+    browse(0x2fe0, BrowseLevel::Block)
+}
+
+#[cfg(test)]
+pub fn browse_block_code_points_short() -> AppState {
+    let mut state = browse(0x2ff5, BrowseLevel::Block);
+    update(&mut state, Action::AdvanceBrowser);
+    state
+}
+
+#[cfg(test)]
+pub fn browse_block_code_points_long_end() -> AppState {
+    let mut state = browse(0x2_00ab, BrowseLevel::Block);
+    update(&mut state, Action::AdvanceBrowser);
+    update(&mut state, Action::MoveBrowser(BrowseMove::Last));
+    state
+}
+
 pub fn browse_code_points() -> AppState {
     browse(0x0041, BrowseLevel::CodePointTable)
 }
