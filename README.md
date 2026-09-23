@@ -207,7 +207,25 @@ For each code point, sauva tries configured normal fonts, the system default tex
 
 ## Screenshots
 
-<img src="./img/inspector.png" width="400" alt="Inspector view"> <img src="./img/plane.png" width="400" alt="Plane browser"> <img src="./img/range.png" width="400" alt="Range browser"> <img src="./img/code-points.png" width="400" alt="Code point browser"> <img src="./img/filter.png" width="400" alt="Search results">
+### Inspector
+
+<img src="./img/inspector.png" width="400" alt="Inspector view">
+
+### Browse Plane / Range / Code point
+
+<img src="./img/plane.png" width="400" alt="Plane browser"> <img src="./img/range.png" width="400" alt="Range browser"> <img src="./img/code-points.png" width="400" alt="Code point browser">
+
+### Browse Block
+
+<img src="./img/block.png" width="400" alt="Block browser"> <img src="./img/block-code-points.png" width="400" alt="Block code point browser">
+
+### Search
+
+<img src="./img/filter.png" width="400" alt="Search results">
+
+### Sequence
+
+<img src="./img/sequence.png" width="400" alt="Sequence"> <img src="./img/inspector-sequence.png" width="400" alt="Sequence inspector view">
 
 ## License
 
