@@ -115,6 +115,7 @@ mod tests {
         ui::inspector,
         ui::layout::{
             MINIMUM_SIZE, STANDARD_SIZE, WIDE_SIZE, browser_list_height, search_result_height,
+            sequence_list_height,
         },
         ui::theme::{
             CodePointTableColors, FooterColors, GlyphPreviewColors, HelpColors, InspectorColors,
@@ -155,6 +156,10 @@ mod tests {
         update(
             &mut state,
             Action::ResizeSearchViewport(search_result_height(Rect::new(0, 0, width, height))),
+        );
+        update(
+            &mut state,
+            Action::ResizeSequenceViewport(sequence_list_height(Rect::new(0, 0, width, height))),
         );
         let backend = TestBackend::new(width, height);
         let mut terminal = Terminal::new(backend).unwrap();
@@ -610,6 +615,22 @@ mod tests {
     #[test]
     fn startup_minimum() {
         let state = fixtures::startup();
+        let (width, height) = MINIMUM_SIZE;
+
+        insta::assert_snapshot!(render_to_text(&state, width, height));
+    }
+
+    #[test]
+    fn sequence_standard() {
+        let state = fixtures::sequence();
+        let (width, height) = STANDARD_SIZE;
+
+        insta::assert_snapshot!(render_to_text(&state, width, height));
+    }
+
+    #[test]
+    fn sequence_minimum() {
+        let state = fixtures::sequence();
         let (width, height) = MINIMUM_SIZE;
 
         insta::assert_snapshot!(render_to_text(&state, width, height));

@@ -6,7 +6,7 @@ use serde::Deserialize;
 use tui_input::backend::crossterm::to_input_request;
 use umbra::optional;
 
-const ALL_COMMANDS: [Command; 25] = [
+const ALL_COMMANDS: [Command; 24] = [
     Command::Quit,
     Command::Help,
     Command::Close,
@@ -31,7 +31,6 @@ const ALL_COMMANDS: [Command; 25] = [
     Command::InspectResult,
     Command::Activate,
     Command::Back,
-    Command::ReturnToSequence,
 ];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -89,7 +88,6 @@ pub enum Command {
     InspectResult,
     Activate,
     Back,
-    ReturnToSequence,
 }
 
 impl Command {
@@ -137,7 +135,6 @@ impl Command {
             Self::InspectResult => "inspect_result",
             Self::Activate => "activate",
             Self::Back => "back",
-            Self::ReturnToSequence => "return_to_sequence",
         }
     }
 }
@@ -377,7 +374,7 @@ keybinding_context!(InspectorKeybindings, Context::Inspector, {
     browse_ranges => (Command::BrowseRanges, ["r"]),
     browse_blocks => (Command::BrowseBlocks, ["b"]),
     browse_code_points => (Command::BrowseCodePoints, ["c"]),
-    return_to_sequence => (Command::ReturnToSequence, ["backspace"]),
+    back => (Command::Back, ["backspace"]),
 });
 
 keybinding_context!(SearchKeybindings, Context::Search, {
@@ -982,6 +979,26 @@ mod tests {
             &[plain('h'), named(KeyCode::Left)]
         );
         assert_eq!(keymap.resolve(Context::Inspector, plain('l')), None);
+    }
+
+    #[test]
+    fn inspector_back_binding_can_be_configured() {
+        let keymap = configured(
+            r#"
+                [inspector]
+                back = ["x"]
+            "#,
+        )
+        .unwrap();
+
+        assert_eq!(
+            keymap.resolve(Context::Inspector, plain('x')),
+            Some(Command::Back)
+        );
+        assert_eq!(
+            keymap.resolve(Context::Inspector, named(KeyCode::Backspace)),
+            None
+        );
     }
 
     #[test]

@@ -102,7 +102,7 @@ fn action_for_command(context: Context, command: Command) -> Option<Action> {
         (X::Inspector, C::BrowseRanges) => Some(Action::OpenBrowser(BrowseLevel::Range)),
         (X::Inspector, C::BrowseBlocks) => Some(Action::OpenBrowser(BrowseLevel::Block)),
         (X::Inspector, C::BrowseCodePoints) => Some(Action::OpenBrowser(BrowseLevel::CodePointTable)),
-        (X::Inspector, C::ReturnToSequence) => Some(Action::ReturnToSequence),
+        (X::Inspector, C::Back) => Some(Action::ReturnToSequence),
         (X::Search, C::PreviousResult) => Some(Action::MoveSearch(SearchMove::Previous)),
         (X::Search, C::NextResult) => Some(Action::MoveSearch(SearchMove::Next)),
         (X::Search, C::InspectResult) => Some(Action::InspectSearchResult),

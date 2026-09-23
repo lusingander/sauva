@@ -345,7 +345,7 @@ fn help_items(context: Context, has_sequence: bool) -> Vec<HelpItem> {
             item(C::BrowseRanges, "Browse ranges"),
             item(C::BrowseBlocks, "Browse blocks"),
             item(C::BrowseCodePoints, "Browse code points"),
-            item(C::ReturnToSequence, "Return to the input sequence"),
+            item(C::Back, "Return to the input sequence"),
             item(C::Quit, "Quit"),
         ],
         Context::Search => vec![
@@ -427,7 +427,7 @@ fn help_items(context: Context, has_sequence: bool) -> Vec<HelpItem> {
         Context::Global => vec![item(C::Quit, "Quit")],
     };
     if !has_sequence && context == Context::Inspector {
-        items.retain(|item| item.command != C::ReturnToSequence);
+        items.retain(|item| item.command != C::Back);
     }
     items.push(item(C::Help, "Open or close help"));
     items
@@ -453,7 +453,7 @@ fn short_help_items(context: Context, has_sequence: bool) -> Vec<ShortHelpItem> 
             short(&[C::CopyValue], "Copy", 1),
             short(&[C::OpenSearch], "Search", 2),
             short(&[C::BrowsePlanes, C::BrowseRanges, C::BrowseBlocks, C::BrowseCodePoints], "Browse", 2),
-            short(&[C::ReturnToSequence], "Sequence", 1),
+            short(&[C::Back], "Sequence", 1),
             short(&[C::Quit], "Quit", 0),
             short(&[C::Help], "Help", 0),
         ],
@@ -522,7 +522,7 @@ fn short_help_items(context: Context, has_sequence: bool) -> Vec<ShortHelpItem> 
         ],
     };
     if !has_sequence && context == Context::Inspector {
-        items.retain(|item| !item.commands.contains(&C::ReturnToSequence));
+        items.retain(|item| !item.commands.contains(&C::Back));
     }
     items
 }

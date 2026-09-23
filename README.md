@@ -52,7 +52,7 @@ Arguments:
   [INPUT]  Text or code point to inspect
 
 Options:
-      --text <TEXT>      Treat the input as literal text, without code point notation parsing
+  -t, --text <TEXT>      Treat the input as literal text, without code point notation parsing
   -g, --graphics <MODE>  Control glyph preview graphics [default: auto] [possible values: auto, force, iterm2, off]
   -h, --help             Print help
   -V, --version          Print version
@@ -80,7 +80,7 @@ A one-character argument is treated as the character itself. Use a prefix for a 
 An input made entirely of hexadecimal digits keeps the code point interpretation. Use `--text` to force literal text when the input would otherwise be interpreted as notation:
 
 ```
-sauva --text 41
+sauva -t 41
 sauva --text U+2192
 ```
 
@@ -174,6 +174,7 @@ help = ["f2"]
 
 [keybindings.inspector]
 next_code_point = ["l", "right", "n"]
+back = ["backspace"]
 browse_planes = []
 ```
 

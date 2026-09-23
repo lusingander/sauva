@@ -525,7 +525,7 @@
         "browse_code_points": {
           "$ref": "#/definitions/keyArray"
         },
-        "return_to_sequence": {
+        "back": {
           "$ref": "#/definitions/keyArray"
         }
       },

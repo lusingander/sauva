@@ -51,7 +51,7 @@ struct Cli {
     input: Option<LaunchTarget>,
 
     /// Treat the input as literal text, without code point notation parsing
-    #[arg(long, value_name = "TEXT", value_parser = parse_text, conflicts_with = "demo")]
+    #[arg(short, long, value_name = "TEXT", value_parser = parse_text, conflicts_with = "demo")]
     text: Option<LaunchTarget>,
 
     /// Control glyph preview graphics
@@ -234,6 +234,22 @@ mod tests {
     }
 
     #[test]
+    fn short_text_option_bypasses_code_point_notation_parsing() {
+        let options = try_parse(&["sauva", "-t", "41"]).unwrap();
+
+        let Some(LaunchTarget::Sequence(code_points)) = options.target() else {
+            panic!("expected a sequence");
+        };
+        assert_eq!(
+            code_points
+                .iter()
+                .map(|code_point| code_point.value())
+                .collect::<Vec<_>>(),
+            [0x0034, 0x0031]
+        );
+    }
+
+    #[test]
     fn one_character_text_still_selects_a_code_point() {
         let options = try_parse(&["sauva", "--text", "A"]).unwrap();
 
@@ -307,7 +323,7 @@ mod tests {
 
         assert!(help.contains("Usage: sauva [OPTIONS] [INPUT]"));
         assert!(help.contains("Text or code point to inspect"));
-        assert!(help.contains("--text <TEXT>"));
+        assert!(help.contains("-t, --text <TEXT>"));
         assert!(help.contains("--graphics <MODE>"));
         assert!(help.contains("possible values: auto, force, iterm2, off"));
     }
