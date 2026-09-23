@@ -10,6 +10,7 @@ use crate::{
     inspector::InspectorMove,
     keybindings::{Command, Context, KeyChord, ResolvedKeymap},
     search::SearchMove,
+    sequence::SequenceMove,
 };
 
 pub fn action_for_key(state: &AppState, key: KeyEvent, keymap: &ResolvedKeymap) -> Option<Action> {
@@ -58,6 +59,7 @@ pub fn context_for_state(state: &AppState) -> Context {
     match state.view() {
         View::Inspector => Context::Inspector,
         View::Search => Context::Search,
+        View::Sequence => Context::Sequence,
         View::Browser => match state
             .browse()
             .expect("the browser view always has browse state")
@@ -100,10 +102,16 @@ fn action_for_command(context: Context, command: Command) -> Option<Action> {
         (X::Inspector, C::BrowseRanges) => Some(Action::OpenBrowser(BrowseLevel::Range)),
         (X::Inspector, C::BrowseBlocks) => Some(Action::OpenBrowser(BrowseLevel::Block)),
         (X::Inspector, C::BrowseCodePoints) => Some(Action::OpenBrowser(BrowseLevel::CodePointTable)),
+        (X::Inspector, C::Back) => Some(Action::ReturnToSequence),
         (X::Search, C::PreviousResult) => Some(Action::MoveSearch(SearchMove::Previous)),
         (X::Search, C::NextResult) => Some(Action::MoveSearch(SearchMove::Next)),
         (X::Search, C::InspectResult) => Some(Action::InspectSearchResult),
         (X::Search, C::Close) => Some(Action::CloseSearch),
+        (X::Sequence, C::MoveUp) => Some(Action::MoveSequence(SequenceMove::Previous)),
+        (X::Sequence, C::MoveDown) => Some(Action::MoveSequence(SequenceMove::Next)),
+        (X::Sequence, C::First) => Some(Action::MoveSequence(SequenceMove::First)),
+        (X::Sequence, C::Last) => Some(Action::MoveSequence(SequenceMove::Last)),
+        (X::Sequence, C::Activate) => Some(Action::InspectSequenceCodePoint),
         (X::BrowsePlane | X::BrowseRange | X::BrowseBlock | X::BrowseCodePoints, C::MoveUp) => Some(Action::MoveBrowser(BrowseMove::Up)),
         (X::BrowsePlane | X::BrowseRange | X::BrowseBlock | X::BrowseCodePoints, C::MoveDown) => Some(Action::MoveBrowser(BrowseMove::Down)),
         (X::BrowsePlane | X::BrowseRange | X::BrowseBlock | X::BrowseCodePoints, C::First) => Some(Action::MoveBrowser(BrowseMove::First)),
@@ -125,6 +133,7 @@ mod tests {
     use tui_input::InputRequest;
 
     use super::*;
+    use crate::unicode::CodePoint;
 
     fn action_for_key(state: &AppState, key: KeyEvent) -> Option<Action> {
         super::action_for_key(state, key, &ResolvedKeymap::default())
@@ -644,6 +653,38 @@ mod tests {
         assert_eq!(
             action_for_key(&state, KeyEvent::new(code, KeyModifiers::NONE)),
             None
+        );
+    }
+
+    #[rstest]
+    #[case(KeyCode::Up, Action::MoveSequence(SequenceMove::Previous))]
+    #[case(KeyCode::Char('j'), Action::MoveSequence(SequenceMove::Next))]
+    #[case(KeyCode::Char('g'), Action::MoveSequence(SequenceMove::First))]
+    #[case(KeyCode::Char('G'), Action::MoveSequence(SequenceMove::Last))]
+    #[case(KeyCode::Enter, Action::InspectSequenceCodePoint)]
+    fn sequence_keys_select_and_inspect_code_points(
+        #[case] code: KeyCode,
+        #[case] expected: Action,
+    ) {
+        let state = AppState::with_sequence("AB".chars().map(CodePoint::from).collect());
+
+        assert_eq!(
+            action_for_key(&state, KeyEvent::new(code, KeyModifiers::NONE)),
+            Some(expected)
+        );
+    }
+
+    #[test]
+    fn backspace_returns_from_a_sequence_inspector() {
+        let mut state = AppState::with_sequence("AB".chars().map(CodePoint::from).collect());
+        crate::app::update(&mut state, Action::InspectSequenceCodePoint);
+
+        assert_eq!(
+            action_for_key(
+                &state,
+                KeyEvent::new(KeyCode::Backspace, KeyModifiers::NONE)
+            ),
+            Some(Action::ReturnToSequence)
         );
     }
 

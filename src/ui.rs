@@ -8,6 +8,7 @@ pub mod render;
 mod scrollbar;
 mod search;
 mod selection_preview;
+mod sequence;
 pub mod settings;
 pub mod theme;
 
@@ -39,6 +40,9 @@ pub fn glyph_preview_request(area: Rect, state: &AppState) -> Option<GlyphPrevie
         View::Search => layout::search(shell.main)
             .preview
             .and_then(|preview| selection_preview::glyph_area(preview, code_point)),
+        View::Sequence => layout::sequence(shell.main)
+            .context
+            .and_then(|context| selection_preview::glyph_area(context, code_point)),
     }?;
     Some(GlyphPreviewRequest {
         code_point,

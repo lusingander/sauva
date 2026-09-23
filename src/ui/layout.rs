@@ -82,6 +82,10 @@ pub fn search(area: Rect) -> SearchLayout {
     }
 }
 
+pub fn sequence(area: Rect) -> BrowserLayout {
+    navigator_and_context(area)
+}
+
 fn navigator_and_context(area: Rect) -> BrowserLayout {
     if area.width < NAVIGATOR_WIDTH + CONTEXT_MINIMUM_WIDTH {
         return BrowserLayout {
@@ -110,6 +114,12 @@ pub fn browser_list_height(area: Rect) -> usize {
 pub fn search_result_height(area: Rect) -> usize {
     calculate(area).map_or(0, |layout| {
         usize::from(search(layout.main).results.height.saturating_sub(2))
+    })
+}
+
+pub fn sequence_list_height(area: Rect) -> usize {
+    calculate(area).map_or(0, |layout| {
+        usize::from(sequence(layout.main).navigator.height.saturating_sub(2))
     })
 }
 

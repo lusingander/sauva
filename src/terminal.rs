@@ -22,7 +22,7 @@ use crate::{
     keybindings::ResolvedKeymap,
     ui::{
         self, inspector,
-        layout::{browser_list_height, search_result_height},
+        layout::{browser_list_height, search_result_height, sequence_list_height},
         render,
         settings::UiSettings,
         theme::ColorTheme,
@@ -158,6 +158,7 @@ fn resize_active_view(state: &mut AppState, area: Rect, keymap: &ResolvedKeymap)
         }
         View::Browser => Action::ResizeBrowserViewport(browser_list_height(area)),
         View::Search => Action::ResizeSearchViewport(search_result_height(area)),
+        View::Sequence => Action::ResizeSequenceViewport(sequence_list_height(area)),
     };
     update(state, action);
 }

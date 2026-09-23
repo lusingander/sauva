@@ -524,6 +524,9 @@
         },
         "browse_code_points": {
           "$ref": "#/definitions/keyArray"
+        },
+        "back": {
+          "$ref": "#/definitions/keyArray"
         }
       },
       "additionalProperties": false
@@ -541,6 +544,30 @@
           "$ref": "#/definitions/keyArray"
         },
         "close": {
+          "$ref": "#/definitions/keyArray"
+        }
+      },
+      "additionalProperties": false
+    },
+    "sequenceKeybindings": {
+      "type": "object",
+      "properties": {
+        "quit": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "move_up": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "move_down": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "first": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "last": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "activate": {
           "$ref": "#/definitions/keyArray"
         }
       },
@@ -729,6 +756,9 @@
         },
         "search": {
           "$ref": "#/definitions/searchKeybindings"
+        },
+        "sequence": {
+          "$ref": "#/definitions/sequenceKeybindings"
         },
         "browse_plane": {
           "$ref": "#/definitions/browsePlaneKeybindings"

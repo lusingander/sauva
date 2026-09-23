@@ -93,6 +93,52 @@ fn starts_at_the_code_point_from_the_command_line() -> termlens::Result<()> {
 }
 
 #[test]
+fn inspects_a_text_sequence_and_preserves_its_position_across_search() -> termlens::Result<()> {
+    let mut terminal = termlens::bin!("sauva", size(100, 30), args(["A→B", "--graphics", "off"]))?;
+    terminal.snapshot_after(|screen| {
+        screen.contains("Sequence · 3 code points")
+            && screen.contains("U+0041")
+            && screen.contains("U+2192")
+            && screen.contains("U+0042")
+    })?;
+
+    terminal.send(Key::Down)?;
+    terminal.send(Key::Enter)?;
+    terminal.wait_until(|screen| {
+        screen.contains("Inspector · from Sequence 2/3")
+            && screen.contains("U+2192")
+            && screen.contains("RIGHTWARDS ARROW")
+    })?;
+
+    terminal.send(Key::Char('/'))?;
+    terminal.wait_until(|screen| screen.contains("Search by Unicode name"))?;
+    terminal.send_str("Ω")?;
+    terminal.wait_until(|screen| {
+        screen.contains("U+03A9") && screen.contains("GREEK CAPITAL LETTER OMEGA")
+    })?;
+    terminal.send(Key::Enter)?;
+    terminal.wait_until(|screen| {
+        screen.contains("Inspector · from Sequence 2/3")
+            && screen.contains("U+03A9")
+            && screen.contains("GREEK CAPITAL LETTER OMEGA")
+    })?;
+
+    terminal.send(Key::Backspace)?;
+    terminal.wait_until(|screen| screen.contains("Sequence · 3 code points"))?;
+    terminal.send(Key::Enter)?;
+    terminal.wait_until(|screen| {
+        screen.contains("Inspector · from Sequence 2/3")
+            && screen.contains("U+2192")
+            && screen.contains("RIGHTWARDS ARROW")
+    })?;
+
+    terminal.send(Key::Char('q'))?;
+    let status = terminal.wait_exit()?;
+    assert!(status.success(), "exit status: {status}");
+    Ok(())
+}
+
+#[test]
 fn searches_for_a_name_and_opens_the_result_in_the_inspector() -> termlens::Result<()> {
     let mut terminal = spawn("off")?;
     terminal.snapshot_after(|screen| screen.contains("LATIN CAPITAL LETTER A"))?;

@@ -90,6 +90,7 @@ pub fn viewport_metrics(area: Rect, state: &AppState, keymap: &ResolvedKeymap) -
     let context = context_for_state(state);
     let document = document(
         context,
+        state.sequence().is_some(),
         keymap,
         Style::new(),
         Style::new(),
@@ -120,6 +121,7 @@ pub fn render(
     let help_content = help_block.inner(sections.help);
     let document = document(
         context,
+        state.sequence().is_some(),
         keymap,
         Style::new().fg(color_theme.fg),
         Style::new().fg(color_theme.help.key),
@@ -178,8 +180,8 @@ fn about_document(
     ])
 }
 
-pub fn footer(context: Context, width: u16, keymap: &ResolvedKeymap) -> String {
-    let mut items = short_help_items(context)
+pub fn footer(context: Context, has_sequence: bool, width: u16, keymap: &ResolvedKeymap) -> String {
+    let mut items = short_help_items(context, has_sequence)
         .into_iter()
         .filter_map(|item| render_short_help_item(context, item, keymap))
         .collect::<Vec<_>>();
@@ -212,12 +214,13 @@ pub fn footer(context: Context, width: u16, keymap: &ResolvedKeymap) -> String {
 
 fn document(
     context: Context,
+    has_sequence: bool,
     keymap: &ResolvedKeymap,
     normal_style: Style,
     key_style: Style,
     width: usize,
 ) -> Text<'static> {
-    let mut lines = help_items(context)
+    let mut lines = help_items(context, has_sequence)
         .into_iter()
         .filter_map(|item| help_lines(context, item, keymap, normal_style, key_style, width))
         .flatten()
@@ -323,7 +326,7 @@ fn wrap_words(text: &str, width: usize) -> Vec<String> {
     lines
 }
 
-fn help_items(context: Context) -> Vec<HelpItem> {
+fn help_items(context: Context, has_sequence: bool) -> Vec<HelpItem> {
     use Command as C;
 
     let mut items = match context {
@@ -342,6 +345,7 @@ fn help_items(context: Context) -> Vec<HelpItem> {
             item(C::BrowseRanges, "Browse ranges"),
             item(C::BrowseBlocks, "Browse blocks"),
             item(C::BrowseCodePoints, "Browse code points"),
+            item(C::Back, "Return to the input sequence"),
             item(C::Quit, "Quit"),
         ],
         Context::Search => vec![
@@ -349,6 +353,14 @@ fn help_items(context: Context) -> Vec<HelpItem> {
             item(C::NextResult, "Select the next result"),
             item(C::InspectResult, "Inspect the selected result"),
             item(C::Close, "Close search"),
+            item(C::Quit, "Quit"),
+        ],
+        Context::Sequence => vec![
+            item(C::MoveUp, "Select the previous code point"),
+            item(C::MoveDown, "Select the next code point"),
+            item(C::First, "Select the first code point"),
+            item(C::Last, "Select the last code point"),
+            item(C::Activate, "Inspect the selected code point"),
             item(C::Quit, "Quit"),
         ],
         Context::BrowsePlane => vec![
@@ -414,6 +426,9 @@ fn help_items(context: Context) -> Vec<HelpItem> {
         ],
         Context::Global => vec![item(C::Quit, "Quit")],
     };
+    if !has_sequence && context == Context::Inspector {
+        items.retain(|item| item.command != C::Back);
+    }
     items.push(item(C::Help, "Open or close help"));
     items
 }
@@ -426,10 +441,10 @@ fn item(command: Command, description: &'static str) -> HelpItem {
 }
 
 #[rustfmt::skip]
-fn short_help_items(context: Context) -> Vec<ShortHelpItem> {
+fn short_help_items(context: Context, has_sequence: bool) -> Vec<ShortHelpItem> {
     use Command as C;
 
-    match context {
+    let mut items = match context {
         Context::Inspector => vec![
             short(&[C::PreviousCodePoint, C::NextCodePoint], "Point", 1),
             short(&[C::MoveUp, C::MoveDown], "Field", 1),
@@ -438,6 +453,7 @@ fn short_help_items(context: Context) -> Vec<ShortHelpItem> {
             short(&[C::CopyValue], "Copy", 1),
             short(&[C::OpenSearch], "Search", 2),
             short(&[C::BrowsePlanes, C::BrowseRanges, C::BrowseBlocks, C::BrowseCodePoints], "Browse", 2),
+            short(&[C::Back], "Sequence", 1),
             short(&[C::Quit], "Quit", 0),
             short(&[C::Help], "Help", 0),
         ],
@@ -446,6 +462,13 @@ fn short_help_items(context: Context) -> Vec<ShortHelpItem> {
             short(&[C::InspectResult], "Inspect", 1),
             short(&[C::Close], "Close", 0),
             short(&[C::Quit], "Quit", 2),
+            short(&[C::Help], "Help", 0),
+        ],
+        Context::Sequence => vec![
+            short(&[C::MoveUp, C::MoveDown], "Move", 1),
+            short(&[C::First, C::Last], "Ends", 3),
+            short(&[C::Activate], "Inspect", 1),
+            short(&[C::Quit], "Quit", 0),
             short(&[C::Help], "Help", 0),
         ],
         Context::BrowsePlane => vec![
@@ -497,7 +520,11 @@ fn short_help_items(context: Context) -> Vec<ShortHelpItem> {
         Context::Global => vec![
             short(&[C::Quit], "Quit", 0), short(&[C::Help], "Help", 0),
         ],
+    };
+    if !has_sequence && context == Context::Inspector {
+        items.retain(|item| !item.commands.contains(&C::Back));
     }
+    items
 }
 
 fn short(commands: &[Command], description: &'static str, priority: u8) -> ShortHelpItem {
@@ -546,6 +573,7 @@ fn context_label(context: Context) -> &'static str {
         Context::Global => "Global",
         Context::Inspector => "Inspector",
         Context::Search => "Search",
+        Context::Sequence => "Sequence",
         Context::BrowsePlane => "Browse Planes",
         Context::BrowseRange => "Browse Ranges",
         Context::BrowseBlock => "Browse Blocks",
@@ -649,8 +677,8 @@ mod tests {
     #[test]
     fn footer_prunes_lower_priority_items_to_fit() {
         let keymap = ResolvedKeymap::default();
-        let wide = footer(Context::Inspector, 140, &keymap);
-        let narrow = footer(Context::Inspector, 60, &keymap);
+        let wide = footer(Context::Inspector, false, 140, &keymap);
+        let narrow = footer(Context::Inspector, false, 60, &keymap);
 
         assert!(Line::from(wide.as_str()).width() <= 140);
         assert!(Line::from(narrow.as_str()).width() <= 60);
@@ -664,6 +692,7 @@ mod tests {
     fn full_help_resolves_context_and_global_keys() {
         let text = document(
             Context::Inspector,
+            false,
             &ResolvedKeymap::default(),
             Style::new(),
             Style::new(),
@@ -686,6 +715,7 @@ mod tests {
     fn search_help_is_context_specific_and_explains_raw_input() {
         let text = document(
             Context::Search,
+            false,
             &ResolvedKeymap::default(),
             Style::new(),
             Style::new(),
@@ -704,6 +734,33 @@ mod tests {
     }
 
     #[test]
+    fn inspector_help_only_offers_a_sequence_return_when_one_exists() {
+        let keymap = ResolvedKeymap::default();
+        let without_sequence = document(
+            Context::Inspector,
+            false,
+            &keymap,
+            Style::new(),
+            Style::new(),
+            80,
+        )
+        .to_string();
+        let with_sequence = document(
+            Context::Inspector,
+            true,
+            &keymap,
+            Style::new(),
+            Style::new(),
+            80,
+        )
+        .to_string();
+
+        assert!(!without_sequence.contains("Return to the input sequence"));
+        assert!(with_sequence.contains("Return to the input sequence"));
+        assert!(footer(Context::Inspector, true, 140, &keymap).contains("BS: Sequence"));
+    }
+
+    #[test]
     fn help_uses_configured_keys_and_omits_disabled_commands() {
         let config: OptionalKeybindings = toml::from_str(
             r#"
@@ -714,13 +771,20 @@ mod tests {
         )
         .unwrap();
         let keymap = ResolvedKeymap::with_config(config.into()).unwrap();
-        let footer = footer(Context::Inspector, 140, &keymap);
-        let help = document(Context::Inspector, &keymap, Style::new(), Style::new(), 80)
-            .lines
-            .iter()
-            .map(|line| line.to_string())
-            .collect::<Vec<_>>()
-            .join("\n");
+        let footer = footer(Context::Inspector, false, 140, &keymap);
+        let help = document(
+            Context::Inspector,
+            false,
+            &keymap,
+            Style::new(),
+            Style::new(),
+            80,
+        )
+        .lines
+        .iter()
+        .map(|line| line.to_string())
+        .collect::<Vec<_>>()
+        .join("\n");
 
         assert!(footer.contains("h/n: Point"));
         assert!(!footer.contains("/: Search"));

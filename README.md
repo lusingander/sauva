@@ -46,29 +46,45 @@ sauva
 ```
 Sauva - Terminal Unicode Explorer 🪄
 
-Usage: sauva [OPTIONS] [CODE_POINT]
+Usage: sauva [OPTIONS] [INPUT]
 
 Arguments:
-  [CODE_POINT]  Code point to inspect: character, U+XXXX, 0xXXXX, or hexadecimal
+  [INPUT]  Text or code point to inspect
 
 Options:
+  -t, --text <TEXT>      Treat the input as literal text, without code point notation parsing
   -g, --graphics <MODE>  Control glyph preview graphics [default: auto] [possible values: auto, force, iterm2, off]
   -h, --help             Print help
   -V, --version          Print version
 ```
 
-#### Specifying `CODE_POINT`
+#### Specifying `INPUT`
 
-The initial code point can be given as one character, `U+` notation, `0x` notation, or two to six hexadecimal digits.
+One character opens its code point directly in the Inspector. A sequence of characters opens the Sequence view, where each constituent code point can be selected and inspected.
 
 ```
 sauva あ
+sauva 'Á👩‍💻'
+```
+
+Code points can also be given in `U+` notation, `0x` notation, or as two to six hexadecimal digits.
+
+```
 sauva U+2192
 sauva 0x1F600
 sauva 1F600
 ```
 
 A one-character argument is treated as the character itself. Use a prefix for a one-digit hexadecimal value, such as `U+A` or `0xA`.
+
+An input made entirely of hexadecimal digits keeps the code point interpretation. Use `--text` to force literal text when the input would otherwise be interpreted as notation:
+
+```
+sauva -t 41
+sauva --text U+2192
+```
+
+`--text` still opens the Inspector directly when its value contains only one code point. Empty text is rejected.
 
 #### `-g, --graphics <MODE>`
 
@@ -132,13 +148,13 @@ These are the main built-in controls. The available controls depend on the curre
 | --- | --- |
 | <kbd>F1</kbd> | Open or close contextual help |
 | <kbd>Ctrl+c</kbd> | Quit from any view |
-| <kbd>q</kbd> | Quit from the Inspector or Browse view |
-| <kbd>Esc</kbd> | Cancel Search or Browse; quit from the Inspector |
+| <kbd>q</kbd> | Quit from the Inspector, Sequence, or Browse view |
+| <kbd>Esc</kbd> | Cancel Search or Browse; quit from the Inspector or Sequence view |
 | <kbd>h</kbd> <kbd>j</kbd> <kbd>k</kbd> <kbd>l</kbd> or arrow keys | Move the selection |
 | <kbd>/</kbd> | Search by character, code point, or Unicode name |
 | <kbd>p</kbd> <kbd>r</kbd> <kbd>b</kbd> <kbd>c</kbd> | Browse planes, ranges, blocks, or code points |
-| <kbd>Enter</kbd> | Open the selected item; confirm a code point from the table |
-| <kbd>Backspace</kbd> | Return to the previous Browse screen, or cancel from the first screen |
+| <kbd>Enter</kbd> | Open the selected item; inspect a code point from Sequence or Browse |
+| <kbd>Backspace</kbd> | Return to the previous Browse screen, or return from Inspector to the input Sequence |
 | <kbd>y</kbd> | Copy the selected Inspector value |
 
 Press <kbd>F1</kbd> to view all controls for the current screen.
@@ -156,6 +172,7 @@ help = ["f2"]
 
 [keybindings.inspector]
 next_code_point = ["l", "right", "n"]
+back = ["backspace"]
 browse_planes = []
 ```
 
@@ -190,7 +207,25 @@ For each code point, sauva tries configured normal fonts, the system default tex
 
 ## Screenshots
 
-<img src="./img/inspector.png" width="400" alt="Inspector view"> <img src="./img/plane.png" width="400" alt="Plane browser"> <img src="./img/range.png" width="400" alt="Range browser"> <img src="./img/code-points.png" width="400" alt="Code point browser"> <img src="./img/filter.png" width="400" alt="Search results">
+### Inspector
+
+<img src="./img/inspector.png" width="400" alt="Inspector view">
+
+### Browse Plane / Range / Code point
+
+<img src="./img/plane.png" width="400" alt="Plane browser"> <img src="./img/range.png" width="400" alt="Range browser"> <img src="./img/code-points.png" width="400" alt="Code point browser">
+
+### Browse Block
+
+<img src="./img/block.png" width="400" alt="Block browser"> <img src="./img/block-code-points.png" width="400" alt="Block code point browser">
+
+### Search
+
+<img src="./img/filter.png" width="400" alt="Search results">
+
+### Sequence
+
+<img src="./img/sequence.png" width="400" alt="Sequence"> <img src="./img/inspector-sequence.png" width="400" alt="Sequence inspector view">
 
 ## License
 

@@ -17,6 +17,26 @@ pub fn startup() -> AppState {
     selected(0x0041)
 }
 
+#[cfg(test)]
+pub fn sequence() -> AppState {
+    let mut state = AppState::with_sequence(
+        "A\u{0301} 👩‍💻"
+            .chars()
+            .map(CodePoint::from)
+            .collect::<Vec<_>>(),
+    );
+    update(
+        &mut state,
+        Action::UpdateGlyphPreview(GlyphPreviewUpdate::Configure {
+            availability: GraphicsAvailability::Unavailable(
+                GraphicsUnavailableReason::UnsupportedTerminal,
+            ),
+            image_id: None,
+        }),
+    );
+    state
+}
+
 pub fn default_ignorable() -> AppState {
     selected(0x115f)
 }
