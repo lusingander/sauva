@@ -159,8 +159,6 @@ These are the main built-in controls. The available controls depend on the curre
 
 Press <kbd>F1</kbd> to view all controls for the current screen.
 
-When an Inspector was opened from a Sequence, its heading shows the originating position. Search and Browse may change the inspected code point, while the Sequence position remains unchanged. <kbd>Backspace</kbd> returns to that position.
-
 #### Custom keybindings
 
 Keybindings can be replaced per command and context. A command can have multiple keys, and an empty array disables it in that context.
