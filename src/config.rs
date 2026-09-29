@@ -333,24 +333,19 @@ mod tests {
             r##"
                 [color]
                 fg = "#123456"
-
-                [color.help]
+                muted = "light-cyan"
+                accent = "light-magenta"
+                border = "white"
+                match = "yellow"
+                key = "light-yellow"
                 link = "light-blue"
 
-                [color.footer]
+                [color.status]
                 info = "light-green"
 
-                [color.inspector.selection]
+                [color.selection]
                 fg = "white"
-
-                [color.list.selection]
                 bg = "blue"
-
-                [color.search_message]
-                detail = "light-cyan"
-
-                [color.selection_preview]
-                empty = "magenta"
             "##,
         )
         .unwrap();
@@ -358,16 +353,17 @@ mod tests {
         let config = load_config(Some(&ConfigFile::Explicit(path))).unwrap();
 
         assert_eq!(config.color_theme().fg, Color::Rgb(0x12, 0x34, 0x56));
-        assert_eq!(config.color_theme().inspector.field_label, Color::DarkGray);
-        assert_eq!(config.color_theme().help.link, Color::LightBlue);
-        assert_eq!(config.color_theme().footer.info, Color::LightGreen);
-        assert_eq!(config.color_theme().footer.warning, Color::Yellow);
-        assert_eq!(config.color_theme().inspector.selection.fg, Color::White);
-        assert_eq!(config.color_theme().inspector.selection.bg, Color::Cyan);
-        assert_eq!(config.color_theme().list.selection.bg, Color::Blue);
-        assert_eq!(config.color_theme().list.selection.fg, Color::Black);
-        assert_eq!(config.color_theme().search_message.detail, Color::LightCyan);
-        assert_eq!(config.color_theme().selection_preview.empty, Color::Magenta);
+        assert_eq!(config.color_theme().bg, Color::Reset);
+        assert_eq!(config.color_theme().muted, Color::LightCyan);
+        assert_eq!(config.color_theme().accent, Color::LightMagenta);
+        assert_eq!(config.color_theme().border, Color::White);
+        assert_eq!(config.color_theme().r#match, Color::Yellow);
+        assert_eq!(config.color_theme().key, Color::LightYellow);
+        assert_eq!(config.color_theme().link, Color::LightBlue);
+        assert_eq!(config.color_theme().status.info, Color::LightGreen);
+        assert_eq!(config.color_theme().status.warning, Color::Yellow);
+        assert_eq!(config.color_theme().selection.fg, Color::White);
+        assert_eq!(config.color_theme().selection.bg, Color::Blue);
     }
 
     #[test]

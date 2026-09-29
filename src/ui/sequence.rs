@@ -51,7 +51,7 @@ pub fn render(
                 )),
                 selected,
                 content.width,
-                color_theme.list.selection,
+                color_theme.selection,
             )
         })
         .collect::<Vec<_>>();

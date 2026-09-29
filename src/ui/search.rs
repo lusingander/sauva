@@ -127,7 +127,7 @@ fn render_results(
                     color_theme,
                     ui,
                 );
-                selectable_list_line(line, selected, content.width, color_theme.list.selection)
+                selectable_list_line(line, selected, content.width, color_theme.selection)
             })
             .collect(),
     };
@@ -146,13 +146,10 @@ fn search_prompt_lines(color_theme: &ColorTheme) -> Vec<Line<'static>> {
             Style::new().add_modifier(Modifier::BOLD),
         ),
         Line::from(vec![
-            Span::styled(
-                "Examples",
-                Style::new().fg(color_theme.search_message.example_label),
-            ),
+            Span::styled("Examples", color_theme.accent_style()),
             Span::styled(
                 "  rightwards arrow · U+2192 · →",
-                Style::new().fg(color_theme.search_message.detail),
+                Style::new().fg(color_theme.muted),
             ),
         ]),
     ]
@@ -166,7 +163,7 @@ fn no_results_lines(color_theme: &ColorTheme) -> Vec<Line<'static>> {
         ),
         Line::styled(
             "Try another name, code point, or character",
-            Style::new().fg(color_theme.search_message.detail),
+            Style::new().fg(color_theme.muted),
         ),
     ]
 }
@@ -184,7 +181,7 @@ fn result_line(
     let representation_width = Line::from(representation).width();
     let literal_match = result.direct_match() == Some(SearchDirectMatchKind::LiteralCharacter);
     let code_point_match = result.direct_match() == Some(SearchDirectMatchKind::CodePointNotation);
-    let match_style = color_theme.search_match.style(selected);
+    let match_style = color_theme.match_style(selected);
     let mut spans = vec![Span::raw(format!("{} ", ui.selection_marker(selected)))];
     if matches!(representation_width, 1 | 2) {
         spans.push(match_span(
@@ -267,7 +264,7 @@ fn render_empty_preview(frame: &mut Frame, area: Rect, color_theme: &ColorTheme)
     );
     frame.render_widget(
         Paragraph::new("No preview")
-            .style(Style::new().fg(color_theme.selection_preview.empty))
+            .style(Style::new().fg(color_theme.muted))
             .alignment(Alignment::Center),
         message,
     );
@@ -391,7 +388,7 @@ mod tests {
         let highlighted = line
             .spans
             .iter()
-            .filter(|span| span.style == color_theme.search_match.style(false))
+            .filter(|span| span.style == color_theme.match_style(false))
             .map(|span| span.content.as_ref())
             .collect::<Vec<_>>();
 
@@ -410,7 +407,7 @@ mod tests {
         let highlighted = line
             .spans
             .iter()
-            .filter(|span| span.style == color_theme.search_match.style(true))
+            .filter(|span| span.style == color_theme.match_style(true))
             .map(|span| span.content.as_ref())
             .collect::<Vec<_>>();
 
@@ -441,14 +438,10 @@ mod tests {
     #[test]
     fn highlights_every_occurrence_in_a_primary_name() {
         let color_theme = ColorTheme::default();
-        let spans = name_spans(
-            "FACE TO FACE",
-            Some("FACE"),
-            color_theme.search_match.style(false),
-        );
+        let spans = name_spans("FACE TO FACE", Some("FACE"), color_theme.match_style(false));
         let highlighted = spans
             .iter()
-            .filter(|span| span.style == color_theme.search_match.style(false))
+            .filter(|span| span.style == color_theme.match_style(false))
             .map(|span| span.content.as_ref())
             .collect::<Vec<_>>();
 

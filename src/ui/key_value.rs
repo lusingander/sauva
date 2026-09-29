@@ -57,7 +57,7 @@ pub fn render(
             .collect::<Vec<_>>();
 
         frame.render_widget(
-            Paragraph::new(entry.label).style(Style::new().fg(color_theme.key_value.label)),
+            Paragraph::new(entry.label).style(Style::new().fg(color_theme.muted)),
             label_area,
         );
         frame.render_widget(Paragraph::new(value_lines), value_area);

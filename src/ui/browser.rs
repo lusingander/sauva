@@ -131,7 +131,7 @@ fn render_block_navigator(
                 )),
                 is_selected,
                 content.width,
-                color_theme.list.selection,
+                color_theme.selection,
             )
         })
         .collect::<Vec<_>>();
@@ -195,7 +195,7 @@ fn render_plane_navigator(
                 )),
                 is_selected,
                 content.width,
-                color_theme.list.selection,
+                color_theme.selection,
             )
         })
         .collect::<Vec<_>>();
@@ -251,7 +251,7 @@ fn render_range_navigator(
                 Line::from(format!("{marker} {}–{}", range.start(), range.end())),
                 is_selected,
                 content.width,
-                color_theme.list.selection,
+                color_theme.selection,
             )
         })
         .collect::<Vec<_>>();
@@ -320,7 +320,7 @@ fn render_code_point_table(
             let selected = code_point == cursor;
             let cell = table_cell(code_point, selected, ui);
             spans.push(if selected {
-                Span::styled(cell, color_theme.code_point_table.selection.style())
+                Span::styled(cell, color_theme.selection.style())
             } else {
                 Span::raw(cell)
             });

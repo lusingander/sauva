@@ -114,14 +114,20 @@ All settings are optional. The following example shows the main configuration ar
 [color]
 fg = "reset"
 bg = "reset"
+muted = "darkgray"
+accent = "cyan"
+border = "darkgray"
+match = "yellow"
+key = "yellow"
+link = "blue"
 
-[color.inspector]
-section_heading = "cyan"
-field_label = "darkgray"
-
-[color.inspector.selection]
+[color.selection]
 fg = "black"
 bg = "cyan"
+
+[color.status]
+info = "green"
+warning = "yellow"
 
 [glyph_preview]
 font_families = ["Iosevka", "Noto Sans"]

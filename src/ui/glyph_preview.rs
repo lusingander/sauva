@@ -68,7 +68,7 @@ fn render_metadata(
     state: &GlyphPreviewState,
     color_theme: &ColorTheme,
 ) {
-    let label = Style::new().fg(color_theme.glyph_preview.metadata_label);
+    let label = Style::new().fg(color_theme.muted);
     let font = state
         .font()
         .map(|font| format!("{} {}", font.family(), font.style()))
@@ -186,13 +186,13 @@ fn render_message(
     let mut lines = vec![Line::from(Span::styled(
         heading,
         Style::new()
-            .fg(color_theme.glyph_preview.status_heading)
+            .fg(color_theme.status.warning)
             .add_modifier(Modifier::BOLD),
     ))];
     if let Some(explanation) = explanation {
         lines.push(Line::from(Span::styled(
             explanation,
-            Style::new().fg(color_theme.glyph_preview.status_detail),
+            Style::new().fg(color_theme.muted),
         )));
     }
     frame.render_widget(Paragraph::new(lines).alignment(Alignment::Center), area);

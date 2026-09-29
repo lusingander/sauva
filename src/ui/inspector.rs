@@ -172,7 +172,7 @@ impl DocumentBuilder {
         self.lines.push(Line::from(Span::styled(
             label.to_owned(),
             Style::new()
-                .fg(self.color_theme.inspector.section_heading)
+                .fg(self.color_theme.accent)
                 .add_modifier(Modifier::BOLD),
         )));
     }
@@ -194,15 +194,12 @@ impl DocumentBuilder {
                 };
                 let mut line = if selected {
                     Line::from(vec![
-                        Span::styled(prefix, self.color_theme.inspector.selection.style()),
-                        Span::styled(wrapped, self.color_theme.inspector.selection.style()),
+                        Span::styled(prefix, self.color_theme.selection.style()),
+                        Span::styled(wrapped, self.color_theme.selection.style()),
                     ])
                 } else {
                     Line::from(vec![
-                        Span::styled(
-                            prefix,
-                            Style::new().fg(self.color_theme.inspector.field_label),
-                        ),
+                        Span::styled(prefix, Style::new().fg(self.color_theme.muted)),
                         Span::raw(wrapped),
                     ])
                 };
@@ -210,7 +207,7 @@ impl DocumentBuilder {
                     let padding = self.width.saturating_sub(line.width());
                     line.push_span(Span::styled(
                         " ".repeat(padding),
-                        self.color_theme.inspector.selection.style(),
+                        self.color_theme.selection.style(),
                     ));
                 }
                 self.lines.push(line);

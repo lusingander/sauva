@@ -124,7 +124,7 @@ pub fn render(
         state.sequence().is_some(),
         keymap,
         Style::new().fg(color_theme.fg),
-        Style::new().fg(color_theme.help.key),
+        Style::new().fg(color_theme.key),
         usize::from(help_content.width),
     );
     let document_height = document.lines.len();
@@ -137,7 +137,7 @@ pub fn render(
         Paragraph::new(about_document(
             DISPLAY_PACKAGE,
             Style::new().fg(color_theme.fg),
-            Style::new().fg(color_theme.help.link),
+            Style::new().fg(color_theme.link),
         ))
         .block(section_block()),
         sections.about,
@@ -145,7 +145,7 @@ pub fn render(
     frame.render_widget(
         Block::default()
             .borders(Borders::TOP)
-            .border_style(Style::new().fg(color_theme.help.divider)),
+            .border_style(color_theme.border_style()),
         sections.divider,
     );
     frame.render_widget(
