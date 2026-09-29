@@ -82,7 +82,7 @@ pub fn inspector(area: Rect) -> InspectorLayout {
             placeholder: centered_glyph_area(Rect::new(
                 panel.x.saturating_add(2),
                 panel.y.saturating_add(3),
-                panel.width.saturating_sub(4),
+                panel.width.saturating_sub(3),
                 panel.height.saturating_sub(4),
             )),
         }),
@@ -92,7 +92,7 @@ pub fn inspector(area: Rect) -> InspectorLayout {
 pub fn search(area: Rect) -> SearchLayout {
     let panes = flexible_primary_and_auxiliary(area);
     let [input, results] =
-        Layout::vertical([Constraint::Length(3), Constraint::Min(1)]).areas(panes.navigator);
+        Layout::vertical([Constraint::Length(2), Constraint::Min(1)]).areas(panes.navigator);
 
     SearchLayout {
         input,
@@ -318,32 +318,32 @@ mod tests {
     #[case(
         Rect::new(0, 3, 60, 12),
         SearchLayout {
-            input: Rect::new(0, 3, 60, 3),
-            results: Rect::new(0, 6, 60, 9),
+            input: Rect::new(0, 3, 60, 2),
+            results: Rect::new(0, 5, 60, 10),
             preview: None,
         }
     )]
     #[case(
         Rect::new(0, 3, 99, 12),
         SearchLayout {
-            input: Rect::new(0, 3, 99, 3),
-            results: Rect::new(0, 6, 99, 9),
+            input: Rect::new(0, 3, 99, 2),
+            results: Rect::new(0, 5, 99, 10),
             preview: None,
         }
     )]
     #[case(
         Rect::new(0, 3, 100, 26),
         SearchLayout {
-            input: Rect::new(0, 3, 60, 3),
-            results: Rect::new(0, 6, 60, 23),
+            input: Rect::new(0, 3, 60, 2),
+            results: Rect::new(0, 5, 60, 24),
             preview: Some(Rect::new(60, 3, 40, 26)),
         }
     )]
     #[case(
         Rect::new(0, 3, 140, 36),
         SearchLayout {
-            input: Rect::new(0, 3, 100, 3),
-            results: Rect::new(0, 6, 100, 33),
+            input: Rect::new(0, 3, 100, 2),
+            results: Rect::new(0, 5, 100, 34),
             preview: Some(Rect::new(100, 3, 40, 36)),
         }
     )]
@@ -364,9 +364,9 @@ mod tests {
 
     #[test]
     fn calculates_search_result_height_from_the_terminal_area() {
-        assert_eq!(search_result_height(Rect::new(0, 0, 100, 30)), 23);
-        assert_eq!(search_result_height(Rect::new(0, 0, 60, 16)), 9);
-        assert_eq!(search_result_height(Rect::new(0, 0, 140, 40)), 33);
+        assert_eq!(search_result_height(Rect::new(0, 0, 100, 30)), 24);
+        assert_eq!(search_result_height(Rect::new(0, 0, 60, 16)), 10);
+        assert_eq!(search_result_height(Rect::new(0, 0, 140, 40)), 34);
         assert_eq!(search_result_height(Rect::new(0, 0, 59, 15)), 0);
     }
 }

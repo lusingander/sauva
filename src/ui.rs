@@ -11,6 +11,7 @@ mod selection_preview;
 mod sequence;
 pub mod settings;
 pub mod theme;
+mod workspace;
 
 use ratatui::layout::Rect;
 use ratatui::text::{Line, Span};
@@ -96,9 +97,9 @@ mod tests {
         .expect("a block table selection has an inline glyph preview");
 
         assert_eq!(search.code_point.value(), 0x2192);
-        assert_eq!(search.placeholder, Rect::new(62, 8, 36, 20));
+        assert_eq!(search.placeholder, Rect::new(62, 9, 36, 19));
         assert_eq!(browse.code_point.value(), 0x0041);
-        assert_eq!(browse.placeholder, Rect::new(62, 10, 36, 18));
+        assert_eq!(browse.placeholder, Rect::new(62, 11, 36, 17));
         assert_eq!(block.code_point.value(), 0x2ff5);
     }
 

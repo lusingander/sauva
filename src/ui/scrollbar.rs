@@ -2,7 +2,7 @@ use std::ops::Range;
 
 use ratatui::{buffer::Buffer, layout::Rect, style::Style, widgets::Widget};
 
-const THUMB_SYMBOL: &str = "│";
+const THUMB_SYMBOL: &str = "┃";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ViewportScrollbar {
@@ -75,6 +75,14 @@ pub fn area_after(content: Rect) -> Rect {
     Rect::new(content.right(), content.y, 1, content.height)
 }
 
+pub fn area_for_primary(frame: Rect, primary: Rect, content: Rect) -> Rect {
+    if primary.right() < frame.right() {
+        Rect::new(primary.right(), content.y, 1, content.height)
+    } else {
+        area_after(content)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use ratatui::buffer::Buffer;
@@ -83,14 +91,14 @@ mod tests {
 
     #[test]
     fn follows_the_visible_range_from_top_to_bottom() {
-        assert_eq!(render(20, 0..10, 10), "│││││     ");
-        assert_eq!(render(20, 5..15, 10), "  │││││   ");
-        assert_eq!(render(20, 10..20, 10), "     │││││");
+        assert_eq!(render(20, 0..10, 10), "┃┃┃┃┃     ");
+        assert_eq!(render(20, 5..15, 10), "  ┃┃┃┃┃   ");
+        assert_eq!(render(20, 10..20, 10), "     ┃┃┃┃┃");
     }
 
     #[test]
     fn keeps_the_thumb_visible_for_a_small_viewport_fraction() {
-        assert_eq!(render(100, 50..51, 5), "  │  ");
+        assert_eq!(render(100, 50..51, 5), "  ┃  ");
     }
 
     #[test]
