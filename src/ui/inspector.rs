@@ -149,7 +149,6 @@ struct DocumentBuilder {
     lines: Vec<Line<'static>>,
     width: usize,
     label_width: usize,
-    value_width: usize,
     color_theme: ColorTheme,
 }
 
@@ -160,7 +159,6 @@ impl DocumentBuilder {
             lines: Vec::new(),
             width,
             label_width,
-            value_width: width.saturating_sub(label_width),
             color_theme: *color_theme,
         }
     }
@@ -184,44 +182,17 @@ impl DocumentBuilder {
         selected: bool,
         selection_marker: &str,
     ) {
-        let mut first_line = true;
-        for value in values {
-            for wrapped in key_value::wrap_value(&value, self.value_width) {
-                let prefix = if first_line {
-                    padded_label(label, self.label_width, selection_marker)
-                } else {
-                    " ".repeat(self.label_width)
-                };
-                let mut line = if selected {
-                    Line::from(vec![
-                        Span::styled(prefix, self.color_theme.selection.style()),
-                        Span::styled(wrapped, self.color_theme.selection.style()),
-                    ])
-                } else {
-                    Line::from(vec![
-                        Span::styled(prefix, Style::new().fg(self.color_theme.muted)),
-                        Span::raw(wrapped),
-                    ])
-                };
-                if selected {
-                    let padding = self.width.saturating_sub(line.width());
-                    line.push_span(Span::styled(
-                        " ".repeat(padding),
-                        self.color_theme.selection.style(),
-                    ));
-                }
-                self.lines.push(line);
-                first_line = false;
-            }
-        }
+        self.lines.extend(key_value::property_lines(
+            label,
+            values,
+            self.width,
+            self.label_width,
+            &format!("{selection_marker} "),
+            Style::new().fg(self.color_theme.muted),
+            Style::new(),
+            selected.then(|| self.color_theme.selection.style()),
+        ));
     }
-}
-
-fn padded_label(label: &str, width: usize, selection_marker: &str) -> String {
-    let mut output = format!("{selection_marker} {label}");
-    let padding = width.saturating_sub(key_value::text_width(&output));
-    output.push_str(&" ".repeat(padding));
-    output
 }
 
 #[cfg(test)]
