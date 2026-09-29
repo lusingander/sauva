@@ -1,9 +1,4 @@
-use ratatui::{
-    Frame,
-    layout::Rect,
-    text::Line,
-    widgets::{Block, Padding, Paragraph},
-};
+use ratatui::{Frame, layout::Rect, text::Line, widgets::Paragraph};
 
 use crate::{
     app::AppState,
@@ -13,6 +8,7 @@ use crate::{
         selectable_list_line, selection_preview,
         settings::UiSettings,
         theme::ColorTheme,
+        workspace,
     },
     unicode::UnicodeDatabase,
 };
@@ -28,13 +24,24 @@ pub fn render(
     let sequence = state
         .sequence()
         .expect("the sequence view always has sequence state");
+    if let Some(context) = layout.context {
+        selection_preview::render(
+            frame,
+            context,
+            sequence.selected(),
+            state.glyph_preview(),
+            color_theme,
+        );
+    }
     let count = sequence.code_points().len();
-    let block = Block::bordered()
-        .title(format!(" Code Points · {count} "))
-        .padding(Padding::horizontal(1))
-        .border_style(color_theme.border_style())
-        .title_style(color_theme.accent_style());
-    let content = block.inner(layout.navigator);
+    let count_label = format!("{count} code points");
+    let content = workspace::render_primary_heading(
+        frame,
+        layout.navigator,
+        "Code Points",
+        Some(&count_label),
+        color_theme,
+    );
     let position_width = count.to_string().len();
     let visible = sequence.visible_range();
     let rows = visible
@@ -58,21 +65,11 @@ pub fn render(
         })
         .collect::<Vec<_>>();
 
-    frame.render_widget(Paragraph::new(rows).block(block), layout.navigator);
+    frame.render_widget(Paragraph::new(rows), content);
     frame.render_widget(
         ViewportScrollbar::new(count, visible).style(color_theme.border_style()),
-        scrollbar::area_after(content),
+        scrollbar::area_for_primary(frame.area(), layout.navigator, content),
     );
-
-    if let Some(context) = layout.context {
-        selection_preview::render(
-            frame,
-            context,
-            sequence.selected(),
-            state.glyph_preview(),
-            color_theme,
-        );
-    }
 }
 
 #[cfg(test)]
@@ -114,7 +111,8 @@ mod tests {
                     text
                 });
 
-        assert!(text.contains("Code Points · 3"));
+        assert!(text.contains("Code Points"));
+        assert!(text.contains("3 code points"));
         assert!(text.contains("1  U+0041"));
         assert!(text.contains("2  U+2192"));
         assert_eq!(text.matches("LATIN CAPITAL LETTER A").count(), 3);
