@@ -115,8 +115,14 @@ fn header_status(state: &AppState) -> String {
                 .expect("the search view always has search state");
             let count = search.outcome().results().len();
             search.selected_result().map_or_else(
-                || format!("{count} results"),
-                |result| format!("{count} results · {}", result.code_point()),
+                || crate::ui::search::result_count_label(count),
+                |result| {
+                    format!(
+                        "{} · {}",
+                        crate::ui::search::result_count_label(count),
+                        result.code_point()
+                    )
+                },
             )
         }
         View::Sequence => {

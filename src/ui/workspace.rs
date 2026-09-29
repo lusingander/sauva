@@ -1,6 +1,7 @@
 use ratatui::{
     Frame,
     layout::{Alignment, Rect},
+    style::Style,
     text::Line,
     widgets::{Block, Borders, Paragraph},
 };
@@ -94,7 +95,7 @@ fn render_heading(
         frame.render_widget(
             Paragraph::new(Line::styled(
                 secondary.to_owned(),
-                color_theme.border_style(),
+                Style::new().fg(color_theme.muted),
             ))
             .alignment(Alignment::Right),
             area,

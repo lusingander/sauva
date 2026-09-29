@@ -141,7 +141,7 @@ fn render_results(
 ) {
     let results = outcome.results();
     let count = if matches!(outcome, SearchOutcome::Results { .. }) {
-        Some(format!("{} results", results.len()))
+        Some(result_count_label(results.len()))
     } else {
         None
     };
@@ -172,6 +172,11 @@ fn render_results(
         ViewportScrollbar::new(results.len(), visible_results).style(color_theme.border_style()),
         scrollbar::area_for_primary(frame.area(), area, content),
     );
+}
+
+pub fn result_count_label(count: usize) -> String {
+    let noun = if count == 1 { "result" } else { "results" };
+    format!("{count} {noun}")
 }
 
 fn search_prompt_lines(color_theme: &ColorTheme) -> Vec<Line<'static>> {
