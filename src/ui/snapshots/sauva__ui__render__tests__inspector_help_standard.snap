@@ -2,33 +2,33 @@
 source: src/ui/render.rs
 expression: "render_to_text(&state, width, height)"
 ---
- sauva · Help                                                                             Inspector
-┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ About                                                                                            │
-│ sauva - Terminal Unicode Explorer                                                                │
-│                                                                                                  │
-│ Version: 1.2.3                                                                                   │
-│                                                                                                  │
-│ https://example.com/sauva                                                                        │
-│ ──────────────────────────────────────────────────────────────────────────────────────────────── │
-│ Keybindings · Inspector                                                                          │
-│ <h>  <Left>                  Previous code point                                                 │
-│ <l>  <Right>                 Next code point                                                     │
-│ <k>  <Up>                    Select the previous property                                        │
-│ <j>  <Down>                  Select the next property                                            │
-│ <Ctrl-u>                     Move properties up one page                                         │
-│ <Ctrl-d>                     Move properties down one page                                       │
-│ <g>                          Select the first property                                           │
-│ <G>                          Select the last property                                            │
-│ <y>                          Copy the selected property value                                    │
-│ </>                          Open search                                                         │
-│ <p>                          Browse planes                                                       │
-│ <r>                          Browse ranges                                                       │
-│ <b>                          Browse blocks                                                       │
-│ <c>                          Browse code points                                                  │
-│ <q>  <Esc>  <Ctrl-c>         Quit                                                                │
-│ <F1>                         Open or close help                                                  │
-│                                                                                                  │
-│                                                                                                  │
-└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+ sauva / Help                                                                             Inspector
+ About
+ sauva - Terminal Unicode Explorer
+
+ Version: 1.2.3
+
+ https://example.com/sauva
+ ─────────────────────────────────────────────────────────────────────────────────────────────────
+ Keybindings · Inspector
+ <h>  <Left>                  Previous code point
+ <l>  <Right>                 Next code point
+ <k>  <Up>                    Select the previous property
+ <j>  <Down>                  Select the next property
+ <Ctrl-u>                     Move properties up one page
+ <Ctrl-d>                     Move properties down one page
+ <g>                          Select the first property
+ <G>                          Select the last property
+ <y>                          Copy the selected property value
+ </>                          Open search
+ <p>                          Browse planes
+ <r>                          Browse ranges
+ <b>                          Browse blocks
+ <c>                          Browse code points
+ <q>  <Esc>  <Ctrl-c>         Quit
+ <F1>                         Open or close help
+
+
+
+
  k/j: Move  C-u/C-d: Page  g/G: Ends  Esc: Close  C-c: Quit                               F1: Close

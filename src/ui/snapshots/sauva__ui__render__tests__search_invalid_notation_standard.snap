@@ -2,33 +2,33 @@
 source: src/ui/render.rs
 expression: "render_to_text(&state, width, height)"
 ---
- sauva · Search                                                                           0 results
-┌ Search ──────────────────────────────────────────────────┐┌ Selection Preview ───────────────────┐
-│ U+110000                                                 ││                                      │
-└──────────────────────────────────────────────────────────┘│                                      │
-┌ Results ─────────────────────────────────────────────────┐│                                      │
-│ Error: code point must be between U+0000 and U+10FFFF    ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││              No preview              │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-└──────────────────────────────────────────────────────────┘└──────────────────────────────────────┘
+ sauva / Search                                                                           0 results
+ Search  U+110000                                           │ Selection
+────────────────────────────────────────────────────────────│
+ Results                                                    │
+ Error: code point must be between U+0000 and U+10FFFF      │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+                                                            │              No preview
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
  ↑/↓: Move  Enter: Inspect  Esc: Close  C-c: Quit                                          F1: Help

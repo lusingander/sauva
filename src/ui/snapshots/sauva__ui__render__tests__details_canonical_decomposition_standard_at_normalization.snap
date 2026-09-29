@@ -2,33 +2,33 @@
 source: src/ui/render.rs
 expression: "render_after_inspector_move(&state, width, height, InspectorMove::Last,)"
 ---
- sauva · Inspector                                                                           U+00E9
-┌ Properties ──────────────────────────────────────────────┐┌ Glyph Preview ───────────────────────┐
-│                                                          ││ Font     —                           │
-│ Classification                                           ││ Version  —                           │
-│   General Category           Ll — Lowercase Letter       ││                                      │
-│   Script                     Latin                       ││                                      │
-│   Age                        1.1                         ││                                      │
-│   East Asian Width           A — Ambiguous               ││                                      │
-│   Canonical Combining Class  0 — Not Reordered           ││                                      │
-│   Bidi Class                 L — Left To Right          │││                                      │
-│   Default Ignorable          No                         │││                                      │
-│                                                         │││                                      │
-│ Encoding                                                │││                                      │
-│   UTF-8                      C3 A9                      │││                                      │
-│   UTF-16                     00E9                       │││                                      │
-│   HTML Decimal               &#233;                     │││         Graphics unavailable         │
-│   HTML Hex                   &#xE9;                     │││  Use --graphics force to try anyway. │
-│   Rust char                  '\u{E9}'                   │││                                      │
-│   Unicode Escape             \u00E9                     │││                                      │
-│                                                         │││                                      │
-│ Normalization                                           │││                                      │
-│   Decomposition Type         Canonical                  │││                                      │
-│   Decomposition                                         │││                                      │
-│   U+0065 LATIN SMALL LETTER E                           │││                                      │
-│   U+0301 COMBINING ACUTE ACCENT                         │││                                      │
-│                                                         │││                                      │
-│ Data                                                    │││                                      │
-│   Unicode Version            17.0.0                     │││                                      │
-└──────────────────────────────────────────────────────────┘└──────────────────────────────────────┘
+ sauva / Inspector                                                                           U+00E9
+   Block                      Latin-1 Supplement            │ Glyph
+ ─────────────────────────────────────────────────────────  │ Font     —
+ Classification                                             │ Version  —
+   General Category           Ll — Lowercase Letter         │
+   Script                     Latin                         │
+   Age                        1.1                           │
+   East Asian Width           A — Ambiguous                 ┃
+   Canonical Combining Class  0 — Not Reordered             ┃
+   Bidi Class                 L — Left To Right             ┃
+   Default Ignorable          No                            ┃
+ ─────────────────────────────────────────────────────────  ┃
+ Encoding                                                   ┃
+   UTF-8                      C3 A9                         ┃
+   UTF-16                     00E9                          ┃
+   HTML Decimal               &#233;                        ┃         Graphics unavailable
+   HTML Hex                   &#xE9;                        ┃  Use --graphics force to try anyway.
+   Rust char                  '\u{E9}'                      ┃
+   Unicode Escape             \u00E9                        ┃
+ ─────────────────────────────────────────────────────────  ┃
+ Normalization                                              ┃
+   Decomposition Type         Canonical                     ┃
+   Decomposition                                            ┃
+   U+0065 LATIN SMALL LETTER E                              ┃
+   U+0301 COMBINING ACUTE ACCENT                            ┃
+ ─────────────────────────────────────────────────────────  ┃
+ Data                                                       ┃
+   Unicode Version            17.0.0                        ┃
+                                                            │
  h/l: Point  k/j: Field  C-u/C-d: Page  y: Copy  /: Search  p/r/b/c: Browse  q: Quit       F1: Help

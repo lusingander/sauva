@@ -2,19 +2,19 @@
 source: src/ui/render.rs
 expression: "render_to_text(&state, width, height)"
 ---
- sauva · Search                         97 results · U+21E5
-┌ Search ──────────────────────────────────────────────────┐
-│ rightwards arrow                                         │
-└──────────────────────────────────────────────────────────┘
-┌ Results · 97 ────────────────────────────────────────────┐
-│   ↣   U+21A3    RIGHTWARDS ARROW WITH TAIL              ││
-│   ↦   U+21A6    RIGHTWARDS ARROW FROM BAR                │
-│   ↪   U+21AA    RIGHTWARDS ARROW WITH HOOK               │
-│   ↬   U+21AC    RIGHTWARDS ARROW WITH LOOP               │
-│   ↴   U+21B4    RIGHTWARDS ARROW WITH CORNER DOWNWARDS   │
-│   ⇄   U+21C4    RIGHTWARDS ARROW OVER LEFTWARDS ARROW    │
-│   ⇥   U+21E5    RIGHTWARDS ARROW TO BAR                  │
-│   ⇸   U+21F8    RIGHTWARDS ARROW WITH VERTICAL STROKE    │
-│   ⇻   U+21FB    RIGHTWARDS ARROW WITH DOUBLE VERTICAL ST │
-└──────────────────────────────────────────────────────────┘
+ sauva / Search                         97 results · U+21E5
+ Search  rightwards arrow
+────────────────────────────────────────────────────────────
+ Results                                        97 results
+   ↣   U+21A3    RIGHTWARDS ARROW WITH TAIL               ┃
+   ↦   U+21A6    RIGHTWARDS ARROW FROM BAR
+   ↪   U+21AA    RIGHTWARDS ARROW WITH HOOK
+   ↬   U+21AC    RIGHTWARDS ARROW WITH LOOP
+   ↴   U+21B4    RIGHTWARDS ARROW WITH CORNER DOWNWARDS
+   ⇄   U+21C4    RIGHTWARDS ARROW OVER LEFTWARDS ARROW
+   ⇥   U+21E5    RIGHTWARDS ARROW TO BAR
+   ⇸   U+21F8    RIGHTWARDS ARROW WITH VERTICAL STROKE
+   ⇻   U+21FB    RIGHTWARDS ARROW WITH DOUBLE VERTICAL STR
+   ⤑   U+2911    RIGHTWARDS ARROW WITH DOTTED STEM
+
  ↑/↓: Move  Enter: Inspect  Esc: Close  C-c: Quit  F1: Help
