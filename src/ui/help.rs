@@ -3,7 +3,7 @@ use ratatui::{
     layout::{Constraint, Layout, Rect},
     style::Style,
     text::{Line, Span, Text},
-    widgets::{Block, Borders, Padding, Paragraph},
+    widgets::Paragraph,
 };
 
 use crate::{
@@ -14,6 +14,7 @@ use crate::{
         layout,
         scrollbar::{self, ViewportScrollbar},
         theme::ColorTheme,
+        workspace,
     },
 };
 
@@ -121,9 +122,6 @@ pub fn render(
     color_theme: &ColorTheme,
 ) {
     let context = context_for_state(state);
-    let block = Block::bordered()
-        .padding(Padding::horizontal(1))
-        .border_style(color_theme.border_style());
     let sections = help_sections(area);
     let document = document(
         context,
@@ -138,7 +136,6 @@ pub fn render(
     let start = visible.start.min(document_height);
     let end = visible.end.max(start).min(document_height);
 
-    frame.render_widget(block, area);
     frame.render_widget(
         Paragraph::new("About").style(color_theme.accent_style()),
         sections.about_label,
@@ -151,12 +148,7 @@ pub fn render(
         )),
         sections.about,
     );
-    frame.render_widget(
-        Block::default()
-            .borders(Borders::TOP)
-            .border_style(color_theme.border_style()),
-        sections.divider,
-    );
+    workspace::render_divider(frame, sections.divider, color_theme);
     frame.render_widget(
         Paragraph::new(format!("Keybindings · {}", context_label(context)))
             .style(color_theme.accent_style()),
@@ -623,9 +615,7 @@ pub fn context_label(context: Context) -> &'static str {
 }
 
 fn content_area(area: Rect) -> Rect {
-    Block::bordered()
-        .padding(Padding::horizontal(1))
-        .inner(area)
+    workspace::primary_canvas(area)
 }
 
 fn help_sections(area: Rect) -> HelpSections {
@@ -706,7 +696,7 @@ mod tests {
 
         let metrics = viewport_metrics(Rect::new(0, 0, width, height), &state, &keymap);
 
-        assert_eq!(metrics.viewport_height, 4);
+        assert_eq!(metrics.viewport_height, 5);
         assert!(metrics.document_height > metrics.viewport_height);
     }
 
