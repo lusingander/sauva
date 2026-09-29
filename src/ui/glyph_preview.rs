@@ -4,14 +4,14 @@ use ratatui::{
     layout::{Alignment, Rect},
     style::{Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Padding, Paragraph},
+    widgets::Paragraph,
 };
 
 use crate::{
     graphics::{GraphicsProtocol, GraphicsUnavailableReason},
     image::kitty,
     preview::{GlyphPreviewError, GlyphPreviewState, GlyphPreviewStatus},
-    ui::{layout::GlyphPreviewLayout, theme::ColorTheme},
+    ui::{layout::GlyphPreviewLayout, theme::ColorTheme, workspace},
 };
 
 pub fn render(
@@ -20,13 +20,7 @@ pub fn render(
     state: &GlyphPreviewState,
     color_theme: &ColorTheme,
 ) {
-    let block = Block::bordered()
-        .title(" Glyph Preview ")
-        .padding(Padding::horizontal(1))
-        .border_style(color_theme.border_style())
-        .title_style(color_theme.accent_style());
-    let content = block.inner(layout.panel);
-    frame.render_widget(block, layout.panel);
+    let content = workspace::render_rail_heading(frame, layout.panel, "Glyph", None, color_theme);
 
     render_metadata(
         frame,

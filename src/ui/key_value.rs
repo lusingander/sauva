@@ -3,10 +3,10 @@ use ratatui::{
     layout::Rect,
     style::Style,
     text::{Line, Span},
-    widgets::{Block, Padding, Paragraph},
+    widgets::Paragraph,
 };
 
-use crate::ui::theme::ColorTheme;
+use crate::ui::{theme::ColorTheme, workspace};
 
 const STACKED_VALUE_INDENT: usize = 2;
 
@@ -65,15 +65,19 @@ pub fn render(
     entries: &[KeyValue<'_>],
     color_theme: &ColorTheme,
 ) {
-    let block = Block::bordered()
-        .title(title.to_owned())
-        .padding(Padding::horizontal(1))
-        .border_style(color_theme.border_style())
-        .title_style(color_theme.accent_style());
-    let content = block.inner(area);
-    let document = Document::for_entries(content.width, label_width, entries, color_theme);
-    frame.render_widget(block, area);
-    frame.render_widget(Paragraph::new(document.lines), content);
+    let content = workspace::render_rail_heading(frame, area, title, None, color_theme);
+    render_entries(frame, content, label_width, entries, color_theme);
+}
+
+pub fn render_entries(
+    frame: &mut Frame,
+    area: Rect,
+    label_width: u16,
+    entries: &[KeyValue<'_>],
+    color_theme: &ColorTheme,
+) {
+    let document = Document::for_entries(area.width, label_width, entries, color_theme);
+    frame.render_widget(Paragraph::new(document.lines), area);
 }
 
 pub fn required_height(content_width: u16, label_width: u16, entries: &[KeyValue<'_>]) -> u16 {

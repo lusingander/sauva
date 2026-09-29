@@ -1,8 +1,4 @@
-use ratatui::{
-    Frame,
-    layout::Rect,
-    widgets::{Block, Padding},
-};
+use ratatui::{Frame, layout::Rect, widgets::Paragraph};
 
 use crate::{
     inspector::InspectorDetails,
@@ -11,6 +7,7 @@ use crate::{
     ui::key_value::{self, KeyValue},
     ui::layout,
     ui::theme::ColorTheme,
+    ui::workspace,
     unicode::CodePoint,
 };
 
@@ -28,16 +25,27 @@ pub fn render(
     let details = SelectionDetails::new(code_point);
     let entries = details.entries();
 
-    key_value::render(
+    let content = workspace::render_rail_heading(frame, area, "Selection", None, color_theme);
+    let details_height = key_value::required_height(content.width, LABEL_WIDTH, &entries);
+    key_value::render_entries(
         frame,
-        area,
-        " Selection Preview ",
+        Rect::new(content.x, content.y, content.width, details_height),
         LABEL_WIDTH,
         &entries,
         color_theme,
     );
-    if let Some(glyph) = glyph_area_for_entries(area, &entries) {
-        glyph_preview::render_image_only(frame, glyph, glyph_preview_state, color_theme);
+    if let Some(glyph_layout) = glyph_layout_for_entries(area, &entries) {
+        workspace::render_divider(frame, glyph_layout.divider, color_theme);
+        frame.render_widget(
+            Paragraph::new("Glyph").style(color_theme.accent_style()),
+            glyph_layout.heading,
+        );
+        glyph_preview::render_image_only(
+            frame,
+            glyph_layout.glyph,
+            glyph_preview_state,
+            color_theme,
+        );
     }
 }
 
@@ -47,22 +55,33 @@ pub fn glyph_area(area: Rect, code_point: CodePoint) -> Option<Rect> {
 }
 
 fn glyph_area_for_entries(area: Rect, entries: &[KeyValue<'_>]) -> Option<Rect> {
-    let content = selection_block().inner(area);
-    let details_height = key_value::required_height(content.width, LABEL_WIDTH, entries);
-    let glyph_y = content
-        .y
-        .saturating_add(details_height)
-        .saturating_add(GLYPH_GAP_HEIGHT);
-    let glyph_height = content.bottom().saturating_sub(glyph_y);
-    (glyph_height >= MINIMUM_GLYPH_HEIGHT).then(|| {
-        layout::centered_glyph_area(Rect::new(content.x, glyph_y, content.width, glyph_height))
-    })
+    glyph_layout_for_entries(area, entries).map(|layout| layout.glyph)
 }
 
-fn selection_block() -> Block<'static> {
-    Block::bordered()
-        .title(" Selection Preview ")
-        .padding(Padding::horizontal(1))
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct InlineGlyphLayout {
+    divider: Rect,
+    heading: Rect,
+    glyph: Rect,
+}
+
+fn glyph_layout_for_entries(area: Rect, entries: &[KeyValue<'_>]) -> Option<InlineGlyphLayout> {
+    let content = workspace::rail_section(area).content;
+    let details_height = key_value::required_height(content.width, LABEL_WIDTH, entries);
+    let divider_y = content.y.saturating_add(details_height);
+    let heading_y = divider_y.saturating_add(GLYPH_GAP_HEIGHT);
+    let glyph_y = heading_y.saturating_add(1);
+    let glyph_height = content.bottom().saturating_sub(glyph_y);
+    (glyph_height >= MINIMUM_GLYPH_HEIGHT).then(|| InlineGlyphLayout {
+        divider: Rect::new(content.x, divider_y, content.width, 1),
+        heading: Rect::new(content.x, heading_y, content.width, 1),
+        glyph: layout::centered_glyph_area(Rect::new(
+            content.x,
+            glyph_y,
+            content.width,
+            glyph_height,
+        )),
+    })
 }
 
 struct SelectionDetails {
@@ -106,7 +125,7 @@ mod tests {
 
         assert_eq!(
             glyph_area(area, code_point),
-            Some(Rect::new(62, 12, 36, 16))
+            Some(Rect::new(62, 13, 36, 15))
         );
     }
 

@@ -3,7 +3,7 @@ use ratatui::{
     layout::Rect,
     style::{Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Padding, Paragraph},
+    widgets::Paragraph,
 };
 
 use crate::app::AppState;
@@ -13,6 +13,7 @@ use crate::ui::{
     scrollbar::{self, ViewportScrollbar},
     settings::UiSettings,
     theme::ColorTheme,
+    workspace,
 };
 use crate::unicode::CodePoint;
 
@@ -59,39 +60,15 @@ pub fn render(
     let end = range.end.max(start).min(document.lines.len());
     let lines = document.lines[start..end].to_vec();
 
-    frame.render_widget(
-        Paragraph::new(lines).block(
-            Block::bordered()
-                .title(inspector_title(state))
-                .padding(Padding::horizontal(1))
-                .border_style(color_theme.border_style())
-                .title_style(color_theme.accent_style()),
-        ),
-        area,
-    );
+    frame.render_widget(Paragraph::new(lines), content);
     frame.render_widget(
         ViewportScrollbar::new(document.lines.len(), start..end).style(color_theme.border_style()),
-        scrollbar::area_after(content),
+        scrollbar::area_for_primary(frame.area(), area, content),
     );
-}
-
-fn inspector_title(state: &AppState) -> String {
-    state.sequence().map_or_else(
-        || " Properties ".to_owned(),
-        |sequence| {
-            format!(
-                " Properties · from Sequence {}/{} ",
-                sequence.selected_index() + 1,
-                sequence.code_points().len()
-            )
-        },
-    )
 }
 
 fn content_area(area: Rect) -> Rect {
-    Block::bordered()
-        .padding(Padding::horizontal(1))
-        .inner(area)
+    workspace::primary_canvas(area)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -167,7 +144,10 @@ impl DocumentBuilder {
 
     fn section(&mut self, label: &str) {
         if !self.lines.is_empty() {
-            self.lines.push(Line::default());
+            self.lines.push(Line::from(Span::styled(
+                "─".repeat(self.width),
+                self.color_theme.border_style(),
+            )));
         }
         self.lines.push(Line::from(Span::styled(
             label.to_owned(),
@@ -297,10 +277,10 @@ mod tests {
         );
 
         for (area, viewport_height, document_height) in [
-            (Rect::new(0, 0, 60, 16), 12, 32),
-            (Rect::new(0, 0, 99, 16), 12, 31),
-            (Rect::new(0, 0, 100, 30), 26, 32),
-            (Rect::new(0, 0, 140, 40), 36, 31),
+            (Rect::new(0, 0, 60, 16), 13, 31),
+            (Rect::new(0, 0, 99, 16), 13, 31),
+            (Rect::new(0, 0, 100, 30), 27, 31),
+            (Rect::new(0, 0, 140, 40), 37, 31),
         ] {
             let metrics = viewport_metrics(area, &state);
             assert_eq!(metrics.viewport_height, viewport_height);
@@ -332,7 +312,7 @@ mod tests {
             &mut state,
             Action::MoveInspector(crate::inspector::InspectorMove::Last),
         );
-        assert_eq!(state.inspector().offset(), 20);
+        assert_eq!(state.inspector().offset(), 18);
 
         let wide = viewport_metrics(Rect::new(0, 0, 140, 40), &state);
         update(
