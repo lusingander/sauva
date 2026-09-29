@@ -3,14 +3,15 @@ source: tests/terminal_e2e.rs
 expression: screen.with_styles()
 ---
 size: 100x30  cursor: hidden
+ sauva · Browse Code Points                                                                  U+0042
 ┌ Browse · Code Points · U+0000–U+00FF ────────────────────┐┌ Selection Preview ───────────────────┐
 │         0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F   ││ Character        B                   │
 │ 000000  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·   ││ Code Point       U+0042              │
-│ 000010  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·   ││ Primary Name     LATIN CAPITAL       │
-│ 000020  ·  !  "  #  $  %  &  '  (  )  *  +  ,  -  .  /   ││                  LETTER B            │
+│ 000010  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·   ││ Primary Name                         │
+│ 000020  ·  !  "  #  $  %  &  '  (  )  *  +  ,  -  .  /   ││   LATIN CAPITAL LETTER B             │
 │ 000030  0  1  2  3  4  5  6  7  8  9  :  ;  <  =  >  ?   ││ Block            Basic Latin         │
-│ 000040  @  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O   ││ General Category Lu — Uppercase      │
-│ 000050  P  Q  R  S  T  U  V  W  X  Y  Z  [  \  ]  ^  _   ││                  Letter              │
+│ 000040  @  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O   ││ General Category                     │
+│ 000050  P  Q  R  S  T  U  V  W  X  Y  Z  [  \  ]  ^  _   ││   Lu — Uppercase Letter              │
 │ 000060  `  a  b  c  d  e  f  g  h  i  j  k  l  m  n  o   ││                                      │
 │ 000070  p  q  r  s  t  u  v  w  x  y  z  {  |  }  ~  ·   ││                                      │
 │ 000080  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·   ││                                      │
@@ -30,14 +31,37 @@ size: 100x30  cursor: hidden
 │                                                          ││                                      │
 │                                                          ││                                      │
 │                                                          ││                                      │
-│                                                          ││                                      │
 └──────────────────────────────────────────────────────────┘└──────────────────────────────────────┘
- h/l/k/j: Move  C-u/C-d: Jump  g/G: Ends  Enter: Inspect  BS: Back  Esc: Close  q: Quit  F1: Help
+ h/l/k/j: Move  C-u/C-d: Jump  g/G: Ends  Enter: Inspect  BS: Back  Esc: Close  q: Quit    F1: Help
 
 styles:
-1: 62-78 fg=8
-2: 62-78 fg=8
-3: 62-78 fg=8
-5: 62-78 fg=8
-6: 15-17 fg=0 bg=6; 62-78 fg=8
-29: 0-99 fg=8
+0: 0-5 fg=6 bold; 93-99 fg=8
+1: 0 fg=8; 1-38 fg=6 bold; 39-60 fg=8; 61-79 fg=6 bold; 80-99 fg=8
+2: 0 fg=8; 59-60 fg=8; 62-78 fg=8; 99 fg=8
+3: 0 fg=8; 59-60 fg=8; 62-78 fg=8; 99 fg=8
+4: 0 fg=8; 59-60 fg=8; 62-73 fg=8; 99 fg=8
+5: 0 fg=8; 59-60 fg=8; 62-63 fg=8; 99 fg=8
+6: 0 fg=8; 59-60 fg=8; 62-78 fg=8; 99 fg=8
+7: 0 fg=8; 15-17 fg=0 bg=6; 59-60 fg=8; 62-77 fg=8; 99 fg=8
+8: 0 fg=8; 59-60 fg=8; 62-63 fg=8; 99 fg=8
+9: 0 fg=8; 59-60 fg=8; 99 fg=8
+10: 0 fg=8; 59-60 fg=8; 99 fg=8
+11: 0 fg=8; 59-60 fg=8; 99 fg=8
+12: 0 fg=8; 59-60 fg=8; 99 fg=8
+13: 0 fg=8; 59-60 fg=8; 99 fg=8
+14: 0 fg=8; 59-60 fg=8; 99 fg=8
+15: 0 fg=8; 59-60 fg=8; 99 fg=8
+16: 0 fg=8; 59-60 fg=8; 99 fg=8
+17: 0 fg=8; 59-60 fg=8; 99 fg=8
+18: 0 fg=8; 59-60 fg=8; 99 fg=8
+19: 0 fg=8; 59-60 fg=8; 99 fg=8
+20: 0 fg=8; 59-60 fg=8; 99 fg=8
+21: 0 fg=8; 59-60 fg=8; 99 fg=8
+22: 0 fg=8; 59-60 fg=8; 99 fg=8
+23: 0 fg=8; 59-60 fg=8; 99 fg=8
+24: 0 fg=8; 59-60 fg=8; 99 fg=8
+25: 0 fg=8; 59-60 fg=8; 99 fg=8
+26: 0 fg=8; 59-60 fg=8; 99 fg=8
+27: 0 fg=8; 59-60 fg=8; 99 fg=8
+28: 0-99 fg=8
+29: 1-7 fg=3; 8-13 fg=8; 16-22 fg=3; 23-28 fg=8; 31-33 fg=3; 34-39 fg=8; 42-46 fg=3; 47-55 fg=8; 58-59 fg=3; 60-65 fg=8; 68-70 fg=3; 71-77 fg=8; 80 fg=3; 81-86 fg=8; 91-92 fg=3; 93-98 fg=8

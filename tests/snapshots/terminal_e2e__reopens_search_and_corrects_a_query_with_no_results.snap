@@ -2,14 +2,14 @@
 source: tests/terminal_e2e.rs
 expression: reopened.with_styles()
 ---
-size: 100x30  cursor: 1,18
+size: 100x30  cursor: 2,18
+ sauva · Search                                                                           0 results
 ┌ Search ──────────────────────────────────────────────────┐┌ Selection Preview ───────────────────┐
 │ rightwards arrox                                         ││                                      │
 └──────────────────────────────────────────────────────────┘│                                      │
 ┌ Results · 0 ─────────────────────────────────────────────┐│                                      │
 │ No matching characters                                   ││                                      │
 │ Try another name, code point, or character               ││                                      │
-│                                                          ││                                      │
 │                                                          ││                                      │
 │                                                          ││                                      │
 │                                                          ││                                      │
@@ -32,10 +32,36 @@ size: 100x30  cursor: 1,18
 │                                                          ││                                      │
 │                                                          ││                                      │
 └──────────────────────────────────────────────────────────┘└──────────────────────────────────────┘
- ↑/↓: Move  Enter: Inspect  Esc: Close  C-c: Quit  F1: Help
+ ↑/↓: Move  Enter: Inspect  Esc: Close  C-c: Quit                                          F1: Help
 
 styles:
-4: 2-23 bold
-5: 2-43 fg=8
-14: 62-97 fg=8
-29: 0-99 fg=8
+0: 0-5 fg=6 bold; 90-99 fg=8
+1: 0 fg=8; 1-8 fg=6 bold; 9-60 fg=8; 61-79 fg=6 bold; 80-99 fg=8
+2: 0 fg=8; 59-60 fg=8; 99 fg=8
+3: 0-60 fg=8; 99 fg=8
+4: 0 fg=8; 1-13 fg=6 bold; 14-60 fg=8; 99 fg=8
+5: 0 fg=8; 2-23 bold; 59-60 fg=8; 99 fg=8
+6: 0 fg=8; 2-43 fg=8; 59-60 fg=8; 99 fg=8
+7: 0 fg=8; 59-60 fg=8; 99 fg=8
+8: 0 fg=8; 59-60 fg=8; 99 fg=8
+9: 0 fg=8; 59-60 fg=8; 99 fg=8
+10: 0 fg=8; 59-60 fg=8; 99 fg=8
+11: 0 fg=8; 59-60 fg=8; 99 fg=8
+12: 0 fg=8; 59-60 fg=8; 99 fg=8
+13: 0 fg=8; 59-60 fg=8; 99 fg=8
+14: 0 fg=8; 59-60 fg=8; 62-97 fg=8; 99 fg=8
+15: 0 fg=8; 59-60 fg=8; 99 fg=8
+16: 0 fg=8; 59-60 fg=8; 99 fg=8
+17: 0 fg=8; 59-60 fg=8; 99 fg=8
+18: 0 fg=8; 59-60 fg=8; 99 fg=8
+19: 0 fg=8; 59-60 fg=8; 99 fg=8
+20: 0 fg=8; 59-60 fg=8; 99 fg=8
+21: 0 fg=8; 59-60 fg=8; 99 fg=8
+22: 0 fg=8; 59-60 fg=8; 99 fg=8
+23: 0 fg=8; 59-60 fg=8; 99 fg=8
+24: 0 fg=8; 59-60 fg=8; 99 fg=8
+25: 0 fg=8; 59-60 fg=8; 99 fg=8
+26: 0 fg=8; 59-60 fg=8; 99 fg=8
+27: 0 fg=8; 59-60 fg=8; 99 fg=8
+28: 0-99 fg=8
+29: 1-3 fg=3; 4-9 fg=8; 12-16 fg=3; 17-25 fg=8; 28-30 fg=3; 31-37 fg=8; 40-42 fg=3; 43-48 fg=8; 91-92 fg=3; 93-98 fg=8

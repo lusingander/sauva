@@ -2,43 +2,43 @@
 source: src/ui/render.rs
 expression: "render_to_text(&state, width, height)"
 ---
-┌ Browse · Ranges · Plane 0 ───────────────────────────────┐┌ Range Context ───────────────────────────────────────────────────────────────┐
-│   U+DB00–U+DBFF                                          ││ Plane  0                                                                     │
-│   U+DC00–U+DCFF                                          ││ Name   Basic Multilingual Plane                                              │
-│   U+DD00–U+DDFF                                          ││ Range  255 of 255                                                            │
-│   U+DE00–U+DEFF                                          ││ Start  U+FF00                                                                │
-│   U+DF00–U+DFFF                                          ││ End    U+FFFF                                                                │
-│   U+E000–U+E0FF                                          ││ Blocks Halfwidth and Fullwidth Forms                                         │
-│   U+E100–U+E1FF                                          ││        Specials                                                              │
-│   U+E200–U+E2FF                                          ││                                                                              │
-│   U+E300–U+E3FF                                          ││                                                                              │
-│   U+E400–U+E4FF                                          ││                                                                              │
-│   U+E500–U+E5FF                                          ││                                                                              │
-│   U+E600–U+E6FF                                          ││                                                                              │
-│   U+E700–U+E7FF                                          ││                                                                              │
-│   U+E800–U+E8FF                                          ││                                                                              │
-│   U+E900–U+E9FF                                          ││                                                                              │
-│   U+EA00–U+EAFF                                          ││                                                                              │
-│   U+EB00–U+EBFF                                          ││                                                                              │
-│   U+EC00–U+ECFF                                          ││                                                                              │
-│   U+ED00–U+EDFF                                          ││                                                                              │
-│   U+EE00–U+EEFF                                          ││                                                                              │
-│   U+EF00–U+EFFF                                          ││                                                                              │
-│   U+F000–U+F0FF                                          ││                                                                              │
-│   U+F100–U+F1FF                                          ││                                                                              │
-│   U+F200–U+F2FF                                          ││                                                                              │
-│   U+F300–U+F3FF                                          ││                                                                              │
-│   U+F400–U+F4FF                                          ││                                                                              │
-│   U+F500–U+F5FF                                          ││                                                                              │
-│   U+F600–U+F6FF                                          ││                                                                              │
-│   U+F700–U+F7FF                                          ││                                                                              │
-│   U+F800–U+F8FF                                          ││                                                                              │
-│   U+F900–U+F9FF                                          ││                                                                              │
-│   U+FA00–U+FAFF                                          ││                                                                              │
-│   U+FB00–U+FBFF                                         │││                                                                              │
-│   U+FC00–U+FCFF                                         │││                                                                              │
-│   U+FD00–U+FDFF                                         │││                                                                              │
-│   U+FE00–U+FEFF                                         │││                                                                              │
-│   U+FF00–U+FFFF                                         │││                                                                              │
-└──────────────────────────────────────────────────────────┘└──────────────────────────────────────────────────────────────────────────────┘
- k/j: Move  C-u/C-d: Jump  g/G: Ends  Enter: Points  BS: Back  Esc: Close  q: Quit  F1: Help
+ sauva · Browse Ranges                                                                                                               U+FF41
+┌ Browse · Ranges · Plane 0 ───────────────────────────────────────────────────────────────────────┐┌ Range Context ───────────────────────┐
+│   U+DC00–U+DCFF                                                                                  ││ Plane  0                             │
+│   U+DD00–U+DDFF                                                                                  ││ Name   Basic Multilingual Plane      │
+│   U+DE00–U+DEFF                                                                                  ││ Range  255 of 255                    │
+│   U+DF00–U+DFFF                                                                                  ││ Start  U+FF00                        │
+│   U+E000–U+E0FF                                                                                  ││ End    U+FFFF                        │
+│   U+E100–U+E1FF                                                                                  ││ Blocks                               │
+│   U+E200–U+E2FF                                                                                  ││   Halfwidth and Fullwidth Forms      │
+│   U+E300–U+E3FF                                                                                  ││   Specials                           │
+│   U+E400–U+E4FF                                                                                  ││                                      │
+│   U+E500–U+E5FF                                                                                  ││                                      │
+│   U+E600–U+E6FF                                                                                  ││                                      │
+│   U+E700–U+E7FF                                                                                  ││                                      │
+│   U+E800–U+E8FF                                                                                  ││                                      │
+│   U+E900–U+E9FF                                                                                  ││                                      │
+│   U+EA00–U+EAFF                                                                                  ││                                      │
+│   U+EB00–U+EBFF                                                                                  ││                                      │
+│   U+EC00–U+ECFF                                                                                  ││                                      │
+│   U+ED00–U+EDFF                                                                                  ││                                      │
+│   U+EE00–U+EEFF                                                                                  ││                                      │
+│   U+EF00–U+EFFF                                                                                  ││                                      │
+│   U+F000–U+F0FF                                                                                  ││                                      │
+│   U+F100–U+F1FF                                                                                  ││                                      │
+│   U+F200–U+F2FF                                                                                  ││                                      │
+│   U+F300–U+F3FF                                                                                  ││                                      │
+│   U+F400–U+F4FF                                                                                  ││                                      │
+│   U+F500–U+F5FF                                                                                  ││                                      │
+│   U+F600–U+F6FF                                                                                  ││                                      │
+│   U+F700–U+F7FF                                                                                  ││                                      │
+│   U+F800–U+F8FF                                                                                  ││                                      │
+│   U+F900–U+F9FF                                                                                  ││                                      │
+│   U+FA00–U+FAFF                                                                                  ││                                      │
+│   U+FB00–U+FBFF                                                                                 │││                                      │
+│   U+FC00–U+FCFF                                                                                 │││                                      │
+│   U+FD00–U+FDFF                                                                                 │││                                      │
+│   U+FE00–U+FEFF                                                                                 │││                                      │
+│   U+FF00–U+FFFF                                                                                 │││                                      │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘└──────────────────────────────────────┘
+ k/j: Move  C-u/C-d: Jump  g/G: Ends  Enter: Points  BS: Back  Esc: Close  q: Quit                                                 F1: Help

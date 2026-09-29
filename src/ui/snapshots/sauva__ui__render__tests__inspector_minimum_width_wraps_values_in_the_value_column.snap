@@ -2,20 +2,20 @@
 source: src/ui/render.rs
 expression: "render_to_text(&state, MINIMUM_SIZE.0, MINIMUM_SIZE.1 + 1)"
 ---
-┌ Inspector ───────────────────────────────────────────────┐
+ sauva · Inspector                                 U+10FFFF
+┌ Properties ──────────────────────────────────────────────┐
 │ Identity                                                ││
 │   Character                  <NONCHARACTER>             ││
 │   Code Point                 U+10FFFF                   ││
 │   Primary Name               Unassigned                 ││
 │   Aliases                    None                       ││
-│   Plane                      16 — Supplementary Private  │
-│                              Use Area-B                  │
-│   Block                      Supplementary Private Use   │
-│                              Area-B                      │
+│   Plane                                                  │
+│   16 — Supplementary Private Use Area-B                  │
+│   Block                                                  │
+│   Supplementary Private Use Area-B                       │
 │                                                          │
 │ Classification                                           │
 │   General Category           Cn — Unassigned             │
 │   Script                     Unknown                     │
-│   Age                        2.0                         │
 └──────────────────────────────────────────────────────────┘
- h/l: Point  k/j: Field  y: Copy  q: Quit  F1: Help
+ h/l: Point  k/j: Field  y: Copy  q: Quit          F1: Help

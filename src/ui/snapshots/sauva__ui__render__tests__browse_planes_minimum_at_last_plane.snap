@@ -2,12 +2,12 @@
 source: src/ui/render.rs
 expression: "render_to_text(&state, width, height)"
 ---
+ sauva · Browse Planes                             U+10FFFF
 ┌ Browse · Planes ─────────────────────────────────────────┐
-│   Plane  4  Reserved                                     │
 │   Plane  5  Reserved                                     │
 │   Plane  6  Reserved                                     │
 │   Plane  7  Reserved                                     │
-│   Plane  8  Reserved                                    ││
+│   Plane  8  Reserved                                     │
 │   Plane  9  Reserved                                    ││
 │   Plane 10  Reserved                                    ││
 │   Plane 11  Reserved                                    ││
@@ -17,4 +17,4 @@ expression: "render_to_text(&state, width, height)"
 │   Plane 15  Supplementary Private Use Area-A            ││
 │   Plane 16  Supplementary Private Use Area-B            ││
 └──────────────────────────────────────────────────────────┘
- k/j: Move  Enter: Ranges  BS: Back  Esc: Close  F1: Help
+ k/j: Move  Enter: Ranges  BS: Back  Esc: Close    F1: Help
