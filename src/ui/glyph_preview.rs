@@ -22,7 +22,9 @@ pub fn render(
 ) {
     let block = Block::bordered()
         .title(" Glyph Preview ")
-        .padding(Padding::horizontal(1));
+        .padding(Padding::horizontal(1))
+        .border_style(color_theme.border_style())
+        .title_style(color_theme.accent_style());
     let content = block.inner(layout.panel);
     frame.render_widget(block, layout.panel);
 

@@ -9,6 +9,7 @@ use crate::{
     preview::GlyphPreviewState,
     ui::glyph_preview,
     ui::key_value::{self, KeyValue},
+    ui::layout,
     ui::theme::ColorTheme,
     unicode::CodePoint,
 };
@@ -53,8 +54,9 @@ fn glyph_area_for_entries(area: Rect, entries: &[KeyValue<'_>]) -> Option<Rect> 
         .saturating_add(details_height)
         .saturating_add(GLYPH_GAP_HEIGHT);
     let glyph_height = content.bottom().saturating_sub(glyph_y);
-    (glyph_height >= MINIMUM_GLYPH_HEIGHT)
-        .then(|| Rect::new(content.x, glyph_y, content.width, glyph_height))
+    (glyph_height >= MINIMUM_GLYPH_HEIGHT).then(|| {
+        layout::centered_glyph_area(Rect::new(content.x, glyph_y, content.width, glyph_height))
+    })
 }
 
 fn selection_block() -> Block<'static> {

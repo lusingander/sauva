@@ -34,9 +34,11 @@ pub fn glyph_preview_request(area: Rect, state: &AppState) -> Option<GlyphPrevie
         View::Inspector => layout::inspector(shell.main)
             .preview
             .map(|preview| preview.placeholder),
-        View::Browser => layout::browser(shell.main)
-            .context
-            .and_then(|context| selection_preview::glyph_area(context, code_point)),
+        View::Browser => state.browse().and_then(|browse| {
+            layout::browser(shell.main, browse.level())
+                .context
+                .and_then(|context| selection_preview::glyph_area(context, code_point))
+        }),
         View::Search => layout::search(shell.main)
             .preview
             .and_then(|preview| selection_preview::glyph_area(preview, code_point)),
@@ -76,7 +78,7 @@ mod tests {
             .expect("the standard inspector has a glyph preview");
 
         assert_eq!(request.code_point.value(), 0x0041);
-        assert_eq!(request.placeholder, Rect::new(62, 4, 36, 24));
+        assert_eq!(request.placeholder, Rect::new(60, 4, 36, 24));
     }
 
     #[test]
@@ -94,7 +96,7 @@ mod tests {
         .expect("a block table selection has an inline glyph preview");
 
         assert_eq!(search.code_point.value(), 0x2192);
-        assert_eq!(search.placeholder, Rect::new(62, 8, 36, 20));
+        assert_eq!(search.placeholder, Rect::new(60, 8, 36, 20));
         assert_eq!(browse.code_point.value(), 0x0041);
         assert_eq!(browse.placeholder, Rect::new(62, 10, 36, 18));
         assert_eq!(block.code_point.value(), 0x2ff5);

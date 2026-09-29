@@ -63,12 +63,14 @@ pub fn render(
         Paragraph::new(lines).block(
             Block::bordered()
                 .title(inspector_title(state))
-                .padding(Padding::horizontal(1)),
+                .padding(Padding::horizontal(1))
+                .border_style(color_theme.border_style())
+                .title_style(color_theme.accent_style()),
         ),
         area,
     );
     frame.render_widget(
-        ViewportScrollbar::new(document.lines.len(), start..end).style(color_theme.base_style()),
+        ViewportScrollbar::new(document.lines.len(), start..end).style(color_theme.border_style()),
         scrollbar::area_after(content),
     );
 }
@@ -298,11 +300,11 @@ mod tests {
             (Rect::new(0, 0, 60, 16), 12, 32),
             (Rect::new(0, 0, 99, 16), 12, 31),
             (Rect::new(0, 0, 100, 30), 26, 32),
-            (Rect::new(0, 0, 140, 40), 36, 32),
+            (Rect::new(0, 0, 140, 40), 36, 31),
         ] {
             let metrics = viewport_metrics(area, &state);
             assert_eq!(metrics.viewport_height, viewport_height);
-            assert_eq!(metrics.document_height, document_height);
+            assert_eq!(metrics.document_height, document_height, "area: {area:?}");
             assert_eq!(metrics.field_ranges.len(), 22);
         }
     }

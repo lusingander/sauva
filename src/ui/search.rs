@@ -34,7 +34,13 @@ pub fn render(
         .search()
         .expect("the search view always has search state");
 
-    render_input(frame, layout.input, search.input(), &ui.input_cursor);
+    render_input(
+        frame,
+        layout.input,
+        search.input(),
+        &ui.input_cursor,
+        color_theme,
+    );
     render_results(
         frame,
         layout.results,
@@ -60,7 +66,13 @@ pub fn render(
     }
 }
 
-fn render_input(frame: &mut Frame, area: Rect, input: &tui_input::Input, cursor: &InputCursor) {
+fn render_input(
+    frame: &mut Frame,
+    area: Rect,
+    input: &tui_input::Input,
+    cursor: &InputCursor,
+    color_theme: &ColorTheme,
+) {
     let width = area.width.saturating_sub(4).max(1);
     let scroll = match cursor {
         InputCursor::Native => input.visual_scroll(usize::from(width)),
@@ -82,7 +94,9 @@ fn render_input(frame: &mut Frame, area: Rect, input: &tui_input::Input, cursor:
         Paragraph::new(content).scroll((0, scroll as u16)).block(
             Block::bordered()
                 .title(" Search ")
-                .padding(Padding::horizontal(1)),
+                .padding(Padding::horizontal(1))
+                .border_style(color_theme.border_style())
+                .title_style(color_theme.accent_style()),
         ),
         area,
     );
@@ -110,7 +124,9 @@ fn render_results(
     };
     let block = Block::bordered()
         .title(title)
-        .padding(Padding::horizontal(1));
+        .padding(Padding::horizontal(1))
+        .border_style(color_theme.border_style())
+        .title_style(color_theme.accent_style());
     let content = block.inner(area);
     let lines = match outcome {
         SearchOutcome::Empty => search_prompt_lines(color_theme),
@@ -134,7 +150,7 @@ fn render_results(
 
     frame.render_widget(Paragraph::new(lines).block(block), area);
     frame.render_widget(
-        ViewportScrollbar::new(results.len(), visible_results).style(color_theme.base_style()),
+        ViewportScrollbar::new(results.len(), visible_results).style(color_theme.border_style()),
         scrollbar::area_after(content),
     );
 }
@@ -252,7 +268,9 @@ fn name_spans(name: &str, query: Option<&str>, style: Style) -> Vec<Span<'static
 fn render_empty_preview(frame: &mut Frame, area: Rect, color_theme: &ColorTheme) {
     let block = Block::bordered()
         .title(" Selection Preview ")
-        .padding(Padding::horizontal(1));
+        .padding(Padding::horizontal(1))
+        .border_style(color_theme.border_style())
+        .title_style(color_theme.accent_style());
     let content = block.inner(area);
     frame.render_widget(block, area);
 
@@ -285,7 +303,9 @@ mod tests {
         let backend = TestBackend::new(width, 3);
         let mut terminal = Terminal::new(backend).unwrap();
         terminal
-            .draw(|frame| render_input(frame, frame.area(), input, cursor))
+            .draw(|frame| {
+                render_input(frame, frame.area(), input, cursor, &ColorTheme::default());
+            })
             .unwrap();
         terminal.backend().clone()
     }

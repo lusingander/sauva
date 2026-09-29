@@ -167,7 +167,7 @@ pub fn render(
         sections.help,
     );
     frame.render_widget(
-        ViewportScrollbar::new(document_height, start..end).style(color_theme.base_style()),
+        ViewportScrollbar::new(document_height, start..end).style(color_theme.border_style()),
         scrollbar::area_after(sections.help),
     );
 }

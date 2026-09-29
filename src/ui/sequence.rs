@@ -31,7 +31,9 @@ pub fn render(
     let count = sequence.code_points().len();
     let block = Block::bordered()
         .title(format!(" Code Points · {count} "))
-        .padding(Padding::horizontal(1));
+        .padding(Padding::horizontal(1))
+        .border_style(color_theme.border_style())
+        .title_style(color_theme.accent_style());
     let content = block.inner(layout.navigator);
     let position_width = count.to_string().len();
     let visible = sequence.visible_range();
@@ -58,7 +60,7 @@ pub fn render(
 
     frame.render_widget(Paragraph::new(rows).block(block), layout.navigator);
     frame.render_widget(
-        ViewportScrollbar::new(count, visible).style(color_theme.base_style()),
+        ViewportScrollbar::new(count, visible).style(color_theme.border_style()),
         scrollbar::area_after(content),
     );
 
@@ -115,6 +117,6 @@ mod tests {
         assert!(text.contains("Code Points · 3"));
         assert!(text.contains("1  U+0041"));
         assert!(text.contains("2  U+2192"));
-        assert_eq!(text.matches("LATIN CAPITAL LETTER A").count(), 2);
+        assert_eq!(text.matches("LATIN CAPITAL LETTER A").count(), 3);
     }
 }

@@ -67,7 +67,9 @@ pub fn render(
 ) {
     let block = Block::bordered()
         .title(title.to_owned())
-        .padding(Padding::horizontal(1));
+        .padding(Padding::horizontal(1))
+        .border_style(color_theme.border_style())
+        .title_style(color_theme.accent_style());
     let content = block.inner(area);
     let document = Document::for_entries(content.width, label_width, entries, color_theme);
     frame.render_widget(block, area);

@@ -26,10 +26,10 @@ pub fn render(
     color_theme: &ColorTheme,
     ui: &UiSettings,
 ) {
-    let layout = browser(area);
     let browse = state
         .browse()
         .expect("the browser view always has browse state");
+    let layout = browser(area, browse.level());
 
     match browse.level() {
         BrowseLevel::Plane => {
@@ -114,7 +114,9 @@ fn render_block_navigator(
         .expect("the block level has a selected block");
     let block = Block::bordered()
         .title(" Browse · Blocks ")
-        .padding(Padding::horizontal(1));
+        .padding(Padding::horizontal(1))
+        .border_style(color_theme.border_style())
+        .title_style(color_theme.accent_style());
     let content = block.inner(area);
     let rows = visible_items
         .clone()
@@ -139,7 +141,7 @@ fn render_block_navigator(
     frame.render_widget(Paragraph::new(rows).block(block), area);
     frame.render_widget(
         ViewportScrollbar::new(UnicodeDatabase::blocks().len(), visible_items)
-            .style(color_theme.base_style()),
+            .style(color_theme.border_style()),
         scrollbar::area_after(content),
     );
 }
@@ -179,7 +181,9 @@ fn render_plane_navigator(
     let selected = Plane::for_code_point(cursor);
     let block = Block::bordered()
         .title(" Browse · Planes ")
-        .padding(Padding::horizontal(1));
+        .padding(Padding::horizontal(1))
+        .border_style(color_theme.border_style())
+        .title_style(color_theme.accent_style());
     let content = block.inner(area);
     let rows = visible_items
         .clone()
@@ -202,7 +206,7 @@ fn render_plane_navigator(
 
     frame.render_widget(Paragraph::new(rows).block(block), area);
     frame.render_widget(
-        ViewportScrollbar::new(Plane::COUNT, visible_items).style(color_theme.base_style()),
+        ViewportScrollbar::new(Plane::COUNT, visible_items).style(color_theme.border_style()),
         scrollbar::area_after(content),
     );
 }
@@ -239,7 +243,9 @@ fn render_range_navigator(
     let title = format!(" Browse · Ranges · Plane {} ", selected.plane().number());
     let block = Block::bordered()
         .title(title)
-        .padding(Padding::horizontal(1));
+        .padding(Padding::horizontal(1))
+        .border_style(color_theme.border_style())
+        .title_style(color_theme.accent_style());
     let content = block.inner(area);
     let rows = visible_items
         .clone()
@@ -259,7 +265,7 @@ fn render_range_navigator(
     frame.render_widget(Paragraph::new(rows).block(block), area);
     frame.render_widget(
         ViewportScrollbar::new(PlaneRange::COUNT_PER_PLANE, visible_items)
-            .style(color_theme.base_style()),
+            .style(color_theme.border_style()),
         scrollbar::area_after(content),
     );
 }
@@ -337,7 +343,9 @@ fn render_code_point_table(
         Paragraph::new(rows).block(
             Block::bordered()
                 .title(title)
-                .padding(Padding::horizontal(1)),
+                .padding(Padding::horizontal(1))
+                .border_style(color_theme.border_style())
+                .title_style(color_theme.accent_style()),
         ),
         area,
     );
