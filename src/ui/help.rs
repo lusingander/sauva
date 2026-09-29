@@ -18,7 +18,8 @@ use crate::{
 };
 
 const KEY_COLUMN_WIDTH: usize = 28;
-const ABOUT_HEIGHT: u16 = 7;
+const SECTION_LABEL_HEIGHT: u16 = 1;
+const ABOUT_HEIGHT: u16 = 5;
 const DIVIDER_HEIGHT: u16 = 1;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -70,14 +71,23 @@ struct ShortHelpItem {
 
 #[derive(Debug, Clone)]
 struct RenderedShortHelpItem {
-    text: String,
+    keys: String,
+    description: &'static str,
     priority: u8,
+}
+
+#[derive(Debug, Clone)]
+pub struct FooterContent {
+    pub left: Line<'static>,
+    pub right: Line<'static>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct HelpSections {
+    about_label: Rect,
     about: Rect,
     divider: Rect,
+    keybindings_label: Rect,
     help: Rect,
 }
 
@@ -86,7 +96,6 @@ pub fn viewport_metrics(area: Rect, state: &AppState, keymap: &ResolvedKeymap) -
         return ViewportMetrics::default();
     };
     let sections = help_sections(layout.main);
-    let content = section_content_area(sections.help);
     let context = context_for_state(state);
     let document = document(
         context,
@@ -94,12 +103,12 @@ pub fn viewport_metrics(area: Rect, state: &AppState, keymap: &ResolvedKeymap) -
         keymap,
         Style::new(),
         Style::new(),
-        usize::from(content.width),
+        usize::from(sections.help.width),
     );
     let document_height = document.lines.len();
 
     ViewportMetrics {
-        viewport_height: usize::from(content.height),
+        viewport_height: usize::from(sections.help.height),
         document_height,
     }
 }
@@ -112,20 +121,17 @@ pub fn render(
     color_theme: &ColorTheme,
 ) {
     let context = context_for_state(state);
-    let title = format!(" Help · {} ", context_label(context));
     let block = Block::bordered()
-        .title(title)
-        .padding(Padding::horizontal(1));
+        .padding(Padding::horizontal(1))
+        .border_style(color_theme.border_style());
     let sections = help_sections(area);
-    let help_block = section_block();
-    let help_content = help_block.inner(sections.help);
     let document = document(
         context,
         state.sequence().is_some(),
         keymap,
         Style::new().fg(color_theme.fg),
         Style::new().fg(color_theme.key),
-        usize::from(help_content.width),
+        usize::from(sections.help.width),
     );
     let document_height = document.lines.len();
     let visible = state.help().visible_range();
@@ -134,12 +140,15 @@ pub fn render(
 
     frame.render_widget(block, area);
     frame.render_widget(
+        Paragraph::new("About").style(color_theme.accent_style()),
+        sections.about_label,
+    );
+    frame.render_widget(
         Paragraph::new(about_document(
             DISPLAY_PACKAGE,
             Style::new().fg(color_theme.fg),
             Style::new().fg(color_theme.link),
-        ))
-        .block(section_block()),
+        )),
         sections.about,
     );
     frame.render_widget(
@@ -149,14 +158,17 @@ pub fn render(
         sections.divider,
     );
     frame.render_widget(
-        Paragraph::new(document)
-            .block(help_block)
-            .scroll((u16::try_from(start).unwrap_or(u16::MAX), 0)),
+        Paragraph::new(format!("Keybindings · {}", context_label(context)))
+            .style(color_theme.accent_style()),
+        sections.keybindings_label,
+    );
+    frame.render_widget(
+        Paragraph::new(document).scroll((u16::try_from(start).unwrap_or(u16::MAX), 0)),
         sections.help,
     );
     frame.render_widget(
         ViewportScrollbar::new(document_height, start..end).style(color_theme.base_style()),
-        scrollbar::area_after(help_content),
+        scrollbar::area_after(sections.help),
     );
 }
 
@@ -180,13 +192,33 @@ fn about_document(
     ])
 }
 
-pub fn footer(context: Context, has_sequence: bool, width: u16, keymap: &ResolvedKeymap) -> String {
+pub fn footer(
+    context: Context,
+    has_sequence: bool,
+    width: u16,
+    keymap: &ResolvedKeymap,
+    color_theme: &ColorTheme,
+) -> FooterContent {
     let mut items = short_help_items(context, has_sequence)
         .into_iter()
         .filter_map(|item| render_short_help_item(context, item, keymap))
         .collect::<Vec<_>>();
+    let help = render_short_help_item(
+        context,
+        short(
+            &[Command::Help],
+            if context == Context::Help {
+                "Close"
+            } else {
+                "Help"
+            },
+            0,
+        ),
+        keymap,
+    );
+    let help_width = help.as_ref().map_or(0, |item| footer_item_width(item) + 2);
 
-    while footer_width(&items) > usize::from(width) {
+    while footer_width(&items) + help_width > usize::from(width) {
         let Some(index) = items
             .iter()
             .enumerate()
@@ -198,17 +230,9 @@ pub fn footer(context: Context, has_sequence: bool, width: u16, keymap: &Resolve
         items.remove(index);
     }
 
-    if items.is_empty() {
-        String::new()
-    } else {
-        format!(
-            " {} ",
-            items
-                .iter()
-                .map(|item| item.text.as_str())
-                .collect::<Vec<_>>()
-                .join("  ")
-        )
+    FooterContent {
+        left: footer_line(&items, color_theme),
+        right: footer_line(&help.into_iter().collect::<Vec<_>>(), color_theme),
     }
 }
 
@@ -455,21 +479,18 @@ fn short_help_items(context: Context, has_sequence: bool) -> Vec<ShortHelpItem> 
             short(&[C::BrowsePlanes, C::BrowseRanges, C::BrowseBlocks, C::BrowseCodePoints], "Browse", 2),
             short(&[C::Back], "Sequence", 1),
             short(&[C::Quit], "Quit", 0),
-            short(&[C::Help], "Help", 0),
         ],
         Context::Search => vec![
             short(&[C::PreviousResult, C::NextResult], "Move", 1),
             short(&[C::InspectResult], "Inspect", 1),
             short(&[C::Close], "Close", 0),
             short(&[C::Quit], "Quit", 2),
-            short(&[C::Help], "Help", 0),
         ],
         Context::Sequence => vec![
             short(&[C::MoveUp, C::MoveDown], "Move", 1),
             short(&[C::First, C::Last], "Ends", 3),
             short(&[C::Activate], "Inspect", 1),
             short(&[C::Quit], "Quit", 0),
-            short(&[C::Help], "Help", 0),
         ],
         Context::BrowsePlane => vec![
             short(&[C::MoveUp, C::MoveDown], "Move", 1),
@@ -478,7 +499,6 @@ fn short_help_items(context: Context, has_sequence: bool) -> Vec<ShortHelpItem> 
             short(&[C::Back], "Back", 1),
             short(&[C::Close], "Close", 0),
             short(&[C::Quit], "Quit", 2),
-            short(&[C::Help], "Help", 0),
         ],
         Context::BrowseRange => vec![
             short(&[C::MoveUp, C::MoveDown], "Move", 1),
@@ -488,7 +508,6 @@ fn short_help_items(context: Context, has_sequence: bool) -> Vec<ShortHelpItem> 
             short(&[C::Back], "Back", 1),
             short(&[C::Close], "Close", 0),
             short(&[C::Quit], "Quit", 2),
-            short(&[C::Help], "Help", 0),
         ],
         Context::BrowseBlock => vec![
             short(&[C::MoveUp, C::MoveDown], "Move", 1),
@@ -498,7 +517,6 @@ fn short_help_items(context: Context, has_sequence: bool) -> Vec<ShortHelpItem> 
             short(&[C::Back], "Back", 1),
             short(&[C::Close], "Close", 0),
             short(&[C::Quit], "Quit", 2),
-            short(&[C::Help], "Help", 0),
         ],
         Context::BrowseCodePoints => vec![
             short(&[C::MoveLeft, C::MoveRight, C::MoveUp, C::MoveDown], "Move", 1),
@@ -508,17 +526,16 @@ fn short_help_items(context: Context, has_sequence: bool) -> Vec<ShortHelpItem> 
             short(&[C::Back], "Back", 1),
             short(&[C::Close], "Close", 0),
             short(&[C::Quit], "Quit", 2),
-            short(&[C::Help], "Help", 0),
         ],
         Context::Help => vec![
             short(&[C::MoveUp, C::MoveDown], "Move", 1),
             short(&[C::PageUp, C::PageDown], "Page", 3),
             short(&[C::First, C::Last], "Ends", 3),
-            short(&[C::Close, C::Help], "Close", 0),
+            short(&[C::Close], "Close", 0),
             short(&[C::Quit], "Quit", 1),
         ],
         Context::Global => vec![
-            short(&[C::Quit], "Quit", 0), short(&[C::Help], "Help", 0),
+            short(&[C::Quit], "Quit", 0),
         ],
     };
     if !has_sequence && context == Context::Inspector {
@@ -551,7 +568,8 @@ fn render_short_help_item(
     }
 
     Some(RenderedShortHelpItem {
-        text: format!("{}: {}", labels.join("/"), item.description),
+        keys: labels.join("/"),
+        description: item.description,
         priority: item.priority,
     })
 }
@@ -560,15 +578,37 @@ fn footer_width(items: &[RenderedShortHelpItem]) -> usize {
     if items.is_empty() {
         return 0;
     }
-    let content = items
-        .iter()
-        .map(|item| item.text.as_str())
-        .collect::<Vec<_>>()
-        .join("  ");
-    Line::from(content).width() + 2
+    items.iter().map(footer_item_width).sum::<usize>() + (items.len() - 1) * 2 + 2
 }
 
-fn context_label(context: Context) -> &'static str {
+fn footer_item_width(item: &RenderedShortHelpItem) -> usize {
+    Line::from(format!("{}: {}", item.keys, item.description)).width()
+}
+
+fn footer_line(items: &[RenderedShortHelpItem], color_theme: &ColorTheme) -> Line<'static> {
+    if items.is_empty() {
+        return Line::default();
+    }
+
+    let mut spans = vec![Span::raw(" ")];
+    for (index, item) in items.iter().enumerate() {
+        if index > 0 {
+            spans.push(Span::raw("  "));
+        }
+        spans.push(Span::styled(
+            item.keys.clone(),
+            Style::new().fg(color_theme.key),
+        ));
+        spans.push(Span::styled(
+            format!(": {}", item.description),
+            Style::new().fg(color_theme.muted),
+        ));
+    }
+    spans.push(Span::raw(" "));
+    Line::from(spans)
+}
+
+pub fn context_label(context: Context) -> &'static str {
     match context {
         Context::Global => "Global",
         Context::Inspector => "Inspector",
@@ -589,26 +629,22 @@ fn content_area(area: Rect) -> Rect {
 }
 
 fn help_sections(area: Rect) -> HelpSections {
-    let [about, divider, help] = Layout::vertical([
+    let [about_label, about, divider, keybindings_label, help] = Layout::vertical([
+        Constraint::Length(SECTION_LABEL_HEIGHT),
         Constraint::Length(ABOUT_HEIGHT),
         Constraint::Length(DIVIDER_HEIGHT),
+        Constraint::Length(SECTION_LABEL_HEIGHT),
         Constraint::Min(0),
     ])
     .areas(content_area(area));
 
     HelpSections {
+        about_label,
         about,
         divider,
+        keybindings_label,
         help,
     }
-}
-
-fn section_block() -> Block<'static> {
-    Block::default().padding(Padding::uniform(1))
-}
-
-fn section_content_area(area: Rect) -> Rect {
-    section_block().inner(area)
 }
 
 #[cfg(test)]
@@ -642,7 +678,7 @@ mod tests {
         let text = about_document(CARGO_PACKAGE, Style::new(), Style::new());
         let (width, height) = MINIMUM_SIZE;
         let shell = layout::calculate(Rect::new(0, 0, width, height)).unwrap();
-        let content = section_content_area(help_sections(shell.main).about);
+        let content = help_sections(shell.main).about;
 
         assert!(
             [
@@ -670,15 +706,16 @@ mod tests {
 
         let metrics = viewport_metrics(Rect::new(0, 0, width, height), &state, &keymap);
 
-        assert_eq!(metrics.viewport_height, 3);
+        assert_eq!(metrics.viewport_height, 4);
         assert!(metrics.document_height > metrics.viewport_height);
     }
 
     #[test]
     fn footer_prunes_lower_priority_items_to_fit() {
         let keymap = ResolvedKeymap::default();
-        let wide = footer(Context::Inspector, false, 140, &keymap);
-        let narrow = footer(Context::Inspector, false, 60, &keymap);
+        let theme = ColorTheme::default();
+        let wide = footer_text(footer(Context::Inspector, false, 140, &keymap, &theme));
+        let narrow = footer_text(footer(Context::Inspector, false, 60, &keymap, &theme));
 
         assert!(Line::from(wide.as_str()).width() <= 140);
         assert!(Line::from(narrow.as_str()).width() <= 60);
@@ -757,7 +794,16 @@ mod tests {
 
         assert!(!without_sequence.contains("Return to the input sequence"));
         assert!(with_sequence.contains("Return to the input sequence"));
-        assert!(footer(Context::Inspector, true, 140, &keymap).contains("BS: Sequence"));
+        assert!(
+            footer_text(footer(
+                Context::Inspector,
+                true,
+                140,
+                &keymap,
+                &ColorTheme::default(),
+            ))
+            .contains("BS: Sequence")
+        );
     }
 
     #[test]
@@ -771,7 +817,13 @@ mod tests {
         )
         .unwrap();
         let keymap = ResolvedKeymap::with_config(config.into()).unwrap();
-        let footer = footer(Context::Inspector, false, 140, &keymap);
+        let footer = footer_text(footer(
+            Context::Inspector,
+            false,
+            140,
+            &keymap,
+            &ColorTheme::default(),
+        ));
         let help = document(
             Context::Inspector,
             false,
@@ -791,5 +843,9 @@ mod tests {
         assert!(help.contains("<n>"));
         assert!(!help.contains("<l>  <Right>"));
         assert!(!help.contains("Open search"));
+    }
+
+    fn footer_text(footer: FooterContent) -> String {
+        format!("{}{}", footer.left, footer.right)
     }
 }

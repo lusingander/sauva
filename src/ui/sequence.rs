@@ -30,7 +30,7 @@ pub fn render(
         .expect("the sequence view always has sequence state");
     let count = sequence.code_points().len();
     let block = Block::bordered()
-        .title(format!(" Sequence · {count} code points "))
+        .title(format!(" Code Points · {count} "))
         .padding(Padding::horizontal(1));
     let content = block.inner(layout.navigator);
     let position_width = count.to_string().len();
@@ -112,7 +112,7 @@ mod tests {
                     text
                 });
 
-        assert!(text.contains("Sequence · 3 code points"));
+        assert!(text.contains("Code Points · 3"));
         assert!(text.contains("1  U+0041"));
         assert!(text.contains("2  U+2192"));
         assert_eq!(text.matches("LATIN CAPITAL LETTER A").count(), 2);

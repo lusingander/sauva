@@ -10,6 +10,7 @@ const CONTEXT_MINIMUM_WIDTH: u16 = 40;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct UiLayout {
+    pub header: Rect,
     pub main: Rect,
     pub footer: Rect,
 }
@@ -45,9 +46,18 @@ pub fn calculate(area: Rect) -> Option<UiLayout> {
         return None;
     }
 
-    let [main, footer] = Layout::vertical([Constraint::Min(1), Constraint::Length(1)]).areas(area);
+    let [header, main, footer] = Layout::vertical([
+        Constraint::Length(1),
+        Constraint::Min(1),
+        Constraint::Length(1),
+    ])
+    .areas(area);
 
-    Some(UiLayout { main, footer })
+    Some(UiLayout {
+        header,
+        main,
+        footer,
+    })
 }
 
 pub fn browser(area: Rect) -> BrowserLayout {
@@ -133,21 +143,24 @@ mod tests {
     #[case(
         STANDARD_SIZE,
         UiLayout {
-            main: Rect::new(0, 0, 100, 29),
+            header: Rect::new(0, 0, 100, 1),
+            main: Rect::new(0, 1, 100, 28),
             footer: Rect::new(0, 29, 100, 1),
         }
     )]
     #[case(
         MINIMUM_SIZE,
         UiLayout {
-            main: Rect::new(0, 0, 60, 15),
+            header: Rect::new(0, 0, 60, 1),
+            main: Rect::new(0, 1, 60, 14),
             footer: Rect::new(0, 15, 60, 1),
         }
     )]
     #[case(
         WIDE_SIZE,
         UiLayout {
-            main: Rect::new(0, 0, 140, 39),
+            header: Rect::new(0, 0, 140, 1),
+            main: Rect::new(0, 1, 140, 38),
             footer: Rect::new(0, 39, 140, 1),
         }
     )]
@@ -287,17 +300,17 @@ mod tests {
 
     #[test]
     fn calculates_browser_list_height_from_the_terminal_area() {
-        assert_eq!(browser_list_height(Rect::new(0, 0, 100, 30)), 27);
-        assert_eq!(browser_list_height(Rect::new(0, 0, 60, 16)), 13);
-        assert_eq!(browser_list_height(Rect::new(0, 0, 140, 40)), 37);
+        assert_eq!(browser_list_height(Rect::new(0, 0, 100, 30)), 26);
+        assert_eq!(browser_list_height(Rect::new(0, 0, 60, 16)), 12);
+        assert_eq!(browser_list_height(Rect::new(0, 0, 140, 40)), 36);
         assert_eq!(browser_list_height(Rect::new(0, 0, 59, 15)), 0);
     }
 
     #[test]
     fn calculates_search_result_height_from_the_terminal_area() {
-        assert_eq!(search_result_height(Rect::new(0, 0, 100, 30)), 24);
-        assert_eq!(search_result_height(Rect::new(0, 0, 60, 16)), 10);
-        assert_eq!(search_result_height(Rect::new(0, 0, 140, 40)), 34);
+        assert_eq!(search_result_height(Rect::new(0, 0, 100, 30)), 23);
+        assert_eq!(search_result_height(Rect::new(0, 0, 60, 16)), 9);
+        assert_eq!(search_result_height(Rect::new(0, 0, 140, 40)), 33);
         assert_eq!(search_result_height(Rect::new(0, 0, 59, 15)), 0);
     }
 }

@@ -1,7 +1,8 @@
 use ratatui::{
     Frame,
-    layout::Rect,
+    layout::{Alignment, Rect},
     style::Style,
+    text::{Line, Span},
     widgets::{Block, Padding, Paragraph},
 };
 
@@ -32,6 +33,7 @@ pub fn render(
         return;
     };
 
+    render_header(frame, layout.header, state, color_theme);
     if state.help().is_open() {
         help::render(frame, layout.main, state, keymap, color_theme);
     } else {
@@ -49,6 +51,66 @@ pub fn render(
         }
     }
     render_footer(frame, layout.footer, state, keymap, color_theme);
+}
+
+fn render_header(frame: &mut Frame, area: Rect, state: &AppState, color_theme: &ColorTheme) {
+    let context = context_for_state(state);
+    let location = if state.help().is_open() {
+        "Help".to_owned()
+    } else {
+        help::context_label(context).to_owned()
+    };
+    let status = if state.help().is_open() {
+        help::context_label(context).to_owned()
+    } else {
+        header_status(state)
+    };
+
+    frame.render_widget(
+        Paragraph::new(Line::from(vec![
+            Span::styled(" sauva", color_theme.accent_style()),
+            Span::styled(format!(" · {location}"), color_theme.base_style()),
+        ])),
+        area,
+    );
+    frame.render_widget(
+        Paragraph::new(Line::styled(
+            format!("{status} "),
+            Style::new().fg(color_theme.muted),
+        ))
+        .alignment(Alignment::Right),
+        area,
+    );
+}
+
+fn header_status(state: &AppState) -> String {
+    match state.view() {
+        View::Inspector => state.selected().to_string(),
+        View::Browser => state
+            .browse()
+            .map_or_else(String::new, |browse| browse.cursor().to_string()),
+        View::Search => {
+            let search = state
+                .search()
+                .expect("the search view always has search state");
+            let count = search.outcome().results().len();
+            search.selected_result().map_or_else(
+                || format!("{count} results"),
+                |result| format!("{count} results · {}", result.code_point()),
+            )
+        }
+        View::Sequence => {
+            let sequence = state
+                .sequence()
+                .expect("the sequence view always has sequence state");
+            format!(
+                "{}/{} · {}",
+                sequence.selected_index() + 1,
+                sequence.code_points().len(),
+                sequence.selected()
+            )
+        }
+    }
 }
 
 fn render_size_warning(frame: &mut Frame, area: Rect) {
@@ -90,9 +152,16 @@ fn render_footer(
     } else {
         context_for_state(state)
     };
-    let text = help::footer(context, state.sequence().is_some(), area.width, keymap);
+    let content = help::footer(
+        context,
+        state.sequence().is_some(),
+        area.width,
+        keymap,
+        color_theme,
+    );
+    frame.render_widget(Paragraph::new(content.left), area);
     frame.render_widget(
-        Paragraph::new(text).style(Style::new().fg(color_theme.muted)),
+        Paragraph::new(content.right).alignment(Alignment::Right),
         area,
     );
 }

@@ -75,10 +75,10 @@ pub fn render(
 
 fn inspector_title(state: &AppState) -> String {
     state.sequence().map_or_else(
-        || " Inspector ".to_owned(),
+        || " Properties ".to_owned(),
         |sequence| {
             format!(
-                " Inspector · from Sequence {}/{} ",
+                " Properties · from Sequence {}/{} ",
                 sequence.selected_index() + 1,
                 sequence.code_points().len()
             )
@@ -324,10 +324,10 @@ mod tests {
         );
 
         for (area, viewport_height, document_height) in [
-            (Rect::new(0, 0, 60, 16), 13, 32),
-            (Rect::new(0, 0, 99, 16), 13, 31),
-            (Rect::new(0, 0, 100, 30), 27, 32),
-            (Rect::new(0, 0, 140, 40), 37, 32),
+            (Rect::new(0, 0, 60, 16), 12, 32),
+            (Rect::new(0, 0, 99, 16), 12, 31),
+            (Rect::new(0, 0, 100, 30), 26, 32),
+            (Rect::new(0, 0, 140, 40), 36, 32),
         ] {
             let metrics = viewport_metrics(area, &state);
             assert_eq!(metrics.viewport_height, viewport_height);
@@ -359,7 +359,7 @@ mod tests {
             &mut state,
             Action::MoveInspector(crate::inspector::InspectorMove::Last),
         );
-        assert_eq!(state.inspector().offset(), 19);
+        assert_eq!(state.inspector().offset(), 20);
 
         let wide = viewport_metrics(Rect::new(0, 0, 140, 40), &state);
         update(

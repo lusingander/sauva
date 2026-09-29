@@ -76,7 +76,7 @@ mod tests {
             .expect("the standard inspector has a glyph preview");
 
         assert_eq!(request.code_point.value(), 0x0041);
-        assert_eq!(request.placeholder, Rect::new(62, 3, 36, 25));
+        assert_eq!(request.placeholder, Rect::new(62, 4, 36, 24));
     }
 
     #[test]
@@ -94,9 +94,9 @@ mod tests {
         .expect("a block table selection has an inline glyph preview");
 
         assert_eq!(search.code_point.value(), 0x2192);
-        assert_eq!(search.placeholder, Rect::new(62, 7, 36, 21));
+        assert_eq!(search.placeholder, Rect::new(62, 8, 36, 20));
         assert_eq!(browse.code_point.value(), 0x0041);
-        assert_eq!(browse.placeholder, Rect::new(62, 9, 36, 19));
+        assert_eq!(browse.placeholder, Rect::new(62, 10, 36, 18));
         assert_eq!(block.code_point.value(), 0x2ff5);
     }
 
