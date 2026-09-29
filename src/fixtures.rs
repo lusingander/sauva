@@ -71,15 +71,15 @@ pub fn details_surrogate() -> AppState {
 }
 
 pub fn glyph_basic() -> AppState {
-    prepared_glyph(0x0041, GlyphPreviewStatus::Ready, 36, 25, 288, 400)
+    prepared_glyph(0x0041, GlyphPreviewStatus::Ready, 36, 24, 288, 384)
 }
 
 pub fn glyph_japanese() -> AppState {
-    prepared_glyph(0x3042, GlyphPreviewStatus::Ready, 36, 25, 288, 400)
+    prepared_glyph(0x3042, GlyphPreviewStatus::Ready, 36, 24, 288, 384)
 }
 
 pub fn glyph_cjk() -> AppState {
-    prepared_glyph(0x6f22, GlyphPreviewStatus::Ready, 36, 25, 288, 400)
+    prepared_glyph(0x6f22, GlyphPreviewStatus::Ready, 36, 24, 288, 384)
 }
 
 pub fn glyph_combining() -> AppState {
@@ -87,22 +87,22 @@ pub fn glyph_combining() -> AppState {
         0x0301,
         GlyphPreviewStatus::CombiningContext,
         36,
-        25,
+        24,
         288,
-        400,
+        384,
     )
 }
 
 pub fn glyph_blank() -> AppState {
-    prepared_glyph(0x0020, GlyphPreviewStatus::Blank, 36, 25, 288, 400)
+    prepared_glyph(0x0020, GlyphPreviewStatus::Blank, 36, 24, 288, 384)
 }
 
 pub fn glyph_missing() -> AppState {
-    prepared_glyph(0x10ffff, GlyphPreviewStatus::Missing, 36, 25, 288, 400)
+    prepared_glyph(0x10ffff, GlyphPreviewStatus::Missing, 36, 24, 288, 384)
 }
 
 pub fn glyph_surrogate() -> AppState {
-    prepared_glyph(0xd800, GlyphPreviewStatus::NotScalar, 36, 25, 288, 400)
+    prepared_glyph(0xd800, GlyphPreviewStatus::NotScalar, 36, 24, 288, 384)
 }
 
 pub fn glyph_disabled() -> AppState {
@@ -115,12 +115,12 @@ pub fn glyph_disabled() -> AppState {
 
 #[cfg(test)]
 pub fn glyph_wide() -> AppState {
-    prepared_glyph(0x3042, GlyphPreviewStatus::Ready, 76, 35, 608, 560)
+    prepared_glyph(0x3042, GlyphPreviewStatus::Ready, 36, 34, 288, 544)
 }
 
 #[cfg(test)]
 pub fn glyph_basic_iterm2() -> AppState {
-    let geometry = preview_geometry(36, 25, 288, 400);
+    let geometry = preview_geometry(36, 24, 288, 384);
     let mut state = configured_glyph(
         0x0041,
         GraphicsAvailability::Available(GraphicsProtocol::Iterm2),
@@ -141,11 +141,11 @@ pub fn glyph_basic_iterm2() -> AppState {
 pub fn details_scrolled_minimum() -> AppState {
     let mut state = details_canonical_decomposition();
     // At the supported minimum size (60x16), U+00E9 has 35 logical
-    // inspector lines and thirteen visible content lines.
+    // inspector lines and twelve visible content lines.
     update(
         &mut state,
         Action::ResizeInspectorViewport {
-            viewport_height: 13,
+            viewport_height: 12,
             document_height: 35,
             field_ranges: inspector_field_ranges(),
         },

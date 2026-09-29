@@ -8,7 +8,7 @@ pub const MINIMUM_SIZE: (u16, u16) = (60, 16);
 #[cfg(test)]
 pub const WIDE_SIZE: (u16, u16) = (140, 40);
 const SPLIT_MINIMUM_WIDTH: u16 = 100;
-const AUXILIARY_WIDTH: u16 = 44;
+const AUXILIARY_WIDTH: u16 = 40;
 const CODE_POINT_GRID_WIDTH: u16 = 60;
 const CODE_POINT_CONTEXT_MINIMUM_WIDTH: u16 = 40;
 pub const GLYPH_MAXIMUM_WIDTH: u16 = 36;
@@ -236,15 +236,15 @@ mod tests {
     #[case(
         Rect::new(0, 3, 100, 26),
         BrowserLayout {
-            navigator: Rect::new(0, 3, 56, 26),
-            context: Some(Rect::new(56, 3, 44, 26)),
+            navigator: Rect::new(0, 3, 60, 26),
+            context: Some(Rect::new(60, 3, 40, 26)),
         }
     )]
     #[case(
         Rect::new(0, 3, 140, 36),
         BrowserLayout {
-            navigator: Rect::new(0, 3, 96, 36),
-            context: Some(Rect::new(96, 3, 44, 36)),
+            navigator: Rect::new(0, 3, 100, 36),
+            context: Some(Rect::new(100, 3, 40, 36)),
         }
     )]
     fn lays_out_the_browser_at_responsive_width_boundaries(
@@ -290,20 +290,20 @@ mod tests {
     #[case(
         Rect::new(0, 3, 100, 26),
         InspectorLayout {
-            details: Rect::new(0, 3, 56, 26),
+            details: Rect::new(0, 3, 60, 26),
             preview: Some(GlyphPreviewLayout {
-                panel: Rect::new(56, 3, 44, 26),
-                placeholder: Rect::new(60, 6, 36, 22),
+                panel: Rect::new(60, 3, 40, 26),
+                placeholder: Rect::new(62, 6, 36, 22),
             }),
         }
     )]
     #[case(
         Rect::new(0, 3, 140, 36),
         InspectorLayout {
-            details: Rect::new(0, 3, 96, 36),
+            details: Rect::new(0, 3, 100, 36),
             preview: Some(GlyphPreviewLayout {
-                panel: Rect::new(96, 3, 44, 36),
-                placeholder: Rect::new(100, 6, 36, 32),
+                panel: Rect::new(100, 3, 40, 36),
+                placeholder: Rect::new(102, 6, 36, 32),
             }),
         }
     )]
@@ -334,17 +334,17 @@ mod tests {
     #[case(
         Rect::new(0, 3, 100, 26),
         SearchLayout {
-            input: Rect::new(0, 3, 56, 3),
-            results: Rect::new(0, 6, 56, 23),
-            preview: Some(Rect::new(56, 3, 44, 26)),
+            input: Rect::new(0, 3, 60, 3),
+            results: Rect::new(0, 6, 60, 23),
+            preview: Some(Rect::new(60, 3, 40, 26)),
         }
     )]
     #[case(
         Rect::new(0, 3, 140, 36),
         SearchLayout {
-            input: Rect::new(0, 3, 96, 3),
-            results: Rect::new(0, 6, 96, 33),
-            preview: Some(Rect::new(96, 3, 44, 36)),
+            input: Rect::new(0, 3, 100, 3),
+            results: Rect::new(0, 6, 100, 33),
+            preview: Some(Rect::new(100, 3, 40, 36)),
         }
     )]
     fn lays_out_search_at_responsive_width_boundaries(

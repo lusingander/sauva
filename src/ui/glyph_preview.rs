@@ -243,10 +243,10 @@ mod tests {
         let fixture = fixtures::glyph_basic();
         let state = fixture.glyph_preview();
         let layout = GlyphPreviewLayout {
-            panel: Rect::new(0, 0, 40, 29),
-            placeholder: Rect::new(2, 3, 36, 25),
+            panel: Rect::new(0, 0, 40, 28),
+            placeholder: Rect::new(2, 3, 36, 24),
         };
-        let backend = TestBackend::new(40, 29);
+        let backend = TestBackend::new(40, 28);
         let mut terminal = Terminal::new(backend).unwrap();
 
         let completed = terminal
@@ -262,8 +262,8 @@ mod tests {
             kitty::placeholder(0, 0).unwrap()
         );
         assert_eq!(
-            buffer.cell((37, 27)).unwrap().symbol(),
-            kitty::placeholder(24, 35).unwrap()
+            buffer.cell((37, 26)).unwrap().symbol(),
+            kitty::placeholder(23, 35).unwrap()
         );
         assert_eq!(
             buffer.cell((2, 3)).unwrap().fg,
@@ -275,8 +275,8 @@ mod tests {
     fn image_only_preview_draws_no_metadata_or_status() {
         let fixture = fixtures::glyph_basic();
         let state = fixture.glyph_preview();
-        let area = Rect::new(0, 0, 36, 25);
-        let backend = TestBackend::new(36, 25);
+        let area = Rect::new(0, 0, 36, 24);
+        let backend = TestBackend::new(36, 24);
         let mut terminal = Terminal::new(backend).unwrap();
 
         terminal
@@ -291,8 +291,8 @@ mod tests {
             kitty::placeholder(0, 0).unwrap()
         );
         assert_eq!(
-            buffer.cell((35, 24)).unwrap().symbol(),
-            kitty::placeholder(24, 35).unwrap()
+            buffer.cell((35, 23)).unwrap().symbol(),
+            kitty::placeholder(23, 35).unwrap()
         );
         assert!(!buffer.content.iter().any(|cell| cell.symbol() == "F"));
     }
@@ -326,10 +326,10 @@ mod tests {
         let fixture = fixtures::glyph_basic_iterm2();
         let state = fixture.glyph_preview();
         let layout = GlyphPreviewLayout {
-            panel: Rect::new(0, 0, 40, 29),
-            placeholder: Rect::new(2, 3, 36, 25),
+            panel: Rect::new(0, 0, 40, 28),
+            placeholder: Rect::new(2, 3, 36, 24),
         };
-        let backend = TestBackend::new(40, 29);
+        let backend = TestBackend::new(40, 28);
         let mut terminal = Terminal::new(backend).unwrap();
 
         let completed = terminal
@@ -339,7 +339,7 @@ mod tests {
             .unwrap();
 
         let buffer = completed.buffer;
-        for y in 0..29 {
+        for y in 0..28 {
             for x in 0..40 {
                 let expected = if layout.placeholder.contains((x, y).into()) {
                     CellDiffOption::Skip

@@ -31,7 +31,10 @@ fn custom_keybindings_appear_in_help_and_drive_the_app() -> termlens::Result<()>
 
     terminal.send(Key::F(2))?;
     let help = terminal.snapshot_after(|screen| {
-        screen.contains("Help · Inspector") && screen.contains("<x>") && screen.contains("<F2>")
+        screen.contains("sauva · Help")
+            && screen.contains("Keybindings · Inspector")
+            && screen.contains("<x>")
+            && screen.contains("<F2>")
     })?;
     let help = help
         .mask_matching(env!("CARGO_PKG_REPOSITORY"), '▒')
@@ -46,7 +49,9 @@ fn custom_keybindings_appear_in_help_and_drive_the_app() -> termlens::Result<()>
 
     terminal.send(Key::Char('q'))?;
     terminal.send(Key::F(2))?;
-    terminal.wait_until(|screen| screen.contains("Help · Inspector"))?;
+    terminal.wait_until(|screen| {
+        screen.contains("sauva · Help") && screen.contains("Keybindings · Inspector")
+    })?;
     terminal.send(Key::F(2))?;
     terminal.wait_until(|screen| screen.contains("Identity"))?;
     terminal.send(Key::Char('x'))?;
@@ -96,7 +101,7 @@ fn starts_at_the_code_point_from_the_command_line() -> termlens::Result<()> {
 fn inspects_a_text_sequence_and_preserves_its_position_across_search() -> termlens::Result<()> {
     let mut terminal = termlens::bin!("sauva", size(100, 30), args(["A→B", "--graphics", "off"]))?;
     terminal.snapshot_after(|screen| {
-        screen.contains("Sequence · 3 code points")
+        screen.contains("Code Points · 3")
             && screen.contains("U+0041")
             && screen.contains("U+2192")
             && screen.contains("U+0042")
@@ -105,7 +110,7 @@ fn inspects_a_text_sequence_and_preserves_its_position_across_search() -> termle
     terminal.send(Key::Down)?;
     terminal.send(Key::Enter)?;
     terminal.wait_until(|screen| {
-        screen.contains("Inspector · from Sequence 2/3")
+        screen.contains("Properties · from Sequence 2/3")
             && screen.contains("U+2192")
             && screen.contains("RIGHTWARDS ARROW")
     })?;
@@ -118,16 +123,16 @@ fn inspects_a_text_sequence_and_preserves_its_position_across_search() -> termle
     })?;
     terminal.send(Key::Enter)?;
     terminal.wait_until(|screen| {
-        screen.contains("Inspector · from Sequence 2/3")
+        screen.contains("Properties · from Sequence 2/3")
             && screen.contains("U+03A9")
             && screen.contains("GREEK CAPITAL LETTER OMEGA")
     })?;
 
     terminal.send(Key::Backspace)?;
-    terminal.wait_until(|screen| screen.contains("Sequence · 3 code points"))?;
+    terminal.wait_until(|screen| screen.contains("Code Points · 3"))?;
     terminal.send(Key::Enter)?;
     terminal.wait_until(|screen| {
-        screen.contains("Inspector · from Sequence 2/3")
+        screen.contains("Properties · from Sequence 2/3")
             && screen.contains("U+2192")
             && screen.contains("RIGHTWARDS ARROW")
     })?;
@@ -268,7 +273,9 @@ fn search_help_does_not_edit_the_query_or_lose_the_result() -> termlens::Result<
 
     terminal.send(Key::F(1))?;
     terminal.snapshot_after(|screen| {
-        screen.contains("Help · Search") && screen.contains("Inspect the selected result")
+        screen.contains("sauva · Help")
+            && screen.contains("Keybindings · Search")
+            && screen.contains("Inspect the selected result")
     })?;
     terminal.send(Key::Char('x'))?;
     terminal.send(Key::F(1))?;

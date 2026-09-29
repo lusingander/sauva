@@ -329,11 +329,11 @@ mod tests {
                 .all(|cell| [color_theme.bg, color_theme.selection.bg].contains(&cell.bg)),
             "unexpected backgrounds: {unexpected_backgrounds:?}"
         );
-        assert_eq!(buffer.cell((2, 0)).unwrap().fg, color_theme.fg);
+        assert_eq!(buffer.cell((2, 0)).unwrap().fg, color_theme.accent);
         assert_eq!(buffer.cell((2, 1)).unwrap().fg, color_theme.accent);
-        assert_eq!(buffer.cell((2, 3)).unwrap().fg, color_theme.muted);
-        assert_eq!(buffer.cell((58, 1)).unwrap().symbol(), "│");
-        assert_eq!(buffer.cell((58, 1)).unwrap().fg, color_theme.fg);
+        assert_eq!(buffer.cell((2, 4)).unwrap().fg, color_theme.muted);
+        assert_eq!(buffer.cell((59, 2)).unwrap().symbol(), "│");
+        assert_eq!(buffer.cell((59, 2)).unwrap().fg, color_theme.border);
         assert!(
             buffer
                 .content
@@ -361,19 +361,19 @@ mod tests {
         let buffer = render_to_buffer(&fixtures::startup(), width, height, &color_theme);
 
         for x in 2..58 {
-            let cell = buffer.cell((x, 2)).unwrap();
+            let cell = buffer.cell((x, 3)).unwrap();
             assert_eq!(cell.bg, color_theme.selection.bg);
         }
-        assert_eq!(buffer.cell((2, 2)).unwrap().fg, color_theme.selection.fg);
-        assert_eq!(buffer.cell((1, 2)).unwrap().bg, color_theme.bg);
-        assert_eq!(buffer.cell((58, 2)).unwrap().bg, color_theme.bg);
+        assert_eq!(buffer.cell((2, 3)).unwrap().fg, color_theme.selection.fg);
+        assert_eq!(buffer.cell((1, 3)).unwrap().bg, color_theme.bg);
+        assert_eq!(buffer.cell((58, 3)).unwrap().bg, color_theme.bg);
 
         let mut state = fixtures::startup();
         synchronize_inspector(&mut state, width, height);
         update(&mut state, Action::MoveInspector(InspectorMove::NextField));
         let moved = render_to_buffer(&state, width, height, &color_theme);
-        assert_eq!(moved.cell((2, 2)).unwrap().bg, color_theme.bg);
-        assert_eq!(moved.cell((2, 3)).unwrap().bg, color_theme.selection.bg);
+        assert_eq!(moved.cell((2, 3)).unwrap().bg, color_theme.bg);
+        assert_eq!(moved.cell((2, 4)).unwrap().bg, color_theme.selection.bg);
     }
 
     #[test]
@@ -390,7 +390,10 @@ mod tests {
 
             let rendered = render_to_text(&state, width, height);
             assert!(
-                rendered.lines().nth(1).unwrap().contains("Identity"),
+                rendered
+                    .lines()
+                    .take(4)
+                    .any(|line| line.contains("Identity")),
                 "{movement:?}"
             );
         }
@@ -432,9 +435,9 @@ mod tests {
         let (width, height) = STANDARD_SIZE;
 
         for (state, selected_y) in [
-            (fixtures::search_name_results(), 4),
-            (fixtures::browse_planes(), 1),
-            (fixtures::browse_ranges(), 1),
+            (fixtures::search_name_results(), 5),
+            (fixtures::browse_planes(), 2),
+            (fixtures::browse_ranges(), 2),
         ] {
             let buffer = render_to_buffer(&state, width, height, &color_theme);
 
@@ -481,13 +484,13 @@ mod tests {
         let empty = render_to_buffer(&fixtures::search_empty(), width, height, &color_theme);
         assert!(
             empty
-                .cell((2, 4))
+                .cell((2, 5))
                 .unwrap()
                 .modifier
                 .contains(Modifier::BOLD)
         );
-        assert_eq!(empty.cell((2, 5)).unwrap().fg, color_theme.accent);
-        assert_eq!(empty.cell((12, 5)).unwrap().fg, color_theme.muted);
+        assert_eq!(empty.cell((2, 6)).unwrap().fg, color_theme.accent);
+        assert_eq!(empty.cell((12, 6)).unwrap().fg, color_theme.muted);
         assert!(
             empty
                 .content
@@ -499,12 +502,12 @@ mod tests {
             render_to_buffer(&fixtures::search_no_results(), width, height, &color_theme);
         assert!(
             no_results
-                .cell((2, 4))
+                .cell((2, 5))
                 .unwrap()
                 .modifier
                 .contains(Modifier::BOLD)
         );
-        assert_eq!(no_results.cell((2, 5)).unwrap().fg, color_theme.muted);
+        assert_eq!(no_results.cell((2, 6)).unwrap().fg, color_theme.muted);
     }
 
     #[test]
@@ -531,7 +534,7 @@ mod tests {
     }
 
     #[test]
-    fn code_point_selection_uses_its_own_fg_and_bg() {
+    fn code_point_selection_uses_the_global_selection_fg_and_bg() {
         let color_theme = test_color_theme();
         let (width, height) = STANDARD_SIZE;
         let state = fixtures::browse_code_points();
@@ -567,11 +570,11 @@ mod tests {
         let (width, height) = STANDARD_SIZE;
 
         for (state, marker) in [
-            (fixtures::startup(), (2, 2)),
-            (fixtures::search_name_results(), (2, 4)),
-            (fixtures::browse_planes(), (2, 1)),
-            (fixtures::browse_ranges(), (2, 1)),
-            (fixtures::browse_code_points(), (12, 6)),
+            (fixtures::startup(), (2, 3)),
+            (fixtures::search_name_results(), (2, 5)),
+            (fixtures::browse_planes(), (2, 2)),
+            (fixtures::browse_ranges(), (2, 2)),
+            (fixtures::browse_code_points(), (12, 7)),
         ] {
             let buffer = render_to_buffer_with_ui(&state, width, height, &color_theme, &ui);
 
@@ -587,7 +590,7 @@ mod tests {
         for state in [fixtures::search_name_results(), fixtures::browse_planes()] {
             let buffer = render_to_buffer(&state, width, height, &color_theme);
 
-            assert_eq!(buffer.cell((62, 1)).unwrap().fg, color_theme.muted);
+            assert_eq!(buffer.cell((62, 2)).unwrap().fg, color_theme.muted);
         }
     }
 
@@ -599,17 +602,18 @@ mod tests {
         update(&mut state, Action::ToggleHelp);
         let buffer = render_to_buffer(&state, width, height, &color_theme);
 
-        assert_eq!(buffer.cell((3, 6)).unwrap().symbol(), "h");
-        assert_eq!(buffer.cell((3, 6)).unwrap().fg, color_theme.link);
+        assert_eq!(buffer.cell((2, 7)).unwrap().symbol(), "h");
+        assert_eq!(buffer.cell((2, 7)).unwrap().fg, color_theme.link);
         assert_eq!(buffer.cell((2, 8)).unwrap().symbol(), "─");
         assert_eq!(buffer.cell((2, 8)).unwrap().fg, color_theme.border);
-        assert_eq!(buffer.cell((3, 10)).unwrap().symbol(), "<");
-        assert_eq!(buffer.cell((3, 10)).unwrap().fg, color_theme.fg);
-        assert_eq!(buffer.cell((4, 10)).unwrap().symbol(), "h");
-        assert_eq!(buffer.cell((4, 10)).unwrap().fg, color_theme.key);
-        assert_eq!(buffer.cell((5, 10)).unwrap().symbol(), ">");
-        assert_eq!(buffer.cell((5, 10)).unwrap().fg, color_theme.fg);
-        assert_eq!(buffer.cell((1, height - 1)).unwrap().fg, color_theme.muted);
+        assert_eq!(buffer.cell((2, 10)).unwrap().symbol(), "<");
+        assert_eq!(buffer.cell((2, 10)).unwrap().fg, color_theme.fg);
+        assert_eq!(buffer.cell((3, 10)).unwrap().symbol(), "h");
+        assert_eq!(buffer.cell((3, 10)).unwrap().fg, color_theme.key);
+        assert_eq!(buffer.cell((4, 10)).unwrap().symbol(), ">");
+        assert_eq!(buffer.cell((4, 10)).unwrap().fg, color_theme.fg);
+        assert_eq!(buffer.cell((1, height - 1)).unwrap().fg, color_theme.key);
+        assert_eq!(buffer.cell((6, height - 1)).unwrap().fg, color_theme.muted);
     }
 
     #[test]
@@ -959,7 +963,7 @@ mod tests {
             })
             .unwrap();
 
-        terminal.backend_mut().assert_cursor_position((18, 1));
+        terminal.backend_mut().assert_cursor_position((18, 2));
     }
 
     #[test]
