@@ -172,6 +172,11 @@ pub fn search_name_results() -> AppState {
 }
 
 #[cfg(test)]
+pub fn search_alias_results() -> AppState {
+    search_with_query("latin capital letter gha")
+}
+
+#[cfg(test)]
 pub fn search_name_results_minimum() -> AppState {
     let mut state = search_name_results();
     update(&mut state, Action::ResizeSearchViewport(7));

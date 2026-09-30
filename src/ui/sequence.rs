@@ -29,6 +29,7 @@ pub fn render(
             frame,
             context,
             sequence.selected(),
+            None,
             state.glyph_preview(),
             color_theme,
         );

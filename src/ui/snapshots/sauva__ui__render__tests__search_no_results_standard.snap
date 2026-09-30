@@ -8,7 +8,7 @@ expression: "render_to_text(&state, width, height)"
 ────────────────────────────────────────────────────────────│
  Results                                         0 results  │
   No matching characters                                    │
-  Try another name, code point, or character                │
+  Try another name or alias, code point, or character       │
                                                             │
                                                             │
                                                             │

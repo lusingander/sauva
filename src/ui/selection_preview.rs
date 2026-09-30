@@ -8,7 +8,7 @@ use crate::{
     ui::layout,
     ui::theme::ColorTheme,
     ui::workspace,
-    unicode::CodePoint,
+    unicode::{CodePoint, NameAlias},
 };
 
 const LABEL_WIDTH: u16 = 17;
@@ -20,10 +20,11 @@ pub fn render(
     frame: &mut Frame,
     area: Rect,
     code_point: CodePoint,
+    matched_alias: Option<NameAlias>,
     glyph_preview_state: &GlyphPreviewState,
     color_theme: &ColorTheme,
 ) {
-    let details = SelectionDetails::new(code_point);
+    let details = SelectionDetails::new(code_point, matched_alias);
     let entries = details.entries();
 
     let content = workspace::render_rail_heading(frame, area, "Selection", None, color_theme);
@@ -51,8 +52,12 @@ pub fn render(
     }
 }
 
-pub fn glyph_area(area: Rect, code_point: CodePoint) -> Option<Rect> {
-    let details = SelectionDetails::new(code_point);
+pub fn glyph_area(
+    area: Rect,
+    code_point: CodePoint,
+    matched_alias: Option<NameAlias>,
+) -> Option<Rect> {
+    let details = SelectionDetails::new(code_point, matched_alias);
     glyph_area_for_entries(area, &details.entries())
 }
 
@@ -92,10 +97,11 @@ struct SelectionDetails {
     details: InspectorDetails,
     category: String,
     code_point: String,
+    matched_alias: Option<NameAlias>,
 }
 
 impl SelectionDetails {
-    fn new(code_point: CodePoint) -> Self {
+    fn new(code_point: CodePoint, matched_alias: Option<NameAlias>) -> Self {
         let details = InspectorDetails::for_code_point(code_point);
         let category = details.general_category();
         let category = format!("{} — {}", category.abbreviation(), category.name());
@@ -104,23 +110,34 @@ impl SelectionDetails {
             details,
             category,
             code_point,
+            matched_alias,
         }
     }
 
-    fn entries(&self) -> [KeyValue<'_>; 5] {
-        [
+    fn entries(&self) -> Vec<KeyValue<'_>> {
+        let mut entries = vec![
             KeyValue::new("Character", self.details.character().as_str()),
             KeyValue::new("Code Point", &self.code_point),
             KeyValue::new("Primary Name", self.details.primary_name()),
+        ];
+        if let Some(alias) = self.matched_alias {
+            entries.extend([
+                KeyValue::new("Matched Alias", alias.name()),
+                KeyValue::new("Alias Type", alias.kind().label()),
+            ]);
+        }
+        entries.extend([
             KeyValue::new("Block", self.details.block()),
             KeyValue::new("General Category", &self.category),
-        ]
+        ]);
+        entries
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::unicode::UnicodeDatabase;
 
     #[test]
     fn reserves_selection_space_before_placing_the_glyph() {
@@ -128,7 +145,7 @@ mod tests {
         let code_point = CodePoint::new(0x0041).unwrap();
 
         assert_eq!(
-            glyph_area(area, code_point),
+            glyph_area(area, code_point, None),
             Some(Rect::new(63, 14, 36, 14))
         );
     }
@@ -138,8 +155,8 @@ mod tests {
         let area = Rect::new(60, 2, 40, 27);
 
         assert_eq!(
-            glyph_area(area, CodePoint::new(0x0041).unwrap()),
-            glyph_area(area, CodePoint::new(0x2192).unwrap())
+            glyph_area(area, CodePoint::new(0x0041).unwrap(), None),
+            glyph_area(area, CodePoint::new(0x2192).unwrap(), None)
         );
     }
 
@@ -148,6 +165,38 @@ mod tests {
         let area = Rect::new(60, 3, 40, 12);
         let code_point = CodePoint::new(0x0041).unwrap();
 
-        assert_eq!(glyph_area(area, code_point), None);
+        assert_eq!(glyph_area(area, code_point, None), None);
+    }
+
+    #[test]
+    fn includes_the_matched_alias_and_reserves_its_height() {
+        let area = Rect::new(60, 2, 40, 27);
+        let code_point = CodePoint::new(0x01a2).unwrap();
+        let alias = UnicodeDatabase::lookup(code_point).name_aliases()[0];
+        let details = SelectionDetails::new(code_point, Some(alias));
+        let document = key_value::Document::for_entries(
+            36,
+            LABEL_WIDTH,
+            &details.entries(),
+            &ColorTheme::default(),
+        )
+        .lines
+        .into_iter()
+        .map(|line| line.to_string())
+        .collect::<Vec<_>>()
+        .join("\n");
+
+        assert!(document.contains("Matched Alias"));
+        assert!(document.contains("LATIN CAPITAL LETTER GHA"));
+        assert!(
+            document
+                .lines()
+                .any(|line| line.contains("Alias Type") && line.contains("correction"))
+        );
+
+        let ordinary = glyph_area(area, code_point, None).unwrap();
+        let matched = glyph_area(area, code_point, Some(alias)).unwrap();
+        assert!(matched.y > ordinary.y);
+        assert!(matched.height < ordinary.height);
     }
 }

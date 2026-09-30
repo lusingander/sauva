@@ -9,7 +9,7 @@ size: 100x30  cursor: 2,25
 ────────────────────────────────────────────────────────────│
  Results                                         0 results  │
   No matching characters                                    │
-  Try another name, code point, or character                │
+  Try another name or alias, code point, or character       │
                                                             │
                                                             │
                                                             │
@@ -40,7 +40,7 @@ styles:
 3: 0-60 fg=8
 4: 1-7 fg=4 bold; 49-57 fg=8; 60 fg=8
 5: 2-23 bold; 60 fg=8
-6: 2-43 fg=8; 60 fg=8
+6: 2-52 fg=8; 60 fg=8
 7: 60 fg=8
 8: 60 fg=8
 9: 60 fg=8
