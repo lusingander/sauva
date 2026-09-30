@@ -252,11 +252,24 @@ fn result_line(
         ));
         spans.push(Span::raw(" — "));
     }
-    spans.extend(name_spans(
-        UnicodeDatabase::primary_name_or_fallback(code_point),
-        result.name_match().and(name_query),
-        match_style,
-    ));
+    if let Some(alias_match) = result.preferred_alias_match() {
+        let alias = alias_match.alias();
+        spans.extend(name_spans(alias.name(), name_query, match_style));
+        spans.push(Span::styled(
+            format!(" · {} alias", alias.kind().label()),
+            if selected {
+                Style::new()
+            } else {
+                Style::new().fg(color_theme.muted)
+            },
+        ));
+    } else {
+        spans.extend(name_spans(
+            UnicodeDatabase::primary_name_or_fallback(code_point),
+            result.name_match().and(name_query),
+            match_style,
+        ));
+    }
 
     Line::from(spans)
 }
@@ -391,6 +404,7 @@ mod tests {
             CodePoint::new(value).unwrap(),
             Some(SearchDirectMatchKind::CodePointNotation),
             None,
+            None,
         );
 
         assert_eq!(
@@ -416,6 +430,7 @@ mod tests {
             CodePoint::new(0xface).unwrap(),
             Some(SearchDirectMatchKind::CodePointNotation),
             Some(SearchNameMatchKind::Substring),
+            None,
         );
         let line = result_line(
             result,
@@ -441,6 +456,7 @@ mod tests {
             CodePoint::new(0x200d).unwrap(),
             Some(SearchDirectMatchKind::LiteralCharacter),
             None,
+            None,
         );
         let line = result_line(result, None, true, &color_theme, &UiSettings::default());
         let highlighted = line
@@ -458,6 +474,7 @@ mod tests {
         let result = SearchResult::new_for_test(
             CodePoint::new(0x2192).unwrap(),
             Some(SearchDirectMatchKind::CodePointNotation),
+            None,
             None,
         );
 
@@ -485,5 +502,59 @@ mod tests {
             .collect::<Vec<_>>();
 
         assert_eq!(highlighted, ["FACE", "FACE"]);
+    }
+
+    #[test]
+    fn shows_the_matched_alias_before_its_type() {
+        let SearchOutcome::Results {
+            name_query,
+            results,
+        } = crate::search::search("latin capital letter gha")
+        else {
+            panic!("expected alias search results");
+        };
+
+        let line = result_line(
+            results[0],
+            name_query.as_deref(),
+            true,
+            &ColorTheme::default(),
+            &UiSettings {
+                selection_cursor: ">".to_owned(),
+                ..Default::default()
+            },
+        );
+
+        assert_eq!(
+            line.to_string(),
+            "> Ƣ   U+01A2    LATIN CAPITAL LETTER GHA · correction alias"
+        );
+    }
+
+    #[test]
+    fn highlights_the_alias_that_caused_the_result() {
+        let color_theme = ColorTheme::default();
+        let SearchOutcome::Results {
+            name_query,
+            results,
+        } = crate::search::search("null")
+        else {
+            panic!("expected alias search results");
+        };
+        let line = result_line(
+            results[0],
+            name_query.as_deref(),
+            false,
+            &color_theme,
+            &UiSettings::default(),
+        );
+        let highlighted = line
+            .spans
+            .iter()
+            .filter(|span| span.style == color_theme.match_style(false))
+            .map(|span| span.content.as_ref())
+            .collect::<Vec<_>>();
+
+        assert_eq!(highlighted, ["NULL"]);
     }
 }

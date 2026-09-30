@@ -87,6 +87,17 @@ impl UnicodeDatabase {
         })
     }
 
+    pub fn name_aliases() -> impl Iterator<Item = (CodePoint, NameAlias)> {
+        NAME_ALIASES.iter().flat_map(|&(value, aliases)| {
+            let code_point =
+                CodePoint::new(value).expect("generated name aliases contain valid code points");
+            aliases
+                .iter()
+                .copied()
+                .map(move |alias| (code_point, alias))
+        })
+    }
+
     pub fn blocks() -> impl ExactSizeIterator<Item = UnicodeBlock> {
         (0..BLOCKS.len()).map(|index| UnicodeBlock { index })
     }
@@ -790,6 +801,18 @@ mod tests {
         assert_eq!(last.name(), "Supplementary Private Use Area-B");
         assert_eq!(last.end().value(), CodePoint::MAX_VALUE);
         assert_eq!(UnicodeDatabase::block(346), None);
+    }
+
+    #[test]
+    fn exposes_name_aliases_in_code_point_and_source_order() {
+        let aliases = UnicodeDatabase::name_aliases().collect::<Vec<_>>();
+
+        assert_eq!(aliases.len(), 481);
+        assert_eq!(aliases[0].0.value(), 0x0000);
+        assert_eq!(aliases[0].1.name(), "NULL");
+        assert_eq!(aliases[1].0.value(), 0x0000);
+        assert_eq!(aliases[1].1.name(), "NUL");
+        assert!(aliases.windows(2).all(|pair| pair[0].0 <= pair[1].0));
     }
 
     #[test]

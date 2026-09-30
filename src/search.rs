@@ -1,9 +1,11 @@
-use std::ops::Range;
+use std::{collections::BTreeMap, ops::Range};
 
 use tui_input::{Input, InputRequest};
 
 use crate::{
-    unicode::{CodePoint, CodePointNotationError, UnicodeDatabase, parse_code_point_notation},
+    unicode::{
+        CodePoint, CodePointNotationError, NameAlias, UnicodeDatabase, parse_code_point_notation,
+    },
     viewport::ListViewport,
 };
 
@@ -27,10 +29,31 @@ pub enum SearchNameMatchKind {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SearchAliasMatch {
+    alias: NameAlias,
+    kind: SearchNameMatchKind,
+}
+
+impl SearchAliasMatch {
+    const fn new(alias: NameAlias, kind: SearchNameMatchKind) -> Self {
+        Self { alias, kind }
+    }
+
+    pub const fn alias(self) -> NameAlias {
+        self.alias
+    }
+
+    pub const fn kind(self) -> SearchNameMatchKind {
+        self.kind
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SearchResult {
     code_point: CodePoint,
     direct_match: Option<SearchDirectMatchKind>,
     name_match: Option<SearchNameMatchKind>,
+    alias_match: Option<SearchAliasMatch>,
 }
 
 impl SearchResult {
@@ -38,11 +61,13 @@ impl SearchResult {
         code_point: CodePoint,
         direct_match: Option<SearchDirectMatchKind>,
         name_match: Option<SearchNameMatchKind>,
+        alias_match: Option<SearchAliasMatch>,
     ) -> Self {
         Self {
             code_point,
             direct_match,
             name_match,
+            alias_match,
         }
     }
 
@@ -51,8 +76,9 @@ impl SearchResult {
         code_point: CodePoint,
         direct_match: Option<SearchDirectMatchKind>,
         name_match: Option<SearchNameMatchKind>,
+        alias_match: Option<SearchAliasMatch>,
     ) -> Self {
-        Self::new(code_point, direct_match, name_match)
+        Self::new(code_point, direct_match, name_match, alias_match)
     }
 
     pub const fn code_point(self) -> CodePoint {
@@ -65,6 +91,30 @@ impl SearchResult {
 
     pub const fn name_match(self) -> Option<SearchNameMatchKind> {
         self.name_match
+    }
+
+    pub const fn alias_match(self) -> Option<SearchAliasMatch> {
+        self.alias_match
+    }
+
+    pub fn preferred_alias_match(self) -> Option<SearchAliasMatch> {
+        match (self.name_match, self.alias_match()) {
+            (Some(name), Some(alias)) if name <= alias.kind() => None,
+            (_, alias) => alias,
+        }
+    }
+
+    fn sort_key(self) -> (u8, SearchNameMatchKind, u8, CodePoint) {
+        if self.direct_match.is_some() {
+            return (0, SearchNameMatchKind::Exact, 0, self.code_point);
+        }
+
+        match (self.name_match, self.alias_match()) {
+            (Some(name), Some(alias)) if name <= alias.kind() => (1, name, 0, self.code_point),
+            (_, Some(alias)) => (1, alias.kind(), 1, self.code_point),
+            (Some(name), None) => (1, name, 0, self.code_point),
+            (None, None) => unreachable!("a non-direct result has a name or alias match"),
+        }
     }
 }
 
@@ -225,7 +275,12 @@ fn exact_notation_result(query: &str) -> SearchOutcome {
 fn exact_result(direct_match: SearchDirectMatchKind, code_point: CodePoint) -> SearchOutcome {
     SearchOutcome::Results {
         name_query: None,
-        results: vec![SearchResult::new(code_point, Some(direct_match), None)],
+        results: vec![SearchResult::new(
+            code_point,
+            Some(direct_match),
+            None,
+            None,
+        )],
     }
 }
 
@@ -248,42 +303,39 @@ fn combined_name_results(
     direct_result: Option<(CodePoint, SearchDirectMatchKind)>,
 ) -> SearchOutcome {
     let query = normalize_name_query(query);
-    let mut direct = None;
-    let mut exact = Vec::new();
-    let mut prefix = Vec::new();
-    let mut substring = Vec::new();
+    let mut matches = BTreeMap::new();
+    if let Some((code_point, direct_match)) = direct_result {
+        matches.insert(
+            code_point,
+            SearchResult::new(code_point, Some(direct_match), None, None),
+        );
+    }
+
     for (code_point, name) in UnicodeDatabase::primary_names() {
-        let direct_match = direct_result.and_then(|(direct_code_point, kind)| {
-            (code_point == direct_code_point).then_some(kind)
-        });
-        let name_match = name_match_kind(name, &query);
-        let Some(result) = (direct_match.is_some() || name_match.is_some())
-            .then(|| SearchResult::new(code_point, direct_match, name_match))
-        else {
+        let Some(name_match) = name_match_kind(name, &query) else {
             continue;
         };
 
-        if direct_match.is_some() {
-            direct = Some(result);
-        } else {
-            match name_match.expect("a non-direct result has a name match") {
-                SearchNameMatchKind::Exact => exact.push(result),
-                SearchNameMatchKind::Prefix => prefix.push(result),
-                SearchNameMatchKind::Substring => substring.push(result),
-            }
+        matches
+            .entry(code_point)
+            .or_insert_with(|| SearchResult::new(code_point, None, None, None))
+            .name_match = Some(name_match);
+    }
+
+    for (code_point, alias) in UnicodeDatabase::name_aliases() {
+        let Some(kind) = name_match_kind(alias.name(), &query) else {
+            continue;
+        };
+        let result = matches
+            .entry(code_point)
+            .or_insert_with(|| SearchResult::new(code_point, None, None, None));
+        if result.alias_match.is_none_or(|current| kind < current.kind) {
+            result.alias_match = Some(SearchAliasMatch::new(alias, kind));
         }
     }
-    if direct.is_none()
-        && let Some((code_point, direct_match)) = direct_result
-    {
-        direct = Some(SearchResult::new(code_point, Some(direct_match), None));
-    }
-    let results = direct
-        .into_iter()
-        .chain(exact)
-        .chain(prefix)
-        .chain(substring)
-        .collect();
+
+    let mut results = matches.into_values().collect::<Vec<_>>();
+    results.sort_by_key(|result| result.sort_key());
 
     SearchOutcome::Results {
         name_query: Some(query),
@@ -467,6 +519,73 @@ mod tests {
         assert_eq!(results[0].name_match(), Some(SearchNameMatchKind::Exact));
     }
 
+    #[rustfmt::skip]
+    #[rstest]
+    #[case("NULL", 0x0000, "NULL", crate::unicode::NameAliasType::Control)]
+    #[case("NUL", 0x0000, "NUL", crate::unicode::NameAliasType::Abbreviation)]
+    #[case("BOM", 0xfeff, "BOM", crate::unicode::NameAliasType::Abbreviation)]
+    #[case("BYTE ORDER MARK", 0xfeff, "BYTE ORDER MARK", crate::unicode::NameAliasType::Alternate)]
+    #[case("LATIN CAPITAL LETTER GHA", 0x01a2, "LATIN CAPITAL LETTER GHA", crate::unicode::NameAliasType::Correction)]
+    fn finds_exact_name_aliases(
+        #[case] query: &str,
+        #[case] expected_code_point: u32,
+        #[case] expected_alias: &str,
+        #[case] expected_type: crate::unicode::NameAliasType,
+    ) {
+        let SearchOutcome::Results { results, .. } = search(query) else {
+            panic!("expected name alias results");
+        };
+
+        let result = results[0];
+        let alias_match = result.preferred_alias_match().unwrap();
+        assert_eq!(result.code_point().value(), expected_code_point);
+        assert_eq!(alias_match.alias().name(), expected_alias);
+        assert_eq!(alias_match.alias().kind(), expected_type);
+        assert_eq!(alias_match.kind(), SearchNameMatchKind::Exact);
+    }
+
+    #[test]
+    fn chooses_the_best_matching_alias_and_deduplicates_code_points() {
+        let SearchOutcome::Results { results, .. } = search("line") else {
+            panic!("expected name alias results");
+        };
+
+        let line_feed = results
+            .iter()
+            .find(|result| result.code_point().value() == 0x000a)
+            .copied()
+            .unwrap();
+        let alias_match = line_feed.alias_match().unwrap();
+        assert_eq!(alias_match.alias().name(), "LINE FEED");
+        assert_eq!(alias_match.kind(), SearchNameMatchKind::Prefix);
+        assert_eq!(
+            results
+                .iter()
+                .filter(|result| result.code_point().value() == 0x000a)
+                .count(),
+            1
+        );
+    }
+
+    #[test]
+    fn prefers_a_primary_name_when_it_ties_an_alias() {
+        let SearchOutcome::Results { results, .. } = search("latin") else {
+            panic!("expected name results");
+        };
+
+        let result = results
+            .iter()
+            .find(|result| result.code_point().value() == 0x01a2)
+            .copied()
+            .unwrap();
+        assert_eq!(result.name_match(), Some(SearchNameMatchKind::Prefix));
+        assert_eq!(
+            result.alias_match().unwrap().kind(),
+            SearchNameMatchKind::Prefix
+        );
+        assert_eq!(result.preferred_alias_match(), None);
+    }
+
     #[test]
     fn orders_name_results_by_match_quality_then_code_point() {
         let SearchOutcome::Results {
@@ -511,7 +630,7 @@ mod tests {
     }
 
     #[test]
-    fn returns_an_empty_result_list_for_an_unknown_primary_name() {
+    fn returns_an_empty_result_list_for_an_unknown_name_or_alias() {
         let SearchOutcome::Results {
             name_query,
             results,
