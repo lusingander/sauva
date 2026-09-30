@@ -21,7 +21,7 @@ use crate::{
 const KEY_COLUMN_WIDTH: usize = 24;
 const SECTION_LABEL_HEIGHT: u16 = 1;
 const ABOUT_HEIGHT: u16 = 5;
-const DIVIDER_HEIGHT: u16 = 1;
+const SECTION_GAP_HEIGHT: u16 = 1;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct PackageMetadata {
@@ -87,7 +87,6 @@ pub struct FooterContent {
 struct HelpSections {
     about_label: Rect,
     about: Rect,
-    divider: Rect,
     keybindings_label: Rect,
     help: Rect,
 }
@@ -148,7 +147,6 @@ pub fn render(
         )),
         sections.about,
     );
-    workspace::render_divider(frame, sections.divider, color_theme);
     frame.render_widget(
         Paragraph::new(format!("Keybindings · {}", context_label(context)))
             .style(color_theme.heading_style()),
@@ -617,10 +615,10 @@ fn content_area(area: Rect) -> Rect {
 }
 
 fn help_sections(area: Rect) -> HelpSections {
-    let [about_label, about, divider, keybindings_label, help] = Layout::vertical([
+    let [about_label, about, _gap, keybindings_label, help] = Layout::vertical([
         Constraint::Length(SECTION_LABEL_HEIGHT),
         Constraint::Length(ABOUT_HEIGHT),
-        Constraint::Length(DIVIDER_HEIGHT),
+        Constraint::Length(SECTION_GAP_HEIGHT),
         Constraint::Length(SECTION_LABEL_HEIGHT),
         Constraint::Min(0),
     ])
@@ -629,7 +627,6 @@ fn help_sections(area: Rect) -> HelpSections {
     HelpSections {
         about_label,
         about: indent_body(about),
-        divider,
         keybindings_label,
         help: indent_body(help),
     }
