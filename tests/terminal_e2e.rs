@@ -110,7 +110,7 @@ fn inspects_a_text_sequence_and_preserves_its_position_across_search() -> termle
     terminal.send(Key::Down)?;
     terminal.send(Key::Enter)?;
     terminal.wait_until(|screen| {
-        screen.contains("Inspector / Sequence 2/3")
+        screen.contains("Sequence 2/3 / Inspector")
             && screen.contains("U+2192")
             && screen.contains("RIGHTWARDS ARROW")
     })?;
@@ -123,7 +123,7 @@ fn inspects_a_text_sequence_and_preserves_its_position_across_search() -> termle
     })?;
     terminal.send(Key::Enter)?;
     terminal.wait_until(|screen| {
-        screen.contains("Inspector / Sequence 2/3")
+        screen.contains("Sequence 2/3 / Inspector")
             && screen.contains("U+03A9")
             && screen.contains("GREEK CAPITAL LETTER OMEGA")
     })?;
@@ -132,7 +132,7 @@ fn inspects_a_text_sequence_and_preserves_its_position_across_search() -> termle
     terminal.wait_until(|screen| screen.contains("3 code points"))?;
     terminal.send(Key::Enter)?;
     terminal.wait_until(|screen| {
-        screen.contains("Inspector / Sequence 2/3")
+        screen.contains("Sequence 2/3 / Inspector")
             && screen.contains("U+2192")
             && screen.contains("RIGHTWARDS ARROW")
     })?;

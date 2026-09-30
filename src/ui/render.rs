@@ -89,7 +89,7 @@ fn header_location(state: &AppState, context: Context) -> String {
             || "Inspector".to_owned(),
             |sequence| {
                 format!(
-                    "Inspector / Sequence {}/{}",
+                    "Sequence {}/{} / Inspector",
                     sequence.selected_index() + 1,
                     sequence.code_points().len()
                 )
