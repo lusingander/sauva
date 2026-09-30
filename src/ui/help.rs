@@ -18,7 +18,7 @@ use crate::{
     },
 };
 
-const KEY_COLUMN_WIDTH: usize = 28;
+const KEY_COLUMN_WIDTH: usize = 24;
 const SECTION_LABEL_HEIGHT: u16 = 1;
 const ABOUT_HEIGHT: u16 = 5;
 const DIVIDER_HEIGHT: u16 = 1;
@@ -269,7 +269,7 @@ fn help_lines(
         .into_iter()
         .map(|key| format_key(key, KeyLabelStyle::Full))
         .collect::<Vec<_>>();
-    let key_text = format!("<{}>", labels.join(">  <"));
+    let key_text = labels.join("  ");
     let key_width = Line::from(key_text.as_str()).width();
     let key_column_width = KEY_COLUMN_WIDTH.max(key_width);
     if width <= key_column_width + 1 {
@@ -303,9 +303,7 @@ fn key_spans(labels: &[String], normal_style: Style, key_style: Style) -> Vec<Sp
         if index > 0 {
             spans.push(Span::styled("  ", normal_style));
         }
-        spans.push(Span::styled("<", normal_style));
         spans.push(Span::styled(label.clone(), key_style));
-        spans.push(Span::styled(">", normal_style));
     }
     spans
 }
@@ -741,9 +739,9 @@ mod tests {
             .collect::<Vec<_>>()
             .join("\n");
 
-        assert!(rendered.contains("<q>  <Esc>  <Ctrl-c>"));
-        assert!(rendered.contains("<h>  <Left>"));
-        assert!(rendered.contains("<F1>"));
+        assert!(rendered.contains("q  Esc  Ctrl-c"));
+        assert!(rendered.contains("h  Left"));
+        assert!(rendered.contains("F1"));
         assert!(rendered.contains("Browse code points"));
     }
 
@@ -839,8 +837,8 @@ mod tests {
 
         assert!(footer.contains("h/n Point"));
         assert!(!footer.contains("/ Search"));
-        assert!(help.contains("<n>"));
-        assert!(!help.contains("<l>  <Right>"));
+        assert!(help.lines().any(|line| line.starts_with("n ")));
+        assert!(!help.contains("l  Right"));
         assert!(!help.contains("Open search"));
     }
 
