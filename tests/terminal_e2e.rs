@@ -33,8 +33,8 @@ fn custom_keybindings_appear_in_help_and_drive_the_app() -> termlens::Result<()>
     let help = terminal.snapshot_after(|screen| {
         screen.contains("sauva / Help")
             && screen.contains("Keybindings · Inspector")
-            && screen.contains("<x>")
-            && screen.contains("<F2>")
+            && screen.contains("x  Ctrl-c                Quit")
+            && screen.contains("F2                       Open or close help")
     })?;
     let help = help
         .mask_matching(env!("CARGO_PKG_REPOSITORY"), '▒')

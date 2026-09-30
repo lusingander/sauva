@@ -682,14 +682,11 @@ mod tests {
 
         assert_eq!(buffer.cell((2, 7)).unwrap().symbol(), "h");
         assert_eq!(buffer.cell((2, 7)).unwrap().fg, color_theme.link);
-        assert_eq!(buffer.cell((1, 8)).unwrap().symbol(), "─");
-        assert_eq!(buffer.cell((1, 8)).unwrap().fg, color_theme.border);
-        assert_eq!(buffer.cell((2, 10)).unwrap().symbol(), "<");
-        assert_eq!(buffer.cell((2, 10)).unwrap().fg, color_theme.fg);
-        assert_eq!(buffer.cell((3, 10)).unwrap().symbol(), "h");
-        assert_eq!(buffer.cell((3, 10)).unwrap().fg, color_theme.key);
-        assert_eq!(buffer.cell((4, 10)).unwrap().symbol(), ">");
-        assert_eq!(buffer.cell((4, 10)).unwrap().fg, color_theme.fg);
+        assert_eq!(buffer.cell((1, 8)).unwrap().symbol(), " ");
+        assert_eq!(buffer.cell((2, 10)).unwrap().symbol(), "h");
+        assert_eq!(buffer.cell((2, 10)).unwrap().fg, color_theme.key);
+        assert_eq!(buffer.cell((5, 10)).unwrap().symbol(), "L");
+        assert_eq!(buffer.cell((5, 10)).unwrap().fg, color_theme.key);
         assert_eq!(buffer.cell((1, height - 1)).unwrap().fg, color_theme.key);
         assert_eq!(buffer.cell((5, height - 1)).unwrap().fg, color_theme.muted);
     }
