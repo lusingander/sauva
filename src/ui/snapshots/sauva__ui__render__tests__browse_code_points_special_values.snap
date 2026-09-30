@@ -3,24 +3,25 @@ source: src/ui/render.rs
 expression: "render_to_text(&state, width, height)"
 ---
  sauva / Browse / Code Points                                                                U+D800
+
  Code Points                                 U+D800–U+D8FF  │ Selection
-         0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F     │ Character        <SURROGATE>
- 00D800  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·     │ Code Point       U+D800
- 00D810  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·     │ Primary Name     No Primary Name
- 00D820  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·     │ Block            High Surrogates
- 00D830  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·     │ General Category Cs — Surrogate
- 00D840  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·     │ ─────────────────────────────────────
- 00D850  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·     │ Glyph
- 00D860  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·     │
- 00D870  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·     │
- 00D880  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·     │
- 00D890  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·     │
- 00D8A0  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·     │
- 00D8B0  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·     │
- 00D8C0  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·     │
- 00D8D0  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·     │
- 00D8E0  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·     │
- 00D8F0  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·     │
+          0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F    │  Character        <SURROGATE>
+  00D800  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·    │  Code Point       U+D800
+  00D810  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·    │  Primary Name     No Primary Name
+  00D820  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·    │  Block            High Surrogates
+  00D830  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·    │  General Category Cs — Surrogate
+  00D840  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·    │
+  00D850  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·    │
+  00D860  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·    │
+  00D870  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·    │
+  00D880  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·    │ ─────────────────────────────────────
+  00D890  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·    │ Glyph
+  00D8A0  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·    │
+  00D8B0  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·    │
+  00D8C0  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·    │
+  00D8D0  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·    │
+  00D8E0  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·    │
+  00D8F0  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·    │
                                                             │
                                                             │
                                                             │
@@ -30,5 +31,4 @@ expression: "render_to_text(&state, width, height)"
                                                             │
                                                             │
                                                             │
-                                                            │
- h/l/k/j: Move  C-u/C-d: Jump  g/G: Ends  Enter: Inspect  BS: Back  Esc: Close  q: Quit    F1: Help
+ h/l/k/j Move  C-u/C-d Jump  g/G Ends  Enter Inspect  BS Back  Esc Close  q Quit            F1 Help

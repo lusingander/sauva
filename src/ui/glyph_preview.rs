@@ -375,7 +375,7 @@ mod tests {
                 .iter()
                 .any(|cell| cell.symbol().contains('\u{10eeee}'))
         );
-        assert_eq!(buffer.cell((2, 1)).unwrap().fg, Color::DarkGray);
+        assert_eq!(buffer.cell((3, 1)).unwrap().fg, Color::DarkGray);
         let heading = (3..25)
             .flat_map(|y| (0..40).filter_map(move |x| buffer.cell((x, y))))
             .find(|cell| cell.symbol() == "G")

@@ -3,9 +3,10 @@ source: src/ui/render.rs
 expression: "render_to_text(&state, width, height)"
 ---
  sauva / Inspector                                                                         U+10FFFF
+
  Identity                                                   ┃ Glyph
-   Character                  <NONCHARACTER>                ┃ Font     —
-   Code Point                 U+10FFFF                      ┃ Version  —
+   Character                  <NONCHARACTER>                ┃  Font     —
+   Code Point                 U+10FFFF                      ┃  Version  —
    Primary Name               Unassigned                    ┃
    Aliases                    None                          ┃
    Plane                                                    ┃
@@ -16,19 +17,18 @@ expression: "render_to_text(&state, width, height)"
  Classification                                             ┃
    General Category           Cn — Unassigned               ┃
    Script                     Unknown                       ┃
-   Age                        2.0                           ┃
-   East Asian Width           N — Neutral                   ┃           Glyph unavailable
-   Canonical Combining Class  0 — Not Reordered             ┃    No configured font contains it.
+   Age                        2.0                           ┃           Glyph unavailable
+   East Asian Width           N — Neutral                   ┃    No configured font contains it.
+   Canonical Combining Class  0 — Not Reordered             ┃
    Bidi Class                 BN — Boundary Neutral         ┃
    Default Ignorable          No                            ┃
  ─────────────────────────────────────────────────────────  ┃
  Encoding                                                   ┃
-   UTF-8                      F4 8F BF BF                   ┃
-   UTF-16                     DBFF DFFF                     ┃
+   UTF-8                      F4 8F BF BF                   │
+   UTF-16                     DBFF DFFF                     │
    HTML Decimal               &#1114111;                    │
    HTML Hex                   &#x10FFFF;                    │
    Rust char                  '\u{10FFFF}'                  │
    Unicode Escape             \U0010FFFF                    │
- ─────────────────────────────────────────────────────────  │
                                                             │
- h/l: Point  k/j: Field  C-u/C-d: Page  y: Copy  /: Search  p/r/b/c: Browse  q: Quit       F1: Help
+ h/l Point  k/j Field  C-u/C-d Page  g/G Ends  y Copy  / Search  p/r/b/c Browse  q Quit     F1 Help

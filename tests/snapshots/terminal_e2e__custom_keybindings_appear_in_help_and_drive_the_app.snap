@@ -4,56 +4,56 @@ expression: help.with_styles()
 ---
 size: 100x30  cursor: hidden
  ▒▒▒▒▒ / Help                                                                             Inspector
+
  About
- ▒▒▒▒▒ - ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+  ▒▒▒▒▒ - ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
 
- Version: ▒▒▒▒▒
+  Version: ▒▒▒▒▒
 
- ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+  ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
  ─────────────────────────────────────────────────────────────────────────────────────────────────
  Keybindings · Inspector
- <h>  <Left>                  Previous code point
- <l>  <Right>                 Next code point
- <k>  <Up>                    Select the previous property
- <j>  <Down>                  Select the next property
- <Ctrl-u>                     Move properties up one page
- <Ctrl-d>                     Move properties down one page
- <g>                          Select the first property
- <G>                          Select the last property
- <y>                          Copy the selected property value
- </>                          Open search
- <p>                          Browse planes
- <r>                          Browse ranges
- <b>                          Browse blocks
- <c>                          Browse code points
- <x>  <Ctrl-c>                Quit
- <F2>                         Open or close help
+  <h>  <Left>                  Previous code point
+  <l>  <Right>                 Next code point
+  <k>  <Up>                    Select the previous property
+  <j>  <Down>                  Select the next property
+  <Ctrl-u>                     Move properties up one page
+  <Ctrl-d>                     Move properties down one page
+  <g>                          Select the first property
+  <G>                          Select the last property
+  <y>                          Copy the selected property value
+  </>                          Open search
+  <p>                          Browse planes
+  <r>                          Browse ranges
+  <b>                          Browse blocks
+  <c>                          Browse code points
+  <x>  <Ctrl-c>                Quit
+  <F2>                         Open or close help
 
 
 
-
- k/j: Move  C-u/C-d: Page  g/G: Ends  Esc: Close  C-c: Quit                               F2: Close
+ k/j Move  C-u/C-d Page  g/G Ends  Esc Close  C-c Quit                                     F2 Close
 
 styles:
 0: 0-5 fg=6 bold; 90-99 fg=8
-1: 1-97 fg=6 bold
-6: 1-36 fg=4
-7: 1-97 fg=8
-8: 1-97 fg=6 bold
-9: 2 fg=3; 7-10 fg=3
-10: 2 fg=3; 7-11 fg=3
-11: 2 fg=3; 7-8 fg=3
-12: 2 fg=3; 7-10 fg=3
-13: 2-7 fg=3
-14: 2-7 fg=3
-15: 2 fg=3
-16: 2 fg=3
-17: 2 fg=3
-18: 2 fg=3
-19: 2 fg=3
-20: 2 fg=3
-21: 2 fg=3
-22: 2 fg=3
-23: 2 fg=3; 7-12 fg=3
-24: 2-3 fg=3
-29: 1-3 fg=3; 4-9 fg=8; 12-18 fg=3; 19-24 fg=8; 27-29 fg=3; 30-35 fg=8; 38-40 fg=3; 41-47 fg=8; 50-52 fg=3; 53-58 fg=8; 90-91 fg=3; 92-98 fg=8
+2: 1-97 fg=4 bold
+7: 2-37 fg=4
+8: 1-97 fg=8
+9: 1-97 fg=4 bold
+10: 3 fg=3; 8-11 fg=3
+11: 3 fg=3; 8-12 fg=3
+12: 3 fg=3; 8-9 fg=3
+13: 3 fg=3; 8-11 fg=3
+14: 3-8 fg=3
+15: 3-8 fg=3
+16: 3 fg=3
+17: 3 fg=3
+18: 3 fg=3
+19: 3 fg=3
+20: 3 fg=3
+21: 3 fg=3
+22: 3 fg=3
+23: 3 fg=3
+24: 3 fg=3; 8-13 fg=3
+25: 3-4 fg=3
+29: 1-3 fg=3; 4-8 fg=8; 11-17 fg=3; 18-22 fg=8; 25-27 fg=3; 28-32 fg=8; 35-37 fg=3; 38-43 fg=8; 46-48 fg=3; 49-53 fg=8; 91-92 fg=3; 93-98 fg=8

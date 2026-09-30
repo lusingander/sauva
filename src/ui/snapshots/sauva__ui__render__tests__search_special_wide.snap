@@ -3,12 +3,17 @@ source: src/ui/render.rs
 expression: "render_to_text(&state, width, height)"
 ---
  sauva / Search                                                                                                           1 result · U+D800
+
  Search  U+D800                                                                                     │ Selection
-────────────────────────────────────────────────────────────────────────────────────────────────────│ Character        <SURROGATE>
- Results                                                                                  1 result  │ Code Point       U+D800
-   ·   U+D800    <SURROGATE> — No Primary Name                                                      │ Primary Name     No Primary Name
-                                                                                                    │ Block            High Surrogates
-                                                                                                    │ General Category Cs — Surrogate
+────────────────────────────────────────────────────────────────────────────────────────────────────│  Character        <SURROGATE>
+ Results                                                                                  1 result  │  Code Point       U+D800
+    ·   U+D800    <SURROGATE> — No Primary Name                                                     │  Primary Name     No Primary Name
+                                                                                                    │  Block            High Surrogates
+                                                                                                    │  General Category Cs — Surrogate
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
                                                                                                     │ ─────────────────────────────────────
                                                                                                     │ Glyph
                                                                                                     │
@@ -36,9 +41,4 @@ expression: "render_to_text(&state, width, height)"
                                                                                                     │
                                                                                                     │
                                                                                                     │
-                                                                                                    │
-                                                                                                    │
-                                                                                                    │
-                                                                                                    │
-                                                                                                    │
- ↑/↓: Move  Enter: Inspect  Esc: Close  C-c: Quit                                                                                  F1: Help
+ ↑/↓ Move  Enter Inspect  Esc Close  C-c Quit                                                                                       F1 Help

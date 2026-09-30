@@ -334,11 +334,11 @@ mod tests {
             .unwrap();
 
         let buffer = terminal.backend().buffer();
-        assert_eq!(buffer.cell((2, 1)).unwrap().symbol(), "P");
-        assert_eq!(buffer.cell((2, 2)).unwrap().symbol(), " ");
-        assert_eq!(buffer.cell((4, 2)).unwrap().symbol(), "A");
-        assert_eq!(buffer.cell((2, 3)).unwrap().symbol(), "B");
-        assert_eq!(buffer.cell((15, 3)).unwrap().symbol(), "B");
+        assert_eq!(buffer.cell((3, 1)).unwrap().symbol(), "P");
+        assert_eq!(buffer.cell((3, 2)).unwrap().symbol(), " ");
+        assert_eq!(buffer.cell((5, 2)).unwrap().symbol(), "A");
+        assert_eq!(buffer.cell((3, 3)).unwrap().symbol(), "B");
+        assert_eq!(buffer.cell((16, 3)).unwrap().symbol(), "B");
     }
 
     #[test]

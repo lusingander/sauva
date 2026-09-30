@@ -3,18 +3,18 @@ source: src/ui/render.rs
 expression: "render_to_text(&state, width, height)"
 ---
  sauva / Browse / Ranges                             U+8041
- Ranges                                            Plane 0
-   U+7500–U+75FF
-   U+7600–U+76FF
-   U+7700–U+77FF
-   U+7800–U+78FF
-   U+7900–U+79FF
-   U+7A00–U+7AFF                                          ┃
-   U+7B00–U+7BFF
-   U+7C00–U+7CFF
-   U+7D00–U+7DFF
-   U+7E00–U+7EFF
-   U+7F00–U+7FFF
-   U+8000–U+80FF
 
- k/j: Move  Enter: Points  BS: Back  Esc: Close    F1: Help
+ Ranges                                            Plane 0
+    U+7600–U+76FF
+    U+7700–U+77FF
+    U+7800–U+78FF
+    U+7900–U+79FF
+    U+7A00–U+7AFF                                         ┃
+    U+7B00–U+7BFF
+    U+7C00–U+7CFF
+    U+7D00–U+7DFF
+    U+7E00–U+7EFF
+    U+7F00–U+7FFF
+    U+8000–U+80FF
+
+ k/j Move  Enter Points  BS Back  Esc Close         F1 Help
