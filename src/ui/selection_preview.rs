@@ -68,7 +68,8 @@ struct InlineGlyphLayout {
 }
 
 fn glyph_layout_for_entries(area: Rect, entries: &[KeyValue<'_>]) -> Option<InlineGlyphLayout> {
-    let content = workspace::rail_section(area).content;
+    let section = workspace::rail_section(area);
+    let content = section.content;
     let details_height = key_value::required_height(content.width, LABEL_WIDTH, entries)
         .max(PREFERRED_SELECTION_HEIGHT);
     let divider_y = content.y.saturating_add(details_height);
@@ -76,8 +77,8 @@ fn glyph_layout_for_entries(area: Rect, entries: &[KeyValue<'_>]) -> Option<Inli
     let glyph_y = heading_y.saturating_add(1);
     let glyph_height = content.bottom().saturating_sub(glyph_y);
     (glyph_height >= MINIMUM_GLYPH_HEIGHT).then(|| InlineGlyphLayout {
-        divider: Rect::new(content.x, divider_y, content.width, 1),
-        heading: Rect::new(content.x, heading_y, content.width, 1),
+        divider: Rect::new(section.heading.x, divider_y, section.heading.width, 1),
+        heading: Rect::new(section.heading.x, heading_y, section.heading.width, 1),
         glyph: layout::centered_glyph_area(Rect::new(
             content.x,
             glyph_y,
