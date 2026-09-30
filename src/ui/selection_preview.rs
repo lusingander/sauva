@@ -37,7 +37,7 @@ pub fn render(
     if let Some(glyph_layout) = glyph_layout_for_entries(area, &entries) {
         workspace::render_divider(frame, glyph_layout.divider, color_theme);
         frame.render_widget(
-            Paragraph::new("Glyph").style(color_theme.accent_style()),
+            Paragraph::new("Glyph").style(color_theme.heading_style()),
             glyph_layout.heading,
         );
         glyph_preview::render_image_only(

@@ -1,7 +1,7 @@
 use ratatui::{
     Frame,
     layout::Rect,
-    style::{Modifier, Style},
+    style::Style,
     text::{Line, Span},
     widgets::Paragraph,
 };
@@ -151,9 +151,7 @@ impl DocumentBuilder {
         }
         self.lines.push(Line::from(Span::styled(
             label.to_owned(),
-            Style::new()
-                .fg(self.color_theme.accent)
-                .add_modifier(Modifier::BOLD),
+            self.color_theme.heading_style(),
         )));
     }
 

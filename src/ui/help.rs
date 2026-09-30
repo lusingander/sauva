@@ -137,7 +137,7 @@ pub fn render(
     let end = visible.end.max(start).min(document_height);
 
     frame.render_widget(
-        Paragraph::new("About").style(color_theme.accent_style()),
+        Paragraph::new("About").style(color_theme.heading_style()),
         sections.about_label,
     );
     frame.render_widget(
@@ -151,7 +151,7 @@ pub fn render(
     workspace::render_divider(frame, sections.divider, color_theme);
     frame.render_widget(
         Paragraph::new(format!("Keybindings · {}", context_label(context)))
-            .style(color_theme.accent_style()),
+            .style(color_theme.heading_style()),
         sections.keybindings_label,
     );
     frame.render_widget(

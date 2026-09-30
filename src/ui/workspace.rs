@@ -88,7 +88,7 @@ fn render_heading(
     color_theme: &ColorTheme,
 ) {
     frame.render_widget(
-        Paragraph::new(Line::styled(title.to_owned(), color_theme.accent_style())),
+        Paragraph::new(Line::styled(title.to_owned(), color_theme.heading_style())),
         area,
     );
     if let Some(secondary) = secondary {

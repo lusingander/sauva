@@ -48,6 +48,8 @@ pub struct ColorTheme {
     pub muted: Color,
     #[default(Color::Cyan)]
     pub accent: Color,
+    #[default(Color::Blue)]
+    pub heading: Color,
     #[default(Color::DarkGray)]
     pub border: Color,
     #[default(Color::Yellow)]
@@ -75,6 +77,10 @@ impl ColorTheme {
         Style::new().fg(self.accent).add_modifier(Modifier::BOLD)
     }
 
+    pub fn heading_style(self) -> Style {
+        Style::new().fg(self.heading).add_modifier(Modifier::BOLD)
+    }
+
     pub fn match_style(self, selected: bool) -> Style {
         if selected {
             self.selection.style().add_modifier(Modifier::BOLD)
@@ -95,6 +101,7 @@ mod tests {
                 fg = "#123456"
                 muted = "magenta"
                 accent = "light-cyan"
+                heading = "light-blue"
                 border = "blue"
                 match = "light-green"
                 key = "light-yellow"
@@ -115,6 +122,7 @@ mod tests {
         assert_eq!(theme.bg, Color::Reset);
         assert_eq!(theme.muted, Color::Magenta);
         assert_eq!(theme.accent, Color::LightCyan);
+        assert_eq!(theme.heading, Color::LightBlue);
         assert_eq!(theme.border, Color::Blue);
         assert_eq!(theme.r#match, Color::LightGreen);
         assert_eq!(theme.key, Color::LightYellow);

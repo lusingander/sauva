@@ -186,7 +186,7 @@ fn search_prompt_lines(color_theme: &ColorTheme) -> Vec<Line<'static>> {
             Style::new().add_modifier(Modifier::BOLD),
         ),
         Line::from(vec![
-            Span::styled("Examples", color_theme.accent_style()),
+            Span::styled("Examples", color_theme.heading_style()),
             Span::styled(
                 "  rightwards arrow · U+2192 · →",
                 Style::new().fg(color_theme.muted),

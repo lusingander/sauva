@@ -181,6 +181,14 @@
           ],
           "default": "cyan"
         },
+        "heading": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "blue"
+        },
         "border": {
           "allOf": [
             {

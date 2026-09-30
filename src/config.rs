@@ -335,6 +335,7 @@ mod tests {
                 fg = "#123456"
                 muted = "light-cyan"
                 accent = "light-magenta"
+                heading = "light-blue"
                 border = "white"
                 match = "yellow"
                 key = "light-yellow"
@@ -356,6 +357,7 @@ mod tests {
         assert_eq!(config.color_theme().bg, Color::Reset);
         assert_eq!(config.color_theme().muted, Color::LightCyan);
         assert_eq!(config.color_theme().accent, Color::LightMagenta);
+        assert_eq!(config.color_theme().heading, Color::LightBlue);
         assert_eq!(config.color_theme().border, Color::White);
         assert_eq!(config.color_theme().r#match, Color::Yellow);
         assert_eq!(config.color_theme().key, Color::LightYellow);

@@ -319,6 +319,7 @@ mod tests {
             bg: Color::Blue,
             muted: Color::Magenta,
             accent: Color::Green,
+            heading: Color::Cyan,
             border: Color::DarkGray,
             r#match: Color::LightGreen,
             key: Color::LightRed,
@@ -356,7 +357,7 @@ mod tests {
             "unexpected backgrounds: {unexpected_backgrounds:?}"
         );
         assert_eq!(buffer.cell((2, 0)).unwrap().fg, color_theme.accent);
-        assert_eq!(buffer.cell((1, 1)).unwrap().fg, color_theme.accent);
+        assert_eq!(buffer.cell((1, 1)).unwrap().fg, color_theme.heading);
         assert_eq!(buffer.cell((3, 3)).unwrap().fg, color_theme.muted);
         assert_eq!(buffer.cell((60, 2)).unwrap().symbol(), "┃");
         assert_eq!(buffer.cell((60, 2)).unwrap().fg, color_theme.border);
@@ -515,7 +516,7 @@ mod tests {
                 .modifier
                 .contains(Modifier::BOLD)
         );
-        assert_eq!(empty.cell((1, 5)).unwrap().fg, color_theme.accent);
+        assert_eq!(empty.cell((1, 5)).unwrap().fg, color_theme.heading);
         assert_eq!(empty.cell((11, 5)).unwrap().fg, color_theme.muted);
         assert!(
             empty
