@@ -8,7 +8,7 @@ use std::{
 };
 
 use garde::Validate;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use umbra::optional;
 
 use crate::{
@@ -56,7 +56,7 @@ impl RuntimeConfig {
     derives = [Debug, Deserialize],
     attrs = [serde(deny_unknown_fields)]
 )]
-#[derive(Debug, Default, Validate)]
+#[derive(Debug, Default, Serialize, Validate)]
 struct Config {
     #[garde(skip)]
     #[nested]
@@ -85,12 +85,9 @@ impl Config {
 }
 
 fn default_runtime_config() -> RuntimeConfig {
-    RuntimeConfig {
-        color_theme: ColorTheme::default(),
-        glyph_preview: GlyphPreviewSettings::default(),
-        ui: UiSettings::default(),
-        keymap: ResolvedKeymap::default(),
-    }
+    Config::default()
+        .resolve()
+        .expect("built-in configuration must be valid")
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -191,6 +188,10 @@ pub fn load() -> Result<RuntimeConfig, ConfigError> {
         env::var_os(HOME_ENV_NAME),
     )?;
     load_config(config_file.as_ref())
+}
+
+pub fn default_toml() -> Result<String, toml::ser::Error> {
+    toml::to_string(&Config::default())
 }
 
 fn resolve_config_file(
@@ -301,6 +302,38 @@ mod tests {
         let error = resolve_config_file(Some(OsString::new()), None, None).unwrap_err();
 
         assert!(matches!(error, ConfigError::EmptyExplicitPath));
+    }
+
+    #[test]
+    fn generated_default_config_is_complete_and_loadable() {
+        let generated = default_toml().unwrap();
+
+        for table in [
+            "[color]",
+            "[color.selection]",
+            "[color.status]",
+            "[glyph_preview]",
+            "[ui]",
+            "[keybindings.global]",
+            "[keybindings.inspector]",
+            "[keybindings.search]",
+            "[keybindings.sequence]",
+            "[keybindings.browse_plane]",
+            "[keybindings.browse_range]",
+            "[keybindings.browse_block]",
+            "[keybindings.browse_code_points]",
+            "[keybindings.help]",
+        ] {
+            assert!(generated.contains(table), "missing {table}");
+        }
+        assert!(generated.contains("fg = \"#f5f7fa\""));
+        assert!(generated.contains("input_cursor = \"native\""));
+
+        let parsed: OptionalConfig = toml::from_str(&generated).unwrap();
+        let parsed: Config = parsed.into();
+        parsed.validate().unwrap();
+        assert_eq!(toml::to_string(&parsed).unwrap(), generated);
+        parsed.resolve().unwrap();
     }
 
     #[test]

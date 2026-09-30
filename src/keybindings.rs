@@ -2,7 +2,7 @@ use std::{collections::HashMap, error::Error, fmt};
 
 use garde::Validate;
 use ratatui::crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tui_input::backend::crossterm::to_input_request;
 use umbra::optional;
 
@@ -270,7 +270,7 @@ fn validate_config_key(value: &str, _: &()) -> garde::Result {
     attrs = [serde(deny_unknown_fields)],
     visibility = pub
 )]
-#[derive(Debug, Default, Validate)]
+#[derive(Debug, Default, Serialize, Validate)]
 pub struct Keybindings {
     #[garde(dive)]
     #[nested]
@@ -323,7 +323,7 @@ macro_rules! keybinding_context {
             derives = [Debug, Deserialize],
             attrs = [serde(deny_unknown_fields)]
         )]
-        #[derive(Debug, Validate)]
+        #[derive(Debug, Serialize, Validate)]
         struct $name {
             $(
                 #[garde(inner(custom(validate_config_key)))]
