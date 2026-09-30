@@ -1,20 +1,10 @@
 ---
 source: src/ui/render.rs
-assertion_line: 463
 expression: "render_to_text(&state, 59, 15)"
 ---
-┌ sauva ──────────────────────────────────────────────────┐
-│ Terminal too small                                      │
-│ Minimum: 60x16                                          │
-│                                                         │
-│                                                         │
-│                                                         │
-│                                                         │
-│                                                         │
-│                                                         │
-│                                                         │
-│                                                         │
-│                                                         │
-│                                                         │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
+ sauva
+
+ Terminal too small
+
+ Required  60 × 16
+ Current   59 × 15

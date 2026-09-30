@@ -31,7 +31,10 @@ fn custom_keybindings_appear_in_help_and_drive_the_app() -> termlens::Result<()>
 
     terminal.send(Key::F(2))?;
     let help = terminal.snapshot_after(|screen| {
-        screen.contains("Help · Inspector") && screen.contains("<x>") && screen.contains("<F2>")
+        screen.contains("sauva / Help")
+            && screen.contains("Keybindings · Inspector")
+            && screen.contains("x  Ctrl-c                Quit")
+            && screen.contains("F2                       Open or close help")
     })?;
     let help = help
         .mask_matching(env!("CARGO_PKG_REPOSITORY"), '▒')
@@ -46,7 +49,9 @@ fn custom_keybindings_appear_in_help_and_drive_the_app() -> termlens::Result<()>
 
     terminal.send(Key::Char('q'))?;
     terminal.send(Key::F(2))?;
-    terminal.wait_until(|screen| screen.contains("Help · Inspector"))?;
+    terminal.wait_until(|screen| {
+        screen.contains("sauva / Help") && screen.contains("Keybindings · Inspector")
+    })?;
     terminal.send(Key::F(2))?;
     terminal.wait_until(|screen| screen.contains("Identity"))?;
     terminal.send(Key::Char('x'))?;
@@ -96,7 +101,7 @@ fn starts_at_the_code_point_from_the_command_line() -> termlens::Result<()> {
 fn inspects_a_text_sequence_and_preserves_its_position_across_search() -> termlens::Result<()> {
     let mut terminal = termlens::bin!("sauva", size(100, 30), args(["A→B", "--graphics", "off"]))?;
     terminal.snapshot_after(|screen| {
-        screen.contains("Sequence · 3 code points")
+        screen.contains("3 code points")
             && screen.contains("U+0041")
             && screen.contains("U+2192")
             && screen.contains("U+0042")
@@ -105,7 +110,7 @@ fn inspects_a_text_sequence_and_preserves_its_position_across_search() -> termle
     terminal.send(Key::Down)?;
     terminal.send(Key::Enter)?;
     terminal.wait_until(|screen| {
-        screen.contains("Inspector · from Sequence 2/3")
+        screen.contains("Sequence 2/3 / Inspector")
             && screen.contains("U+2192")
             && screen.contains("RIGHTWARDS ARROW")
     })?;
@@ -118,16 +123,16 @@ fn inspects_a_text_sequence_and_preserves_its_position_across_search() -> termle
     })?;
     terminal.send(Key::Enter)?;
     terminal.wait_until(|screen| {
-        screen.contains("Inspector · from Sequence 2/3")
+        screen.contains("Sequence 2/3 / Inspector")
             && screen.contains("U+03A9")
             && screen.contains("GREEK CAPITAL LETTER OMEGA")
     })?;
 
     terminal.send(Key::Backspace)?;
-    terminal.wait_until(|screen| screen.contains("Sequence · 3 code points"))?;
+    terminal.wait_until(|screen| screen.contains("3 code points"))?;
     terminal.send(Key::Enter)?;
     terminal.wait_until(|screen| {
-        screen.contains("Inspector · from Sequence 2/3")
+        screen.contains("Sequence 2/3 / Inspector")
             && screen.contains("U+2192")
             && screen.contains("RIGHTWARDS ARROW")
     })?;
@@ -237,7 +242,7 @@ fn keeps_the_search_result_selected_across_terminal_resizes() -> termlens::Resul
     terminal.resize(100, 30)?;
     terminal.snapshot_after(|screen| {
         screen.size() == (100, 30)
-            && screen.contains("Selection Preview")
+            && screen.contains("Selection")
             && screen.contains("U+2192")
             && screen.contains("RIGHTWARDS ARROW")
     })?;
@@ -262,19 +267,20 @@ fn search_help_does_not_edit_the_query_or_lose_the_result() -> termlens::Result<
     terminal.send(Key::Char('/'))?;
     terminal.wait_until(|screen| screen.contains("Search by Unicode name"))?;
     terminal.send_str("U+2192")?;
-    terminal.wait_until(|screen| {
-        screen.contains("Results · 1") && screen.contains("RIGHTWARDS ARROW")
-    })?;
+    terminal
+        .wait_until(|screen| screen.contains("1 result") && screen.contains("RIGHTWARDS ARROW"))?;
 
     terminal.send(Key::F(1))?;
     terminal.snapshot_after(|screen| {
-        screen.contains("Help · Search") && screen.contains("Inspect the selected result")
+        screen.contains("sauva / Help")
+            && screen.contains("Keybindings · Search")
+            && screen.contains("Inspect the selected result")
     })?;
     terminal.send(Key::Char('x'))?;
     terminal.send(Key::F(1))?;
     let screen = terminal.snapshot_after(|screen| {
         screen.contains("Search")
-            && screen.contains("Results · 1")
+            && screen.contains("1 result")
             && screen.contains("U+2192")
             && screen.contains("RIGHTWARDS ARROW")
     })?;
@@ -300,19 +306,21 @@ fn browses_through_planes_and_ranges_to_inspect_a_code_point() -> termlens::Resu
 
     terminal.send(Key::Char('p'))?;
     terminal.wait_until(|screen| {
-        screen.contains("Browse · Planes") && screen.contains("Basic Multilingual Plane")
+        screen.contains("Browse / Planes") && screen.contains("Basic Multilingual Plane")
     })?;
     terminal.send(Key::Enter)?;
     terminal.wait_until(|screen| {
-        screen.contains("Browse · Ranges · Plane 0") && screen.contains("U+0000–U+00FF")
+        screen.contains("Browse / Ranges")
+            && screen.contains("Plane 0")
+            && screen.contains("U+0000–U+00FF")
     })?;
     terminal.send(Key::Enter)?;
     terminal.wait_until(|screen| {
-        screen.contains("Browse · Code Points") && screen.contains("Selection Preview")
+        screen.contains("Browse / Code Points") && screen.contains("Selection")
     })?;
     terminal.send(Key::Right)?;
     let screen = terminal.snapshot_after(|screen| {
-        screen.contains("Browse · Code Points") && screen.contains("U+0042")
+        screen.contains("Browse / Code Points") && screen.contains("U+0042")
     })?;
     insta::assert_snapshot!(screen.with_styles());
 
@@ -337,15 +345,15 @@ fn backs_out_of_a_block_table_without_changing_the_inspected_code_point() -> ter
 
     terminal.send(Key::Char('b'))?;
     terminal.wait_until(|screen| {
-        screen.contains("Browse · Blocks") && screen.contains("Basic Latin")
+        screen.contains("Browse / Blocks") && screen.contains("Basic Latin")
     })?;
     terminal.send(Key::Enter)?;
-    terminal.wait_until(|screen| screen.contains("Browse · Block Code Points"))?;
+    terminal.wait_until(|screen| screen.contains("Block Code Points"))?;
     terminal.send(Key::Right)?;
     terminal.wait_until(|screen| screen.contains("U+0042"))?;
 
     terminal.send(Key::Backspace)?;
-    terminal.wait_until(|screen| screen.contains("Browse · Blocks"))?;
+    terminal.wait_until(|screen| screen.contains("Browse / Blocks"))?;
     terminal.send(Key::Esc)?;
     terminal.snapshot_after(|screen| {
         screen.contains("Identity")
@@ -365,7 +373,7 @@ fn cancels_direct_code_point_browsing_without_changing_the_inspector() -> termle
     terminal.snapshot_after(|screen| screen.contains("LATIN CAPITAL LETTER A"))?;
 
     terminal.send(Key::Char('c'))?;
-    terminal.wait_until(|screen| screen.contains("Browse · Code Points"))?;
+    terminal.wait_until(|screen| screen.contains("Browse / Code Points"))?;
     terminal.send(Key::Right)?;
     terminal.wait_until(|screen| screen.contains("U+0042"))?;
     terminal.send(Key::Esc)?;

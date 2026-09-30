@@ -1,9 +1,9 @@
 use ratatui::{
     Frame,
     layout::Rect,
-    style::{Modifier, Style},
+    style::Style,
     text::{Line, Span},
-    widgets::{Block, Padding, Paragraph},
+    widgets::Paragraph,
 };
 
 use crate::app::AppState;
@@ -13,6 +13,7 @@ use crate::ui::{
     scrollbar::{self, ViewportScrollbar},
     settings::UiSettings,
     theme::ColorTheme,
+    workspace,
 };
 use crate::unicode::CodePoint;
 
@@ -59,37 +60,15 @@ pub fn render(
     let end = range.end.max(start).min(document.lines.len());
     let lines = document.lines[start..end].to_vec();
 
+    frame.render_widget(Paragraph::new(lines), content);
     frame.render_widget(
-        Paragraph::new(lines).block(
-            Block::bordered()
-                .title(inspector_title(state))
-                .padding(Padding::horizontal(1)),
-        ),
-        area,
+        ViewportScrollbar::new(document.lines.len(), start..end).style(color_theme.border_style()),
+        scrollbar::area_for_primary(frame.area(), area, content),
     );
-    frame.render_widget(
-        ViewportScrollbar::new(document.lines.len(), start..end).style(color_theme.base_style()),
-        scrollbar::area_after(content),
-    );
-}
-
-fn inspector_title(state: &AppState) -> String {
-    state.sequence().map_or_else(
-        || " Inspector ".to_owned(),
-        |sequence| {
-            format!(
-                " Inspector · from Sequence {}/{} ",
-                sequence.selected_index() + 1,
-                sequence.code_points().len()
-            )
-        },
-    )
 }
 
 fn content_area(area: Rect) -> Rect {
-    Block::bordered()
-        .padding(Padding::horizontal(1))
-        .inner(area)
+    workspace::primary_canvas(area)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -149,7 +128,6 @@ struct DocumentBuilder {
     lines: Vec<Line<'static>>,
     width: usize,
     label_width: usize,
-    value_width: usize,
     color_theme: ColorTheme,
 }
 
@@ -160,20 +138,20 @@ impl DocumentBuilder {
             lines: Vec::new(),
             width,
             label_width,
-            value_width: width.saturating_sub(label_width),
             color_theme: *color_theme,
         }
     }
 
     fn section(&mut self, label: &str) {
         if !self.lines.is_empty() {
-            self.lines.push(Line::default());
+            self.lines.push(Line::from(Span::styled(
+                "─".repeat(self.width),
+                self.color_theme.border_style(),
+            )));
         }
         self.lines.push(Line::from(Span::styled(
             label.to_owned(),
-            Style::new()
-                .fg(self.color_theme.inspector.section_heading)
-                .add_modifier(Modifier::BOLD),
+            self.color_theme.heading_style(),
         )));
     }
 
@@ -184,47 +162,17 @@ impl DocumentBuilder {
         selected: bool,
         selection_marker: &str,
     ) {
-        let mut first_line = true;
-        for value in values {
-            for wrapped in key_value::wrap_value(&value, self.value_width) {
-                let prefix = if first_line {
-                    padded_label(label, self.label_width, selection_marker)
-                } else {
-                    " ".repeat(self.label_width)
-                };
-                let mut line = if selected {
-                    Line::from(vec![
-                        Span::styled(prefix, self.color_theme.inspector.selection.style()),
-                        Span::styled(wrapped, self.color_theme.inspector.selection.style()),
-                    ])
-                } else {
-                    Line::from(vec![
-                        Span::styled(
-                            prefix,
-                            Style::new().fg(self.color_theme.inspector.field_label),
-                        ),
-                        Span::raw(wrapped),
-                    ])
-                };
-                if selected {
-                    let padding = self.width.saturating_sub(line.width());
-                    line.push_span(Span::styled(
-                        " ".repeat(padding),
-                        self.color_theme.inspector.selection.style(),
-                    ));
-                }
-                self.lines.push(line);
-                first_line = false;
-            }
-        }
+        self.lines.extend(key_value::property_lines(
+            label,
+            values,
+            self.width,
+            self.label_width,
+            &format!("{selection_marker} "),
+            Style::new().fg(self.color_theme.muted),
+            Style::new(),
+            selected.then(|| self.color_theme.selection.style()),
+        ));
     }
-}
-
-fn padded_label(label: &str, width: usize, selection_marker: &str) -> String {
-    let mut output = format!("{selection_marker} {label}");
-    let padding = width.saturating_sub(key_value::text_width(&output));
-    output.push_str(&" ".repeat(padding));
-    output
 }
 
 #[cfg(test)]
@@ -327,14 +275,14 @@ mod tests {
         );
 
         for (area, viewport_height, document_height) in [
-            (Rect::new(0, 0, 60, 16), 13, 32),
-            (Rect::new(0, 0, 99, 16), 13, 31),
-            (Rect::new(0, 0, 100, 30), 27, 32),
-            (Rect::new(0, 0, 140, 40), 37, 32),
+            (Rect::new(0, 0, 60, 16), 12, 31),
+            (Rect::new(0, 0, 99, 16), 12, 31),
+            (Rect::new(0, 0, 100, 30), 26, 31),
+            (Rect::new(0, 0, 140, 40), 36, 31),
         ] {
             let metrics = viewport_metrics(area, &state);
             assert_eq!(metrics.viewport_height, viewport_height);
-            assert_eq!(metrics.document_height, document_height);
+            assert_eq!(metrics.document_height, document_height, "area: {area:?}");
             assert_eq!(metrics.field_ranges.len(), 22);
         }
     }

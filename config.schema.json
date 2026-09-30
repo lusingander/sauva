@@ -123,192 +123,9 @@
       },
       "additionalProperties": false
     },
-    "inspectorColors": {
+    "statusColors": {
       "type": "object",
       "properties": {
-        "section_heading": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/color"
-            }
-          ],
-          "default": "cyan"
-        },
-        "field_label": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/color"
-            }
-          ],
-          "default": "darkgray"
-        },
-        "selection": {
-          "$ref": "#/definitions/selectionColors"
-        }
-      },
-      "additionalProperties": false
-    },
-    "keyValueColors": {
-      "type": "object",
-      "properties": {
-        "label": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/color"
-            }
-          ],
-          "default": "darkgray"
-        }
-      },
-      "additionalProperties": false
-    },
-    "listColors": {
-      "type": "object",
-      "properties": {
-        "selection": {
-          "$ref": "#/definitions/selectionColors"
-        }
-      },
-      "additionalProperties": false
-    },
-    "codePointTableColors": {
-      "type": "object",
-      "properties": {
-        "selection": {
-          "$ref": "#/definitions/selectionColors"
-        }
-      },
-      "additionalProperties": false
-    },
-    "searchMatchColors": {
-      "type": "object",
-      "properties": {
-        "fg": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/color"
-            }
-          ],
-          "default": "yellow"
-        },
-        "selected_fg": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/color"
-            }
-          ],
-          "default": "white"
-        }
-      },
-      "additionalProperties": false
-    },
-    "searchMessageColors": {
-      "type": "object",
-      "properties": {
-        "example_label": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/color"
-            }
-          ],
-          "default": "cyan"
-        },
-        "detail": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/color"
-            }
-          ],
-          "default": "darkgray"
-        }
-      },
-      "additionalProperties": false
-    },
-    "selectionPreviewColors": {
-      "type": "object",
-      "properties": {
-        "empty": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/color"
-            }
-          ],
-          "default": "darkgray"
-        }
-      },
-      "additionalProperties": false
-    },
-    "glyphPreviewColors": {
-      "type": "object",
-      "properties": {
-        "metadata_label": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/color"
-            }
-          ],
-          "default": "darkgray"
-        },
-        "status_heading": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/color"
-            }
-          ],
-          "default": "yellow"
-        },
-        "status_detail": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/color"
-            }
-          ],
-          "default": "darkgray"
-        }
-      },
-      "additionalProperties": false
-    },
-    "helpColors": {
-      "type": "object",
-      "properties": {
-        "key": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/color"
-            }
-          ],
-          "default": "yellow"
-        },
-        "link": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/color"
-            }
-          ],
-          "default": "blue"
-        },
-        "divider": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/color"
-            }
-          ],
-          "default": "darkgray"
-        }
-      },
-      "additionalProperties": false
-    },
-    "footerColors": {
-      "type": "object",
-      "properties": {
-        "short_help": {
-          "allOf": [
-            {
-              "$ref": "#/definitions/color"
-            }
-          ],
-          "default": "darkgray"
-        },
         "info": {
           "allOf": [
             {
@@ -348,35 +165,67 @@
           ],
           "default": "reset"
         },
-        "inspector": {
-          "$ref": "#/definitions/inspectorColors"
+        "muted": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "darkgray"
         },
-        "key_value": {
-          "$ref": "#/definitions/keyValueColors"
+        "accent": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "cyan"
         },
-        "list": {
-          "$ref": "#/definitions/listColors"
+        "heading": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "blue"
         },
-        "code_point_table": {
-          "$ref": "#/definitions/codePointTableColors"
+        "border": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "darkgray"
         },
-        "search_match": {
-          "$ref": "#/definitions/searchMatchColors"
+        "match": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "yellow"
         },
-        "search_message": {
-          "$ref": "#/definitions/searchMessageColors"
+        "key": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "yellow"
         },
-        "selection_preview": {
-          "$ref": "#/definitions/selectionPreviewColors"
+        "link": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/color"
+            }
+          ],
+          "default": "blue"
         },
-        "glyph_preview": {
-          "$ref": "#/definitions/glyphPreviewColors"
+        "selection": {
+          "$ref": "#/definitions/selectionColors"
         },
-        "help": {
-          "$ref": "#/definitions/helpColors"
-        },
-        "footer": {
-          "$ref": "#/definitions/footerColors"
+        "status": {
+          "$ref": "#/definitions/statusColors"
         }
       },
       "additionalProperties": false

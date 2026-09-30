@@ -1,8 +1,9 @@
 use ratatui::{
     Frame,
-    layout::Rect,
-    style::Style,
-    widgets::{Block, Padding, Paragraph},
+    layout::{Alignment, Rect},
+    style::{Modifier, Style},
+    text::{Line, Span},
+    widgets::{Block, Paragraph},
 };
 
 use crate::{
@@ -28,20 +29,21 @@ pub fn render(
     let area = frame.area();
     frame.render_widget(Block::default().style(color_theme.base_style()), area);
     let Some(layout) = calculate(area) else {
-        render_size_warning(frame, area);
+        render_size_warning(frame, area, color_theme);
         return;
     };
 
+    render_header(frame, layout.header, state, color_theme);
     if state.help().is_open() {
         help::render(frame, layout.main, state, keymap, color_theme);
     } else {
         match state.view() {
             View::Inspector => {
                 let inspector_layout = crate::ui::layout::inspector(layout.main);
-                inspector::render(frame, inspector_layout.details, state, color_theme, ui);
                 if let Some(preview) = inspector_layout.preview {
                     glyph_preview::render(frame, preview, state.glyph_preview(), color_theme);
                 }
+                inspector::render(frame, inspector_layout.details, state, color_theme, ui);
             }
             View::Browser => browser::render(frame, layout.main, state, color_theme, ui),
             View::Search => search::render(frame, layout.main, state, color_theme, ui),
@@ -51,18 +53,128 @@ pub fn render(
     render_footer(frame, layout.footer, state, keymap, color_theme);
 }
 
-fn render_size_warning(frame: &mut Frame, area: Rect) {
+fn render_header(frame: &mut Frame, area: Rect, state: &AppState, color_theme: &ColorTheme) {
+    let context = context_for_state(state);
+    let location = if state.help().is_open() {
+        "Help".to_owned()
+    } else {
+        header_location(state, context)
+    };
+    let status = if state.help().is_open() {
+        help::context_label(context).to_owned()
+    } else {
+        header_status(state)
+    };
+
+    frame.render_widget(
+        Paragraph::new(Line::from(vec![
+            Span::styled(" sauva", color_theme.accent_style()),
+            Span::styled(format!(" / {location}"), color_theme.base_style()),
+        ])),
+        area,
+    );
+    frame.render_widget(
+        Paragraph::new(Line::styled(
+            format!("{status} "),
+            Style::new().fg(color_theme.muted),
+        ))
+        .alignment(Alignment::Right),
+        area,
+    );
+}
+
+fn header_location(state: &AppState, context: Context) -> String {
+    match context {
+        Context::Inspector => state.sequence().map_or_else(
+            || "Inspector".to_owned(),
+            |sequence| {
+                format!(
+                    "Sequence {}/{} / Inspector",
+                    sequence.selected_index() + 1,
+                    sequence.code_points().len()
+                )
+            },
+        ),
+        Context::BrowsePlane => "Browse / Planes".to_owned(),
+        Context::BrowseRange => "Browse / Ranges".to_owned(),
+        Context::BrowseBlock => "Browse / Blocks".to_owned(),
+        Context::BrowseCodePoints => "Browse / Code Points".to_owned(),
+        _ => help::context_label(context).to_owned(),
+    }
+}
+
+fn header_status(state: &AppState) -> String {
+    match state.view() {
+        View::Inspector => state.selected().to_string(),
+        View::Browser => state
+            .browse()
+            .map_or_else(String::new, |browse| browse.cursor().to_string()),
+        View::Search => {
+            let search = state
+                .search()
+                .expect("the search view always has search state");
+            let count = search.outcome().results().len();
+            search.selected_result().map_or_else(
+                || crate::ui::search::result_count_label(count),
+                |result| {
+                    format!(
+                        "{} · {}",
+                        crate::ui::search::result_count_label(count),
+                        result.code_point()
+                    )
+                },
+            )
+        }
+        View::Sequence => {
+            let sequence = state
+                .sequence()
+                .expect("the sequence view always has sequence state");
+            format!(
+                "{}/{} · {}",
+                sequence.selected_index() + 1,
+                sequence.code_points().len(),
+                sequence.selected()
+            )
+        }
+    }
+}
+
+fn render_size_warning(frame: &mut Frame, area: Rect, color_theme: &ColorTheme) {
     let (minimum_width, minimum_height) = MINIMUM_SIZE;
     frame.render_widget(
-        Paragraph::new(format!(
-            "Terminal too small\nMinimum: {minimum_width}x{minimum_height}"
-        ))
-        .block(
-            Block::bordered()
-                .title(" sauva ")
-                .padding(Padding::horizontal(1)),
-        ),
-        area,
+        Paragraph::new(Line::from(Span::styled(
+            " sauva",
+            color_theme.accent_style(),
+        ))),
+        Rect::new(area.x, area.y, area.width, area.height.min(1)),
+    );
+
+    let content = Rect::new(
+        area.x.saturating_add(1),
+        area.y.saturating_add(2),
+        area.width.saturating_sub(2),
+        area.height.saturating_sub(2),
+    );
+    let label = Style::new().fg(color_theme.muted);
+    frame.render_widget(
+        Paragraph::new(vec![
+            Line::from(Span::styled(
+                "Terminal too small",
+                Style::new()
+                    .fg(color_theme.status.warning)
+                    .add_modifier(Modifier::BOLD),
+            )),
+            Line::default(),
+            Line::from(vec![
+                Span::styled("Required  ", label),
+                Span::raw(format!("{minimum_width} × {minimum_height}")),
+            ]),
+            Line::from(vec![
+                Span::styled("Current   ", label),
+                Span::raw(format!("{} × {}", area.width, area.height)),
+            ]),
+        ]),
+        content,
     );
 }
 
@@ -75,8 +187,8 @@ fn render_footer(
 ) {
     if let Some(status) = state.footer_status() {
         let fg = match status.level() {
-            FooterStatusLevel::Info => color_theme.footer.info,
-            FooterStatusLevel::Warning => color_theme.footer.warning,
+            FooterStatusLevel::Info => color_theme.status.info,
+            FooterStatusLevel::Warning => color_theme.status.warning,
         };
         frame.render_widget(
             Paragraph::new(format!(" {} ", status.message())).style(Style::new().fg(fg)),
@@ -90,9 +202,16 @@ fn render_footer(
     } else {
         context_for_state(state)
     };
-    let text = help::footer(context, state.sequence().is_some(), area.width, keymap);
+    let content = help::footer(
+        context,
+        state.sequence().is_some(),
+        area.width,
+        keymap,
+        color_theme,
+    );
+    frame.render_widget(Paragraph::new(content.left), area);
     frame.render_widget(
-        Paragraph::new(text).style(Style::new().fg(color_theme.footer.short_help)),
+        Paragraph::new(content.right).alignment(Alignment::Right),
         area,
     );
 }
@@ -117,11 +236,7 @@ mod tests {
             MINIMUM_SIZE, STANDARD_SIZE, WIDE_SIZE, browser_list_height, search_result_height,
             sequence_list_height,
         },
-        ui::theme::{
-            CodePointTableColors, FooterColors, GlyphPreviewColors, HelpColors, InspectorColors,
-            KeyValueColors, ListColors, SearchMatchColors, SearchMessageColors, SelectionColors,
-            SelectionPreviewColors,
-        },
+        ui::theme::{SelectionColors, StatusColors},
     };
 
     fn render_to_text(state: &AppState, width: u16, height: u16) -> String {
@@ -226,52 +341,18 @@ mod tests {
         ColorTheme {
             fg: Color::White,
             bg: Color::Blue,
-            inspector: InspectorColors {
-                section_heading: Color::Green,
-                field_label: Color::Magenta,
-                selection: SelectionColors {
-                    fg: Color::White,
-                    bg: Color::DarkGray,
-                },
+            muted: Color::Magenta,
+            accent: Color::Green,
+            heading: Color::Cyan,
+            border: Color::DarkGray,
+            r#match: Color::LightGreen,
+            key: Color::LightRed,
+            link: Color::LightBlue,
+            selection: SelectionColors {
+                fg: Color::White,
+                bg: Color::DarkGray,
             },
-            key_value: KeyValueColors {
-                label: Color::LightMagenta,
-            },
-            list: ListColors {
-                selection: SelectionColors {
-                    fg: Color::Black,
-                    bg: Color::LightBlue,
-                },
-            },
-            code_point_table: CodePointTableColors {
-                selection: SelectionColors {
-                    fg: Color::Black,
-                    bg: Color::LightYellow,
-                },
-            },
-            search_match: SearchMatchColors {
-                fg: Color::LightGreen,
-                selected_fg: Color::White,
-            },
-            search_message: SearchMessageColors {
-                example_label: Color::LightCyan,
-                detail: Color::Gray,
-            },
-            selection_preview: SelectionPreviewColors {
-                empty: Color::Magenta,
-            },
-            glyph_preview: GlyphPreviewColors {
-                metadata_label: Color::Cyan,
-                status_heading: Color::Red,
-                status_detail: Color::LightCyan,
-            },
-            help: HelpColors {
-                key: Color::LightRed,
-                link: Color::LightBlue,
-                divider: Color::DarkGray,
-            },
-            footer: FooterColors {
-                short_help: Color::Gray,
+            status: StatusColors {
                 info: Color::LightGreen,
                 warning: Color::LightYellow,
             },
@@ -288,43 +369,39 @@ mod tests {
             .content
             .iter()
             .enumerate()
-            .filter(|(_, cell)| {
-                ![color_theme.bg, color_theme.inspector.selection.bg].contains(&cell.bg)
-            })
+            .filter(|(_, cell)| ![color_theme.bg, color_theme.selection.bg].contains(&cell.bg))
             .take(10)
             .map(|(index, cell)| (index, cell.symbol().to_owned(), cell.bg))
             .collect::<Vec<_>>();
         assert!(
-            buffer.content.iter().all(
-                |cell| [color_theme.bg, color_theme.inspector.selection.bg,].contains(&cell.bg)
-            ),
+            buffer
+                .content
+                .iter()
+                .all(|cell| [color_theme.bg, color_theme.selection.bg].contains(&cell.bg)),
             "unexpected backgrounds: {unexpected_backgrounds:?}"
         );
-        assert_eq!(buffer.cell((2, 0)).unwrap().fg, color_theme.fg);
-        assert_eq!(
-            buffer.cell((2, 1)).unwrap().fg,
-            color_theme.inspector.section_heading
-        );
-        assert_eq!(
-            buffer.cell((2, 3)).unwrap().fg,
-            color_theme.inspector.field_label
-        );
-        assert_eq!(buffer.cell((58, 1)).unwrap().symbol(), "│");
-        assert_eq!(buffer.cell((58, 1)).unwrap().fg, color_theme.fg);
-        assert!(buffer.content.iter().any(
-            |cell| cell.symbol() == "G" && cell.fg == color_theme.glyph_preview.status_heading
-        ));
+        assert_eq!(buffer.cell((2, 0)).unwrap().fg, color_theme.accent);
+        assert_eq!(buffer.cell((1, 2)).unwrap().fg, color_theme.heading);
+        assert_eq!(buffer.cell((3, 4)).unwrap().fg, color_theme.muted);
+        assert_eq!(buffer.cell((60, 2)).unwrap().symbol(), "┃");
+        assert_eq!(buffer.cell((60, 2)).unwrap().fg, color_theme.border);
         assert!(
             buffer
                 .content
                 .iter()
-                .any(|cell| cell.fg == color_theme.glyph_preview.metadata_label)
+                .any(|cell| cell.symbol() == "G" && cell.fg == color_theme.status.warning)
         );
         assert!(
             buffer
                 .content
                 .iter()
-                .any(|cell| cell.fg == color_theme.glyph_preview.status_detail)
+                .any(|cell| cell.fg == color_theme.muted)
+        );
+        assert!(
+            buffer
+                .content
+                .iter()
+                .any(|cell| cell.fg == color_theme.muted)
         );
     }
 
@@ -334,26 +411,20 @@ mod tests {
         let (width, height) = STANDARD_SIZE;
         let buffer = render_to_buffer(&fixtures::startup(), width, height, &color_theme);
 
-        for x in 2..58 {
-            let cell = buffer.cell((x, 2)).unwrap();
-            assert_eq!(cell.bg, color_theme.inspector.selection.bg);
+        for x in 1..58 {
+            let cell = buffer.cell((x, 3)).unwrap();
+            assert_eq!(cell.bg, color_theme.selection.bg);
         }
-        assert_eq!(
-            buffer.cell((2, 2)).unwrap().fg,
-            color_theme.inspector.selection.fg
-        );
-        assert_eq!(buffer.cell((1, 2)).unwrap().bg, color_theme.bg);
-        assert_eq!(buffer.cell((58, 2)).unwrap().bg, color_theme.bg);
+        assert_eq!(buffer.cell((1, 3)).unwrap().fg, color_theme.selection.fg);
+        assert_eq!(buffer.cell((0, 3)).unwrap().bg, color_theme.bg);
+        assert_eq!(buffer.cell((58, 3)).unwrap().bg, color_theme.bg);
 
         let mut state = fixtures::startup();
         synchronize_inspector(&mut state, width, height);
         update(&mut state, Action::MoveInspector(InspectorMove::NextField));
         let moved = render_to_buffer(&state, width, height, &color_theme);
-        assert_eq!(moved.cell((2, 2)).unwrap().bg, color_theme.bg);
-        assert_eq!(
-            moved.cell((2, 3)).unwrap().bg,
-            color_theme.inspector.selection.bg
-        );
+        assert_eq!(moved.cell((1, 3)).unwrap().bg, color_theme.bg);
+        assert_eq!(moved.cell((1, 4)).unwrap().bg, color_theme.selection.bg);
     }
 
     #[test]
@@ -370,7 +441,10 @@ mod tests {
 
             let rendered = render_to_text(&state, width, height);
             assert!(
-                rendered.lines().nth(1).unwrap().contains("Identity"),
+                rendered
+                    .lines()
+                    .take(4)
+                    .any(|line| line.contains("Identity")),
                 "{movement:?}"
             );
         }
@@ -386,12 +460,12 @@ mod tests {
             (
                 crate::app::FooterStatus::info("Copied Code Point"),
                 "Copied Code Point",
-                color_theme.footer.info,
+                color_theme.status.info,
             ),
             (
                 crate::app::FooterStatus::warning("No value to copy: Aliases"),
                 "No value to copy: Aliases",
-                color_theme.footer.warning,
+                color_theme.status.warning,
             ),
         ] {
             update(&mut state, Action::ShowFooterStatus(status));
@@ -412,19 +486,19 @@ mod tests {
         let (width, height) = STANDARD_SIZE;
 
         for (state, selected_y) in [
-            (fixtures::search_name_results(), 4),
-            (fixtures::browse_planes(), 1),
-            (fixtures::browse_ranges(), 1),
+            (fixtures::search_name_results(), 5),
+            (fixtures::browse_planes(), 3),
+            (fixtures::browse_ranges(), 3),
         ] {
             let buffer = render_to_buffer(&state, width, height, &color_theme);
 
             for x in 2..58 {
                 let cell = buffer.cell((x, selected_y)).unwrap();
-                assert_eq!(cell.bg, color_theme.list.selection.bg);
+                assert_eq!(cell.bg, color_theme.selection.bg);
             }
             assert_eq!(
                 buffer.cell((2, selected_y)).unwrap().fg,
-                color_theme.list.selection.fg
+                color_theme.selection.fg
             );
             assert_eq!(buffer.cell((1, selected_y)).unwrap().bg, color_theme.bg);
             assert_eq!(buffer.cell((58, selected_y)).unwrap().bg, color_theme.bg);
@@ -443,13 +517,13 @@ mod tests {
         );
 
         assert!(buffer.content.iter().any(|cell| {
-            cell.fg == color_theme.search_match.selected_fg
-                && cell.bg == color_theme.list.selection.bg
+            cell.fg == color_theme.selection.fg && cell.bg == color_theme.selection.bg
         }));
         assert!(
-            buffer.content.iter().any(|cell| {
-                cell.fg == color_theme.search_match.fg && cell.bg == color_theme.bg
-            })
+            buffer
+                .content
+                .iter()
+                .any(|cell| { cell.fg == color_theme.r#match && cell.bg == color_theme.bg })
         );
     }
 
@@ -461,36 +535,30 @@ mod tests {
         let empty = render_to_buffer(&fixtures::search_empty(), width, height, &color_theme);
         assert!(
             empty
-                .cell((2, 4))
+                .cell((2, 5))
                 .unwrap()
                 .modifier
                 .contains(Modifier::BOLD)
         );
-        assert_eq!(
-            empty.cell((2, 5)).unwrap().fg,
-            color_theme.search_message.example_label
+        assert_eq!(empty.cell((2, 6)).unwrap().fg, color_theme.heading);
+        assert_eq!(empty.cell((12, 6)).unwrap().fg, color_theme.muted);
+        assert!(
+            empty
+                .content
+                .iter()
+                .any(|cell| { cell.symbol() == "N" && cell.fg == color_theme.muted })
         );
-        assert_eq!(
-            empty.cell((12, 5)).unwrap().fg,
-            color_theme.search_message.detail
-        );
-        assert!(empty.content.iter().any(|cell| {
-            cell.symbol() == "N" && cell.fg == color_theme.selection_preview.empty
-        }));
 
         let no_results =
             render_to_buffer(&fixtures::search_no_results(), width, height, &color_theme);
         assert!(
             no_results
-                .cell((2, 4))
+                .cell((2, 5))
                 .unwrap()
                 .modifier
                 .contains(Modifier::BOLD)
         );
-        assert_eq!(
-            no_results.cell((2, 5)).unwrap().fg,
-            color_theme.search_message.detail
-        );
+        assert_eq!(no_results.cell((2, 6)).unwrap().fg, color_theme.muted);
     }
 
     #[test]
@@ -517,7 +585,7 @@ mod tests {
     }
 
     #[test]
-    fn code_point_selection_uses_its_own_fg_and_bg() {
+    fn code_point_selection_uses_the_global_selection_fg_and_bg() {
         let color_theme = test_color_theme();
         let (width, height) = STANDARD_SIZE;
         let state = fixtures::browse_code_points();
@@ -525,14 +593,14 @@ mod tests {
         let selected_cells = buffer
             .content
             .iter()
-            .filter(|cell| cell.bg == color_theme.code_point_table.selection.bg)
+            .filter(|cell| cell.bg == color_theme.selection.bg)
             .collect::<Vec<_>>();
 
         assert_eq!(selected_cells.len(), 3);
         assert!(
             selected_cells
                 .iter()
-                .all(|cell| cell.fg == color_theme.code_point_table.selection.fg)
+                .all(|cell| cell.fg == color_theme.selection.fg)
         );
         assert_eq!(
             selected_cells
@@ -541,6 +609,33 @@ mod tests {
                 .collect::<String>(),
             " A "
         );
+    }
+
+    #[test]
+    fn code_point_table_axes_highlight_only_the_selected_row_and_column() {
+        let color_theme = test_color_theme();
+        let (width, height) = STANDARD_SIZE;
+        let buffer = render_to_buffer(&fixtures::browse_code_points(), width, height, &color_theme);
+
+        assert_eq!(buffer.cell((10, 3)).unwrap().fg, color_theme.muted);
+        assert_eq!(buffer.cell((13, 3)).unwrap().fg, color_theme.accent);
+        assert_eq!(buffer.cell((2, 4)).unwrap().fg, color_theme.muted);
+        assert_eq!(buffer.cell((2, 8)).unwrap().fg, color_theme.accent);
+        assert!(
+            buffer
+                .cell((13, 3))
+                .unwrap()
+                .modifier
+                .contains(Modifier::BOLD)
+        );
+        assert!(
+            buffer
+                .cell((2, 8))
+                .unwrap()
+                .modifier
+                .contains(Modifier::BOLD)
+        );
+        assert_eq!(buffer.cell((13, 8)).unwrap().bg, color_theme.selection.bg);
     }
 
     #[test]
@@ -553,11 +648,11 @@ mod tests {
         let (width, height) = STANDARD_SIZE;
 
         for (state, marker) in [
-            (fixtures::startup(), (2, 2)),
-            (fixtures::search_name_results(), (2, 4)),
-            (fixtures::browse_planes(), (2, 1)),
-            (fixtures::browse_ranges(), (2, 1)),
-            (fixtures::browse_code_points(), (12, 6)),
+            (fixtures::startup(), (1, 3)),
+            (fixtures::search_name_results(), (2, 5)),
+            (fixtures::browse_planes(), (2, 3)),
+            (fixtures::browse_ranges(), (2, 3)),
+            (fixtures::browse_code_points(), (12, 8)),
         ] {
             let buffer = render_to_buffer_with_ui(&state, width, height, &color_theme, &ui);
 
@@ -573,10 +668,7 @@ mod tests {
         for state in [fixtures::search_name_results(), fixtures::browse_planes()] {
             let buffer = render_to_buffer(&state, width, height, &color_theme);
 
-            assert_eq!(
-                buffer.cell((62, 1)).unwrap().fg,
-                color_theme.key_value.label
-            );
+            assert_eq!(buffer.cell((63, 3)).unwrap().fg, color_theme.muted);
         }
     }
 
@@ -588,20 +680,15 @@ mod tests {
         update(&mut state, Action::ToggleHelp);
         let buffer = render_to_buffer(&state, width, height, &color_theme);
 
-        assert_eq!(buffer.cell((3, 6)).unwrap().symbol(), "h");
-        assert_eq!(buffer.cell((3, 6)).unwrap().fg, color_theme.help.link);
-        assert_eq!(buffer.cell((2, 8)).unwrap().symbol(), "─");
-        assert_eq!(buffer.cell((2, 8)).unwrap().fg, color_theme.help.divider);
-        assert_eq!(buffer.cell((3, 10)).unwrap().symbol(), "<");
-        assert_eq!(buffer.cell((3, 10)).unwrap().fg, color_theme.fg);
-        assert_eq!(buffer.cell((4, 10)).unwrap().symbol(), "h");
-        assert_eq!(buffer.cell((4, 10)).unwrap().fg, color_theme.help.key);
-        assert_eq!(buffer.cell((5, 10)).unwrap().symbol(), ">");
-        assert_eq!(buffer.cell((5, 10)).unwrap().fg, color_theme.fg);
-        assert_eq!(
-            buffer.cell((1, height - 1)).unwrap().fg,
-            color_theme.footer.short_help
-        );
+        assert_eq!(buffer.cell((2, 7)).unwrap().symbol(), "h");
+        assert_eq!(buffer.cell((2, 7)).unwrap().fg, color_theme.link);
+        assert_eq!(buffer.cell((1, 8)).unwrap().symbol(), " ");
+        assert_eq!(buffer.cell((2, 10)).unwrap().symbol(), "h");
+        assert_eq!(buffer.cell((2, 10)).unwrap().fg, color_theme.key);
+        assert_eq!(buffer.cell((5, 10)).unwrap().symbol(), "L");
+        assert_eq!(buffer.cell((5, 10)).unwrap().fg, color_theme.key);
+        assert_eq!(buffer.cell((1, height - 1)).unwrap().fg, color_theme.key);
+        assert_eq!(buffer.cell((5, height - 1)).unwrap().fg, color_theme.muted);
     }
 
     #[test]
@@ -951,7 +1038,7 @@ mod tests {
             })
             .unwrap();
 
-        terminal.backend_mut().assert_cursor_position((18, 1));
+        terminal.backend_mut().assert_cursor_position((25, 2));
     }
 
     #[test]

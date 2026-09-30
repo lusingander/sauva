@@ -1,15 +1,22 @@
 use ratatui::layout::{Constraint, Layout, Rect};
 
+use crate::browser::BrowseLevel;
+
 #[cfg(test)]
 pub const STANDARD_SIZE: (u16, u16) = (100, 30);
 pub const MINIMUM_SIZE: (u16, u16) = (60, 16);
 #[cfg(test)]
 pub const WIDE_SIZE: (u16, u16) = (140, 40);
-const NAVIGATOR_WIDTH: u16 = 60;
-const CONTEXT_MINIMUM_WIDTH: u16 = 40;
+const SPLIT_MINIMUM_WIDTH: u16 = 100;
+const AUXILIARY_WIDTH: u16 = 40;
+const CODE_POINT_GRID_WIDTH: u16 = 60;
+const CODE_POINT_CONTEXT_MINIMUM_WIDTH: u16 = 40;
+pub const GLYPH_MAXIMUM_WIDTH: u16 = 36;
+pub const GLYPH_MAXIMUM_HEIGHT: u16 = 20;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct UiLayout {
+    pub header: Rect,
     pub main: Rect,
     pub footer: Rect,
 }
@@ -45,35 +52,48 @@ pub fn calculate(area: Rect) -> Option<UiLayout> {
         return None;
     }
 
-    let [main, footer] = Layout::vertical([Constraint::Min(1), Constraint::Length(1)]).areas(area);
+    let [header, main, footer] = Layout::vertical([
+        Constraint::Length(2),
+        Constraint::Min(1),
+        Constraint::Length(1),
+    ])
+    .areas(area);
 
-    Some(UiLayout { main, footer })
+    Some(UiLayout {
+        header,
+        main,
+        footer,
+    })
 }
 
-pub fn browser(area: Rect) -> BrowserLayout {
-    navigator_and_context(area)
+pub fn browser(area: Rect, level: BrowseLevel) -> BrowserLayout {
+    if level == BrowseLevel::CodePointTable {
+        code_point_grid_and_context(area)
+    } else {
+        flexible_primary_and_auxiliary(area)
+    }
 }
 
 pub fn inspector(area: Rect) -> InspectorLayout {
-    let panes = navigator_and_context(area);
+    let panes = flexible_primary_and_auxiliary(area);
     InspectorLayout {
         details: panes.navigator,
         preview: panes.context.map(|panel| GlyphPreviewLayout {
             panel,
-            placeholder: Rect::new(
+            placeholder: centered_glyph_area(Rect::new(
                 panel.x.saturating_add(2),
                 panel.y.saturating_add(3),
-                panel.width.saturating_sub(4),
+                panel.width.saturating_sub(3),
                 panel.height.saturating_sub(4),
-            ),
+            )),
         }),
     }
 }
 
 pub fn search(area: Rect) -> SearchLayout {
-    let panes = navigator_and_context(area);
+    let panes = flexible_primary_and_auxiliary(area);
     let [input, results] =
-        Layout::vertical([Constraint::Length(3), Constraint::Min(1)]).areas(panes.navigator);
+        Layout::vertical([Constraint::Length(2), Constraint::Min(1)]).areas(panes.navigator);
 
     SearchLayout {
         input,
@@ -83,11 +103,11 @@ pub fn search(area: Rect) -> SearchLayout {
 }
 
 pub fn sequence(area: Rect) -> BrowserLayout {
-    navigator_and_context(area)
+    flexible_primary_and_auxiliary(area)
 }
 
-fn navigator_and_context(area: Rect) -> BrowserLayout {
-    if area.width < NAVIGATOR_WIDTH + CONTEXT_MINIMUM_WIDTH {
+fn flexible_primary_and_auxiliary(area: Rect) -> BrowserLayout {
+    if area.width < SPLIT_MINIMUM_WIDTH {
         return BrowserLayout {
             navigator: area,
             context: None,
@@ -95,8 +115,8 @@ fn navigator_and_context(area: Rect) -> BrowserLayout {
     }
 
     let [navigator, context] = Layout::horizontal([
-        Constraint::Length(NAVIGATOR_WIDTH),
-        Constraint::Min(CONTEXT_MINIMUM_WIDTH),
+        Constraint::Min(SPLIT_MINIMUM_WIDTH - AUXILIARY_WIDTH),
+        Constraint::Length(AUXILIARY_WIDTH),
     ])
     .areas(area);
     BrowserLayout {
@@ -105,9 +125,39 @@ fn navigator_and_context(area: Rect) -> BrowserLayout {
     }
 }
 
+fn code_point_grid_and_context(area: Rect) -> BrowserLayout {
+    if area.width < CODE_POINT_GRID_WIDTH + CODE_POINT_CONTEXT_MINIMUM_WIDTH {
+        return BrowserLayout {
+            navigator: area,
+            context: None,
+        };
+    }
+
+    let [navigator, context] = Layout::horizontal([
+        Constraint::Length(CODE_POINT_GRID_WIDTH),
+        Constraint::Min(CODE_POINT_CONTEXT_MINIMUM_WIDTH),
+    ])
+    .areas(area);
+    BrowserLayout {
+        navigator,
+        context: Some(context),
+    }
+}
+
+pub fn centered_glyph_area(area: Rect) -> Rect {
+    let width = area.width.min(GLYPH_MAXIMUM_WIDTH);
+    let height = area.height.min(GLYPH_MAXIMUM_HEIGHT);
+    Rect::new(
+        area.x + area.width.saturating_sub(width) / 2,
+        area.y + area.height.saturating_sub(height) / 2,
+        width,
+        height,
+    )
+}
+
 pub fn browser_list_height(area: Rect) -> usize {
     calculate(area).map_or(0, |layout| {
-        usize::from(browser(layout.main).navigator.height.saturating_sub(2))
+        usize::from(layout.main.height.saturating_sub(2))
     })
 }
 
@@ -133,21 +183,24 @@ mod tests {
     #[case(
         STANDARD_SIZE,
         UiLayout {
-            main: Rect::new(0, 0, 100, 29),
+            header: Rect::new(0, 0, 100, 2),
+            main: Rect::new(0, 2, 100, 27),
             footer: Rect::new(0, 29, 100, 1),
         }
     )]
     #[case(
         MINIMUM_SIZE,
         UiLayout {
-            main: Rect::new(0, 0, 60, 15),
+            header: Rect::new(0, 0, 60, 2),
+            main: Rect::new(0, 2, 60, 13),
             footer: Rect::new(0, 15, 60, 1),
         }
     )]
     #[case(
         WIDE_SIZE,
         UiLayout {
-            main: Rect::new(0, 0, 140, 39),
+            header: Rect::new(0, 0, 140, 2),
+            main: Rect::new(0, 2, 140, 37),
             footer: Rect::new(0, 39, 140, 1),
         }
     )]
@@ -192,15 +245,33 @@ mod tests {
     #[case(
         Rect::new(0, 3, 140, 36),
         BrowserLayout {
-            navigator: Rect::new(0, 3, 60, 36),
-            context: Some(Rect::new(60, 3, 80, 36)),
+            navigator: Rect::new(0, 3, 100, 36),
+            context: Some(Rect::new(100, 3, 40, 36)),
         }
     )]
     fn lays_out_the_browser_at_responsive_width_boundaries(
         #[case] area: Rect,
         #[case] expected: BrowserLayout,
     ) {
-        assert_eq!(browser(area), expected);
+        assert_eq!(browser(area, BrowseLevel::Plane), expected);
+    }
+
+    #[test]
+    fn keeps_the_code_point_grid_fixed_and_gives_the_preview_remaining_width() {
+        assert_eq!(
+            browser(Rect::new(0, 3, 100, 26), BrowseLevel::CodePointTable),
+            BrowserLayout {
+                navigator: Rect::new(0, 3, 60, 26),
+                context: Some(Rect::new(60, 3, 40, 26)),
+            }
+        );
+        assert_eq!(
+            browser(Rect::new(0, 3, 140, 36), BrowseLevel::CodePointTable),
+            BrowserLayout {
+                navigator: Rect::new(0, 3, 60, 36),
+                context: Some(Rect::new(60, 3, 80, 36)),
+            }
+        );
     }
 
     #[rstest]
@@ -224,17 +295,17 @@ mod tests {
             details: Rect::new(0, 3, 60, 26),
             preview: Some(GlyphPreviewLayout {
                 panel: Rect::new(60, 3, 40, 26),
-                placeholder: Rect::new(62, 6, 36, 22),
+                placeholder: Rect::new(62, 7, 36, 20),
             }),
         }
     )]
     #[case(
         Rect::new(0, 3, 140, 36),
         InspectorLayout {
-            details: Rect::new(0, 3, 60, 36),
+            details: Rect::new(0, 3, 100, 36),
             preview: Some(GlyphPreviewLayout {
-                panel: Rect::new(60, 3, 80, 36),
-                placeholder: Rect::new(62, 6, 76, 32),
+                panel: Rect::new(100, 3, 40, 36),
+                placeholder: Rect::new(102, 12, 36, 20),
             }),
         }
     )]
@@ -249,33 +320,33 @@ mod tests {
     #[case(
         Rect::new(0, 3, 60, 12),
         SearchLayout {
-            input: Rect::new(0, 3, 60, 3),
-            results: Rect::new(0, 6, 60, 9),
+            input: Rect::new(0, 3, 60, 2),
+            results: Rect::new(0, 5, 60, 10),
             preview: None,
         }
     )]
     #[case(
         Rect::new(0, 3, 99, 12),
         SearchLayout {
-            input: Rect::new(0, 3, 99, 3),
-            results: Rect::new(0, 6, 99, 9),
+            input: Rect::new(0, 3, 99, 2),
+            results: Rect::new(0, 5, 99, 10),
             preview: None,
         }
     )]
     #[case(
         Rect::new(0, 3, 100, 26),
         SearchLayout {
-            input: Rect::new(0, 3, 60, 3),
-            results: Rect::new(0, 6, 60, 23),
+            input: Rect::new(0, 3, 60, 2),
+            results: Rect::new(0, 5, 60, 24),
             preview: Some(Rect::new(60, 3, 40, 26)),
         }
     )]
     #[case(
         Rect::new(0, 3, 140, 36),
         SearchLayout {
-            input: Rect::new(0, 3, 60, 3),
-            results: Rect::new(0, 6, 60, 33),
-            preview: Some(Rect::new(60, 3, 80, 36)),
+            input: Rect::new(0, 3, 100, 2),
+            results: Rect::new(0, 5, 100, 34),
+            preview: Some(Rect::new(100, 3, 40, 36)),
         }
     )]
     fn lays_out_search_at_responsive_width_boundaries(
@@ -287,17 +358,17 @@ mod tests {
 
     #[test]
     fn calculates_browser_list_height_from_the_terminal_area() {
-        assert_eq!(browser_list_height(Rect::new(0, 0, 100, 30)), 27);
-        assert_eq!(browser_list_height(Rect::new(0, 0, 60, 16)), 13);
-        assert_eq!(browser_list_height(Rect::new(0, 0, 140, 40)), 37);
+        assert_eq!(browser_list_height(Rect::new(0, 0, 100, 30)), 25);
+        assert_eq!(browser_list_height(Rect::new(0, 0, 60, 16)), 11);
+        assert_eq!(browser_list_height(Rect::new(0, 0, 140, 40)), 35);
         assert_eq!(browser_list_height(Rect::new(0, 0, 59, 15)), 0);
     }
 
     #[test]
     fn calculates_search_result_height_from_the_terminal_area() {
-        assert_eq!(search_result_height(Rect::new(0, 0, 100, 30)), 24);
-        assert_eq!(search_result_height(Rect::new(0, 0, 60, 16)), 10);
-        assert_eq!(search_result_height(Rect::new(0, 0, 140, 40)), 34);
+        assert_eq!(search_result_height(Rect::new(0, 0, 100, 30)), 23);
+        assert_eq!(search_result_height(Rect::new(0, 0, 60, 16)), 9);
+        assert_eq!(search_result_height(Rect::new(0, 0, 140, 40)), 33);
         assert_eq!(search_result_height(Rect::new(0, 0, 59, 15)), 0);
     }
 }

@@ -1,21 +1,20 @@
-use ratatui::{
-    Frame,
-    layout::Rect,
-    widgets::{Block, Padding},
-};
+use ratatui::{Frame, layout::Rect, widgets::Paragraph};
 
 use crate::{
     inspector::InspectorDetails,
     preview::GlyphPreviewState,
     ui::glyph_preview,
     ui::key_value::{self, KeyValue},
+    ui::layout,
     ui::theme::ColorTheme,
+    ui::workspace,
     unicode::CodePoint,
 };
 
 const LABEL_WIDTH: u16 = 17;
 const GLYPH_GAP_HEIGHT: u16 = 1;
 const MINIMUM_GLYPH_HEIGHT: u16 = 8;
+const PREFERRED_SELECTION_HEIGHT: u16 = 9;
 
 pub fn render(
     frame: &mut Frame,
@@ -27,16 +26,28 @@ pub fn render(
     let details = SelectionDetails::new(code_point);
     let entries = details.entries();
 
-    key_value::render(
+    let content = workspace::render_rail_heading(frame, area, "Selection", None, color_theme);
+    let details_height =
+        key_value::required_height(content.width, LABEL_WIDTH, &entries).min(content.height);
+    key_value::render_entries(
         frame,
-        area,
-        " Selection Preview ",
+        Rect::new(content.x, content.y, content.width, details_height),
         LABEL_WIDTH,
         &entries,
         color_theme,
     );
-    if let Some(glyph) = glyph_area_for_entries(area, &entries) {
-        glyph_preview::render_image_only(frame, glyph, glyph_preview_state, color_theme);
+    if let Some(glyph_layout) = glyph_layout_for_entries(area, &entries) {
+        workspace::render_divider(frame, glyph_layout.divider, color_theme);
+        frame.render_widget(
+            Paragraph::new("Glyph").style(color_theme.heading_style()),
+            glyph_layout.heading,
+        );
+        glyph_preview::render_image_only(
+            frame,
+            glyph_layout.glyph,
+            glyph_preview_state,
+            color_theme,
+        );
     }
 }
 
@@ -46,21 +57,35 @@ pub fn glyph_area(area: Rect, code_point: CodePoint) -> Option<Rect> {
 }
 
 fn glyph_area_for_entries(area: Rect, entries: &[KeyValue<'_>]) -> Option<Rect> {
-    let content = selection_block().inner(area);
-    let details_height = key_value::required_height(content.width, LABEL_WIDTH, entries);
-    let glyph_y = content
-        .y
-        .saturating_add(details_height)
-        .saturating_add(GLYPH_GAP_HEIGHT);
-    let glyph_height = content.bottom().saturating_sub(glyph_y);
-    (glyph_height >= MINIMUM_GLYPH_HEIGHT)
-        .then(|| Rect::new(content.x, glyph_y, content.width, glyph_height))
+    glyph_layout_for_entries(area, entries).map(|layout| layout.glyph)
 }
 
-fn selection_block() -> Block<'static> {
-    Block::bordered()
-        .title(" Selection Preview ")
-        .padding(Padding::horizontal(1))
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct InlineGlyphLayout {
+    divider: Rect,
+    heading: Rect,
+    glyph: Rect,
+}
+
+fn glyph_layout_for_entries(area: Rect, entries: &[KeyValue<'_>]) -> Option<InlineGlyphLayout> {
+    let section = workspace::rail_section(area);
+    let content = section.content;
+    let details_height = key_value::required_height(content.width, LABEL_WIDTH, entries)
+        .max(PREFERRED_SELECTION_HEIGHT);
+    let divider_y = content.y.saturating_add(details_height);
+    let heading_y = divider_y.saturating_add(GLYPH_GAP_HEIGHT);
+    let glyph_y = heading_y.saturating_add(1);
+    let glyph_height = content.bottom().saturating_sub(glyph_y);
+    (glyph_height >= MINIMUM_GLYPH_HEIGHT).then(|| InlineGlyphLayout {
+        divider: Rect::new(section.heading.x, divider_y, section.heading.width, 1),
+        heading: Rect::new(section.heading.x, heading_y, section.heading.width, 1),
+        glyph: layout::centered_glyph_area(Rect::new(
+            content.x,
+            glyph_y,
+            content.width,
+            glyph_height,
+        )),
+    })
 }
 
 struct SelectionDetails {
@@ -98,13 +123,23 @@ mod tests {
     use super::*;
 
     #[test]
-    fn uses_the_space_below_uncompressed_details_for_the_glyph() {
-        let area = Rect::new(60, 3, 40, 26);
+    fn reserves_selection_space_before_placing_the_glyph() {
+        let area = Rect::new(60, 2, 40, 27);
         let code_point = CodePoint::new(0x0041).unwrap();
 
         assert_eq!(
             glyph_area(area, code_point),
-            Some(Rect::new(62, 12, 36, 16))
+            Some(Rect::new(63, 14, 36, 14))
+        );
+    }
+
+    #[test]
+    fn keeps_the_glyph_position_stable_for_common_wrapping_differences() {
+        let area = Rect::new(60, 2, 40, 27);
+
+        assert_eq!(
+            glyph_area(area, CodePoint::new(0x0041).unwrap()),
+            glyph_area(area, CodePoint::new(0x2192).unwrap())
         );
     }
 

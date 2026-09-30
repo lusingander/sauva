@@ -3,60 +3,64 @@ source: tests/terminal_e2e.rs
 expression: inspector.with_styles()
 ---
 size: 100x30  cursor: hidden
-┌ Inspector ───────────────────────────────────────────────┐┌ Glyph Preview ───────────────────────┐
-│ Identity                                                │││ Font     —                           │
-│   Character                  B                          │││ Version  —                           │
-│   Code Point                 U+0042                     │││                                      │
-│   Primary Name               LATIN CAPITAL LETTER B     │││                                      │
-│   Aliases                    None                       │││                                      │
-│   Plane                      0 — Basic Multilingual     │││                                      │
-│                              Plane                      │││                                      │
-│   Block                      Basic Latin                │││                                      │
-│                                                         │││                                      │
-│ Classification                                          │││                                      │
-│   General Category           Lu — Uppercase Letter      │││                                      │
-│   Script                     Latin                      │││                                      │
-│   Age                        1.1                        │││                                      │
-│   East Asian Width           Na — Narrow                │││           Graphics disabled          │
-│   Canonical Combining Class  0 — Not Reordered          │││  Enable with --graphics auto/force.  │
-│   Bidi Class                 L — Left To Right          │││                                      │
-│   Default Ignorable          No                         │││                                      │
-│                                                         │││                                      │
-│ Encoding                                                │││                                      │
-│   UTF-8                      42                         │││                                      │
-│   UTF-16                     0042                       │││                                      │
-│   HTML Decimal               &#66;                      │││                                      │
-│   HTML Hex                   &#x42;                      ││                                      │
-│   Rust char                  '\u{42}'                    ││                                      │
-│   Unicode Escape             \u0042                      ││                                      │
-│                                                          ││                                      │
-│ Normalization                                            ││                                      │
-└──────────────────────────────────────────────────────────┘└──────────────────────────────────────┘
- h/l: Point  k/j: Field  C-u/C-d: Page  y: Copy  /: Search  p/r/b/c: Browse  q: Quit  F1: Help
+ sauva / Inspector                                                                           U+0042
+
+ Identity                                                   ┃ Glyph
+   Character                  B                             ┃  Font     —
+   Code Point                 U+0042                        ┃  Version  —
+   Primary Name               LATIN CAPITAL LETTER B        ┃
+   Aliases                    None                          ┃
+   Plane                      0 — Basic Multilingual Plane  ┃
+   Block                      Basic Latin                   ┃
+ ─────────────────────────────────────────────────────────  ┃
+ Classification                                             ┃
+   General Category           Lu — Uppercase Letter         ┃
+   Script                     Latin                         ┃
+   Age                        1.1                           ┃
+   East Asian Width           Na — Narrow                   ┃
+   Canonical Combining Class  0 — Not Reordered             ┃           Graphics disabled
+   Bidi Class                 L — Left To Right             ┃  Enable with --graphics auto/force.
+   Default Ignorable          No                            ┃
+ ─────────────────────────────────────────────────────────  ┃
+ Encoding                                                   ┃
+   UTF-8                      42                            ┃
+   UTF-16                     0042                          ┃
+   HTML Decimal               &#66;                         ┃
+   HTML Hex                   &#x42;                        │
+   Rust char                  '\u{42}'                      │
+   Unicode Escape             \u0042                        │
+ ─────────────────────────────────────────────────────────  │
+ Normalization                                              │
+                                                            │
+ h/l Point  k/j Field  C-u/C-d Page  g/G Ends  y Copy  / Search  p/r/b/c Browse  q Quit     F1 Help
 
 styles:
-1: 2-9 fg=6 bold; 62-70 fg=8
-2: 2-57 fg=0 bg=6; 62-70 fg=8
-3: 2-30 fg=8
-4: 2-30 fg=8
-5: 2-30 fg=8
-6: 2-30 fg=8
-7: 2-30 fg=8
-8: 2-30 fg=8
-10: 2-15 fg=6 bold
-11: 2-30 fg=8
-12: 2-30 fg=8
-13: 2-30 fg=8
-14: 2-30 fg=8; 72-88 fg=3 bold
-15: 2-30 fg=8; 63-96 fg=8
-16: 2-30 fg=8
-17: 2-30 fg=8
-19: 2-9 fg=6 bold
-20: 2-30 fg=8
-21: 2-30 fg=8
-22: 2-30 fg=8
-23: 2-30 fg=8
-24: 2-30 fg=8
-25: 2-30 fg=8
-27: 2-14 fg=6 bold
-29: 0-99 fg=8
+0: 0-5 fg=6 bold; 93-99 fg=8
+2: 1-8 fg=4 bold; 60 fg=8; 62-66 fg=4 bold
+3: 1-57 fg=0 bg=6; 60 fg=8; 63-71 fg=8
+4: 1-29 fg=8; 60 fg=8; 63-71 fg=8
+5: 1-29 fg=8; 60 fg=8
+6: 1-29 fg=8; 60 fg=8
+7: 1-29 fg=8; 60 fg=8
+8: 1-29 fg=8; 60 fg=8
+9: 1-57 fg=8; 60 fg=8
+10: 1-14 fg=4 bold; 60 fg=8
+11: 1-29 fg=8; 60 fg=8
+12: 1-29 fg=8; 60 fg=8
+13: 1-29 fg=8; 60 fg=8
+14: 1-29 fg=8; 60 fg=8
+15: 1-29 fg=8; 60 fg=8; 72-88 fg=3 bold
+16: 1-29 fg=8; 60 fg=8; 63-96 fg=8
+17: 1-29 fg=8; 60 fg=8
+18: 1-57 fg=8; 60 fg=8
+19: 1-8 fg=4 bold; 60 fg=8
+20: 1-29 fg=8; 60 fg=8
+21: 1-29 fg=8; 60 fg=8
+22: 1-29 fg=8; 60 fg=8
+23: 1-29 fg=8; 60 fg=8
+24: 1-29 fg=8; 60 fg=8
+25: 1-29 fg=8; 60 fg=8
+26: 1-57 fg=8; 60 fg=8
+27: 1-13 fg=4 bold; 60 fg=8
+28: 60 fg=8
+29: 1-3 fg=3; 4-9 fg=8; 12-14 fg=3; 15-20 fg=8; 23-29 fg=3; 30-34 fg=8; 37-39 fg=3; 40-44 fg=8; 47 fg=3; 48-52 fg=8; 55 fg=3; 56-62 fg=8; 65-71 fg=3; 72-78 fg=8; 81 fg=3; 82-86 fg=8; 92-93 fg=3; 94-98 fg=8

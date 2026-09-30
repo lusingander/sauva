@@ -3,41 +3,64 @@ source: tests/terminal_e2e.rs
 expression: screen.with_styles()
 ---
 size: 100x30  cursor: hidden
-┌ Browse · Code Points · U+0000–U+00FF ────────────────────┐┌ Selection Preview ───────────────────┐
-│         0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F   ││ Character        B                   │
-│ 000000  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·   ││ Code Point       U+0042              │
-│ 000010  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·   ││ Primary Name     LATIN CAPITAL       │
-│ 000020  ·  !  "  #  $  %  &  '  (  )  *  +  ,  -  .  /   ││                  LETTER B            │
-│ 000030  0  1  2  3  4  5  6  7  8  9  :  ;  <  =  >  ?   ││ Block            Basic Latin         │
-│ 000040  @  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O   ││ General Category Lu — Uppercase      │
-│ 000050  P  Q  R  S  T  U  V  W  X  Y  Z  [  \  ]  ^  _   ││                  Letter              │
-│ 000060  `  a  b  c  d  e  f  g  h  i  j  k  l  m  n  o   ││                                      │
-│ 000070  p  q  r  s  t  u  v  w  x  y  z  {  |  }  ~  ·   ││                                      │
-│ 000080  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·   ││                                      │
-│ 000090  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·   ││                                      │
-│ 0000A0  ·  ¡  ¢  £  ¤  ¥  ¦  §  ¨  ©  ª  «  ¬  ·  ®  ¯   ││                                      │
-│ 0000B0  °  ±  ²  ³  ´  µ  ¶  ·  ¸  ¹  º  »  ¼  ½  ¾  ¿   ││                                      │
-│ 0000C0  À  Á  Â  Ã  Ä  Å  Æ  Ç  È  É  Ê  Ë  Ì  Í  Î  Ï   ││                                      │
-│ 0000D0  Ð  Ñ  Ò  Ó  Ô  Õ  Ö  ×  Ø  Ù  Ú  Û  Ü  Ý  Þ  ß   ││                                      │
-│ 0000E0  à  á  â  ã  ä  å  æ  ç  è  é  ê  ë  ì  í  î  ï   ││                                      │
-│ 0000F0  ð  ñ  ò  ó  ô  õ  ö  ÷  ø  ù  ú  û  ü  ý  þ  ÿ   ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-│                                                          ││                                      │
-└──────────────────────────────────────────────────────────┘└──────────────────────────────────────┘
- h/l/k/j: Move  C-u/C-d: Jump  g/G: Ends  Enter: Inspect  BS: Back  Esc: Close  q: Quit  F1: Help
+ sauva / Browse / Code Points                                                                U+0042
+
+ Code Points                                 U+0000–U+00FF  │ Selection
+          0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F    │  Character        B
+  000000  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·    │  Code Point       U+0042
+  000010  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·    │  Primary Name
+  000020  ·  !  "  #  $  %  &  '  (  )  *  +  ,  -  .  /    │    LATIN CAPITAL LETTER B
+  000030  0  1  2  3  4  5  6  7  8  9  :  ;  <  =  >  ?    │  Block            Basic Latin
+  000040  @  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O    │  General Category
+  000050  P  Q  R  S  T  U  V  W  X  Y  Z  [  \  ]  ^  _    │    Lu — Uppercase Letter
+  000060  `  a  b  c  d  e  f  g  h  i  j  k  l  m  n  o    │
+  000070  p  q  r  s  t  u  v  w  x  y  z  {  |  }  ~  ·    │
+  000080  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·    │ ─────────────────────────────────────
+  000090  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·    │ Glyph
+  0000A0  ·  ¡  ¢  £  ¤  ¥  ¦  §  ¨  ©  ª  «  ¬  ·  ®  ¯    │
+  0000B0  °  ±  ²  ³  ´  µ  ¶  ·  ¸  ¹  º  »  ¼  ½  ¾  ¿    │
+  0000C0  À  Á  Â  Ã  Ä  Å  Æ  Ç  È  É  Ê  Ë  Ì  Í  Î  Ï    │
+  0000D0  Ð  Ñ  Ò  Ó  Ô  Õ  Ö  ×  Ø  Ù  Ú  Û  Ü  Ý  Þ  ß    │
+  0000E0  à  á  â  ã  ä  å  æ  ç  è  é  ê  ë  ì  í  î  ï    │
+  0000F0  ð  ñ  ò  ó  ô  õ  ö  ÷  ø  ù  ú  û  ü  ý  þ  ÿ    │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+ h/l/k/j Move  C-u/C-d Jump  g/G Ends  Enter Inspect  BS Back  Esc Close  q Quit            F1 Help
 
 styles:
-1: 62-78 fg=8
-2: 62-78 fg=8
-3: 62-78 fg=8
-5: 62-78 fg=8
-6: 15-17 fg=0 bg=6; 62-78 fg=8
-29: 0-99 fg=8
+0: 0-5 fg=6 bold; 93-99 fg=8
+2: 1-11 fg=4 bold; 45-57 fg=8; 60 fg=8; 62-70 fg=4 bold
+3: 9-14 fg=8; 15-17 fg=6 bold; 18-56 fg=8; 60 fg=8; 63-79 fg=8
+4: 2-8 fg=8; 60 fg=8; 63-79 fg=8
+5: 2-8 fg=8; 60 fg=8; 63-74 fg=8
+6: 2-8 fg=8; 60 fg=8; 63-64 fg=8
+7: 2-8 fg=8; 60 fg=8; 63-79 fg=8
+8: 2-8 fg=6 bold; 15-17 fg=0 bg=6; 60 fg=8; 63-78 fg=8
+9: 2-8 fg=8; 60 fg=8; 63-64 fg=8
+10: 2-8 fg=8; 60 fg=8
+11: 2-8 fg=8; 60 fg=8
+12: 2-8 fg=8; 60 fg=8; 62-98 fg=8
+13: 2-8 fg=8; 60 fg=8; 62-98 fg=4 bold
+14: 2-8 fg=8; 60 fg=8
+15: 2-8 fg=8; 60 fg=8
+16: 2-8 fg=8; 60 fg=8
+17: 2-8 fg=8; 60 fg=8
+18: 2-8 fg=8; 60 fg=8
+19: 2-8 fg=8; 60 fg=8
+20: 60 fg=8
+21: 60 fg=8
+22: 60 fg=8
+23: 60 fg=8
+24: 60 fg=8
+25: 60 fg=8
+26: 60 fg=8
+27: 60 fg=8
+28: 60 fg=8
+29: 1-7 fg=3; 8-12 fg=8; 15-21 fg=3; 22-26 fg=8; 29-31 fg=3; 32-36 fg=8; 39-43 fg=3; 44-51 fg=8; 54-55 fg=3; 56-60 fg=8; 63-65 fg=3; 66-71 fg=8; 74 fg=3; 75-79 fg=8; 92-93 fg=3; 94-98 fg=8

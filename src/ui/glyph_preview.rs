@@ -4,14 +4,14 @@ use ratatui::{
     layout::{Alignment, Rect},
     style::{Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Padding, Paragraph},
+    widgets::Paragraph,
 };
 
 use crate::{
     graphics::{GraphicsProtocol, GraphicsUnavailableReason},
     image::kitty,
     preview::{GlyphPreviewError, GlyphPreviewState, GlyphPreviewStatus},
-    ui::{layout::GlyphPreviewLayout, theme::ColorTheme},
+    ui::{layout::GlyphPreviewLayout, theme::ColorTheme, workspace},
 };
 
 pub fn render(
@@ -20,11 +20,7 @@ pub fn render(
     state: &GlyphPreviewState,
     color_theme: &ColorTheme,
 ) {
-    let block = Block::bordered()
-        .title(" Glyph Preview ")
-        .padding(Padding::horizontal(1));
-    let content = block.inner(layout.panel);
-    frame.render_widget(block, layout.panel);
+    let content = workspace::render_rail_heading(frame, layout.panel, "Glyph", None, color_theme);
 
     render_metadata(
         frame,
@@ -68,7 +64,7 @@ fn render_metadata(
     state: &GlyphPreviewState,
     color_theme: &ColorTheme,
 ) {
-    let label = Style::new().fg(color_theme.glyph_preview.metadata_label);
+    let label = Style::new().fg(color_theme.muted);
     let font = state
         .font()
         .map(|font| format!("{} {}", font.family(), font.style()))
@@ -186,13 +182,13 @@ fn render_message(
     let mut lines = vec![Line::from(Span::styled(
         heading,
         Style::new()
-            .fg(color_theme.glyph_preview.status_heading)
+            .fg(color_theme.status.warning)
             .add_modifier(Modifier::BOLD),
     ))];
     if let Some(explanation) = explanation {
         lines.push(Line::from(Span::styled(
             explanation,
-            Style::new().fg(color_theme.glyph_preview.status_detail),
+            Style::new().fg(color_theme.muted),
         )));
     }
     frame.render_widget(Paragraph::new(lines).alignment(Alignment::Center), area);
@@ -241,10 +237,10 @@ mod tests {
         let fixture = fixtures::glyph_basic();
         let state = fixture.glyph_preview();
         let layout = GlyphPreviewLayout {
-            panel: Rect::new(0, 0, 40, 29),
-            placeholder: Rect::new(2, 3, 36, 25),
+            panel: Rect::new(0, 0, 40, 28),
+            placeholder: Rect::new(2, 3, 36, 24),
         };
-        let backend = TestBackend::new(40, 29);
+        let backend = TestBackend::new(40, 28);
         let mut terminal = Terminal::new(backend).unwrap();
 
         let completed = terminal
@@ -260,8 +256,8 @@ mod tests {
             kitty::placeholder(0, 0).unwrap()
         );
         assert_eq!(
-            buffer.cell((37, 27)).unwrap().symbol(),
-            kitty::placeholder(24, 35).unwrap()
+            buffer.cell((37, 26)).unwrap().symbol(),
+            kitty::placeholder(23, 35).unwrap()
         );
         assert_eq!(
             buffer.cell((2, 3)).unwrap().fg,
@@ -273,8 +269,8 @@ mod tests {
     fn image_only_preview_draws_no_metadata_or_status() {
         let fixture = fixtures::glyph_basic();
         let state = fixture.glyph_preview();
-        let area = Rect::new(0, 0, 36, 25);
-        let backend = TestBackend::new(36, 25);
+        let area = Rect::new(0, 0, 36, 24);
+        let backend = TestBackend::new(36, 24);
         let mut terminal = Terminal::new(backend).unwrap();
 
         terminal
@@ -289,8 +285,8 @@ mod tests {
             kitty::placeholder(0, 0).unwrap()
         );
         assert_eq!(
-            buffer.cell((35, 24)).unwrap().symbol(),
-            kitty::placeholder(24, 35).unwrap()
+            buffer.cell((35, 23)).unwrap().symbol(),
+            kitty::placeholder(23, 35).unwrap()
         );
         assert!(!buffer.content.iter().any(|cell| cell.symbol() == "F"));
     }
@@ -324,10 +320,10 @@ mod tests {
         let fixture = fixtures::glyph_basic_iterm2();
         let state = fixture.glyph_preview();
         let layout = GlyphPreviewLayout {
-            panel: Rect::new(0, 0, 40, 29),
-            placeholder: Rect::new(2, 3, 36, 25),
+            panel: Rect::new(0, 0, 40, 28),
+            placeholder: Rect::new(2, 3, 36, 24),
         };
-        let backend = TestBackend::new(40, 29);
+        let backend = TestBackend::new(40, 28);
         let mut terminal = Terminal::new(backend).unwrap();
 
         let completed = terminal
@@ -337,7 +333,7 @@ mod tests {
             .unwrap();
 
         let buffer = completed.buffer;
-        for y in 0..29 {
+        for y in 0..28 {
             for x in 0..40 {
                 let expected = if layout.placeholder.contains((x, y).into()) {
                     CellDiffOption::Skip
@@ -379,7 +375,7 @@ mod tests {
                 .iter()
                 .any(|cell| cell.symbol().contains('\u{10eeee}'))
         );
-        assert_eq!(buffer.cell((2, 1)).unwrap().fg, Color::DarkGray);
+        assert_eq!(buffer.cell((3, 1)).unwrap().fg, Color::DarkGray);
         let heading = (3..25)
             .flat_map(|y| (0..40).filter_map(move |x| buffer.cell((x, y))))
             .find(|cell| cell.symbol() == "G")

@@ -1,8 +1,9 @@
 use ratatui::{
     Frame,
     layout::Rect,
+    style::Style,
     text::{Line, Span},
-    widgets::{Block, Padding, Paragraph},
+    widgets::Paragraph,
 };
 
 use crate::{
@@ -15,6 +16,7 @@ use crate::{
         selectable_list_line, selection_preview,
         settings::UiSettings,
         theme::ColorTheme,
+        workspace,
     },
     unicode::{CodePoint, Plane, UnicodeDatabase, plane::PlaneRange},
 };
@@ -26,13 +28,16 @@ pub fn render(
     color_theme: &ColorTheme,
     ui: &UiSettings,
 ) {
-    let layout = browser(area);
     let browse = state
         .browse()
         .expect("the browser view always has browse state");
+    let layout = browser(area, browse.level());
 
     match browse.level() {
         BrowseLevel::Plane => {
+            if let Some(context) = layout.context {
+                render_plane_context(frame, context, browse.cursor(), color_theme);
+            }
             render_plane_navigator(
                 frame,
                 layout.navigator,
@@ -43,11 +48,11 @@ pub fn render(
                 color_theme,
                 ui,
             );
-            if let Some(context) = layout.context {
-                render_plane_context(frame, context, browse.cursor(), color_theme);
-            }
         }
         BrowseLevel::Range => {
+            if let Some(context) = layout.context {
+                render_range_context(frame, context, browse.cursor(), color_theme);
+            }
             render_range_navigator(
                 frame,
                 layout.navigator,
@@ -58,11 +63,11 @@ pub fn render(
                 color_theme,
                 ui,
             );
-            if let Some(context) = layout.context {
-                render_range_context(frame, context, browse.cursor(), color_theme);
-            }
         }
         BrowseLevel::Block => {
+            if let Some(context) = layout.context {
+                render_block_context(frame, context, browse, color_theme);
+            }
             render_block_navigator(
                 frame,
                 layout.navigator,
@@ -73,11 +78,17 @@ pub fn render(
                 color_theme,
                 ui,
             );
-            if let Some(context) = layout.context {
-                render_block_context(frame, context, browse, color_theme);
-            }
         }
         BrowseLevel::CodePointTable => {
+            if let Some(context) = layout.context {
+                selection_preview::render(
+                    frame,
+                    context,
+                    browse.cursor(),
+                    state.glyph_preview(),
+                    color_theme,
+                );
+            }
             render_code_point_table(
                 frame,
                 layout.navigator,
@@ -88,15 +99,6 @@ pub fn render(
                 color_theme,
                 ui,
             );
-            if let Some(context) = layout.context {
-                selection_preview::render(
-                    frame,
-                    context,
-                    browse.cursor(),
-                    state.glyph_preview(),
-                    color_theme,
-                );
-            }
         }
     }
 }
@@ -112,10 +114,7 @@ fn render_block_navigator(
     let selected = browse
         .selected_block()
         .expect("the block level has a selected block");
-    let block = Block::bordered()
-        .title(" Browse · Blocks ")
-        .padding(Padding::horizontal(1));
-    let content = block.inner(area);
+    let content = workspace::render_primary_heading(frame, area, "Blocks", None, color_theme);
     let rows = visible_items
         .clone()
         .map(|index| {
@@ -131,16 +130,16 @@ fn render_block_navigator(
                 )),
                 is_selected,
                 content.width,
-                color_theme.list.selection,
+                color_theme.selection,
             )
         })
         .collect::<Vec<_>>();
 
-    frame.render_widget(Paragraph::new(rows).block(block), area);
+    frame.render_widget(Paragraph::new(rows), content);
     frame.render_widget(
         ViewportScrollbar::new(UnicodeDatabase::blocks().len(), visible_items)
-            .style(color_theme.base_style()),
-        scrollbar::area_after(content),
+            .style(color_theme.border_style()),
+        scrollbar::area_for_primary(frame.area(), area, content),
     );
 }
 
@@ -165,7 +164,7 @@ fn render_block_context(
         KeyValue::new("Size", &size),
     ];
 
-    key_value::render(frame, area, " Block Context ", 7, &entries, color_theme);
+    key_value::render(frame, area, "Selection", 7, &entries, color_theme);
 }
 
 fn render_plane_navigator(
@@ -177,10 +176,7 @@ fn render_plane_navigator(
     ui: &UiSettings,
 ) {
     let selected = Plane::for_code_point(cursor);
-    let block = Block::bordered()
-        .title(" Browse · Planes ")
-        .padding(Padding::horizontal(1));
-    let content = block.inner(area);
+    let content = workspace::render_primary_heading(frame, area, "Planes", None, color_theme);
     let rows = visible_items
         .clone()
         .map(|number| {
@@ -195,15 +191,15 @@ fn render_plane_navigator(
                 )),
                 is_selected,
                 content.width,
-                color_theme.list.selection,
+                color_theme.selection,
             )
         })
         .collect::<Vec<_>>();
 
-    frame.render_widget(Paragraph::new(rows).block(block), area);
+    frame.render_widget(Paragraph::new(rows), content);
     frame.render_widget(
-        ViewportScrollbar::new(Plane::COUNT, visible_items).style(color_theme.base_style()),
-        scrollbar::area_after(content),
+        ViewportScrollbar::new(Plane::COUNT, visible_items).style(color_theme.border_style()),
+        scrollbar::area_for_primary(frame.area(), area, content),
     );
 }
 
@@ -224,7 +220,7 @@ fn render_plane_context(
         KeyValue::new("End", &end),
     ];
 
-    key_value::render(frame, area, " Plane Context ", 7, &entries, color_theme);
+    key_value::render(frame, area, "Selection", 7, &entries, color_theme);
 }
 
 fn render_range_navigator(
@@ -236,11 +232,9 @@ fn render_range_navigator(
     ui: &UiSettings,
 ) {
     let selected = PlaneRange::for_code_point(cursor);
-    let title = format!(" Browse · Ranges · Plane {} ", selected.plane().number());
-    let block = Block::bordered()
-        .title(title)
-        .padding(Padding::horizontal(1));
-    let content = block.inner(area);
+    let plane = format!("Plane {}", selected.plane().number());
+    let content =
+        workspace::render_primary_heading(frame, area, "Ranges", Some(&plane), color_theme);
     let rows = visible_items
         .clone()
         .map(|index| {
@@ -251,16 +245,16 @@ fn render_range_navigator(
                 Line::from(format!("{marker} {}–{}", range.start(), range.end())),
                 is_selected,
                 content.width,
-                color_theme.list.selection,
+                color_theme.selection,
             )
         })
         .collect::<Vec<_>>();
 
-    frame.render_widget(Paragraph::new(rows).block(block), area);
+    frame.render_widget(Paragraph::new(rows), content);
     frame.render_widget(
         ViewportScrollbar::new(PlaneRange::COUNT_PER_PLANE, visible_items)
-            .style(color_theme.base_style()),
-        scrollbar::area_after(content),
+            .style(color_theme.border_style()),
+        scrollbar::area_for_primary(frame.area(), area, content),
     );
 }
 
@@ -294,7 +288,7 @@ fn render_range_context(
         KeyValue::new("Blocks", &blocks),
     ];
 
-    key_value::render(frame, area, " Range Context ", 7, &entries, color_theme);
+    key_value::render(frame, area, "Selection", 7, &entries, color_theme);
 }
 
 fn render_code_point_table(
@@ -310,17 +304,26 @@ fn render_code_point_table(
         .table_page()
         .expect("the code point table has a visible page");
     let mut rows = Vec::with_capacity(visible_rows.len() + 1);
-    rows.push(Line::from(table_column_header()));
+    rows.push(table_column_header(
+        usize::try_from(cursor.value() % 16).expect("a table column fits usize"),
+        color_theme,
+    ));
     rows.extend(visible_rows.map(|row| {
         let row_start = page_start.value() + row as u32 * 16;
-        let mut spans = vec![Span::raw(format!("{row_start:06X} "))];
+        let row_selected = cursor.value() >= row_start && cursor.value() < row_start + 16;
+        let row_style = if row_selected {
+            color_theme.accent_style()
+        } else {
+            Style::new().fg(color_theme.muted)
+        };
+        let mut spans = vec![Span::styled(format!("{row_start:06X} "), row_style)];
         for column in 0..16 {
             let code_point = CodePoint::new(row_start + column as u32)
                 .expect("table pages contain valid code points");
             let selected = code_point == cursor;
             let cell = table_cell(code_point, selected, ui);
             spans.push(if selected {
-                Span::styled(cell, color_theme.code_point_table.selection.style())
+                Span::styled(cell, color_theme.selection.style())
             } else {
                 Span::raw(cell)
             });
@@ -329,26 +332,26 @@ fn render_code_point_table(
     }));
 
     let title = if browse.is_block_table() {
-        format!(" Browse · Block Code Points · {page_start}–{page_end} ")
+        "Block Code Points"
     } else {
-        format!(" Browse · Code Points · {page_start}–{page_end} ")
+        "Code Points"
     };
-    frame.render_widget(
-        Paragraph::new(rows).block(
-            Block::bordered()
-                .title(title)
-                .padding(Padding::horizontal(1)),
-        ),
-        area,
-    );
+    let range = format!("{page_start}–{page_end}");
+    let content = workspace::render_primary_heading(frame, area, title, Some(&range), color_theme);
+    frame.render_widget(Paragraph::new(rows), content);
 }
 
-fn table_column_header() -> String {
-    let mut text = "       ".to_owned();
+fn table_column_header(selected_column: usize, color_theme: &ColorTheme) -> Line<'static> {
+    let mut spans = vec![Span::raw("       ")];
     for column in 0..16 {
-        text.push_str(&format!(" {column:X} "));
+        let style = if column == selected_column {
+            color_theme.accent_style()
+        } else {
+            Style::new().fg(color_theme.muted)
+        };
+        spans.push(Span::styled(format!(" {column:X} "), style));
     }
-    text
+    Line::from(spans)
 }
 
 fn table_cell(code_point: CodePoint, selected: bool, ui: &UiSettings) -> String {
@@ -398,7 +401,7 @@ mod tests {
 
     #[test]
     fn table_header_and_rows_fit_the_minimum_navigator_width() {
-        assert_eq!(Line::from(table_column_header()).width(), 55);
+        assert_eq!(table_column_header(0, &ColorTheme::default()).width(), 55);
 
         let cursor = CodePoint::new(0x0041).unwrap();
         let range = PlaneRange::for_code_point(cursor);

@@ -3,7 +3,7 @@ use ratatui::{
     layout::{Alignment, Rect},
     style::{Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Padding, Paragraph},
+    widgets::Paragraph,
 };
 
 use crate::{
@@ -15,12 +15,15 @@ use crate::{
         selectable_list_line, selection_preview,
         settings::{InputCursor, UiSettings},
         theme::ColorTheme,
+        workspace,
     },
     unicode::UnicodeDatabase,
 };
 
 const CHARACTER_COLUMN_WIDTH: usize = 2;
 const CODE_POINT_COLUMN_WIDTH: usize = 8;
+const SEARCH_PREFIX: &str = "Search  ";
+const SEARCH_PREFIX_MINIMUM_WIDTH: u16 = 24;
 
 pub fn render(
     frame: &mut Frame,
@@ -34,16 +37,6 @@ pub fn render(
         .search()
         .expect("the search view always has search state");
 
-    render_input(frame, layout.input, search.input(), &ui.input_cursor);
-    render_results(
-        frame,
-        layout.results,
-        search.outcome(),
-        search.selected_index(),
-        search.visible_result_range(),
-        color_theme,
-        ui,
-    );
     if let Some(preview) = layout.preview {
         match search.selected_result() {
             Some(result) => {
@@ -58,15 +51,46 @@ pub fn render(
             None => render_empty_preview(frame, preview, color_theme),
         }
     }
+    render_input(
+        frame,
+        layout.input,
+        search.input(),
+        &ui.input_cursor,
+        color_theme,
+    );
+    render_results(
+        frame,
+        layout.results,
+        search.outcome(),
+        search.selected_index(),
+        search.visible_result_range(),
+        color_theme,
+        ui,
+    );
 }
 
-fn render_input(frame: &mut Frame, area: Rect, input: &tui_input::Input, cursor: &InputCursor) {
-    let width = area.width.saturating_sub(4).max(1);
-    let scroll = match cursor {
-        InputCursor::Native => input.visual_scroll(usize::from(width)),
-        InputCursor::Text(_) => input.visual_scroll(usize::from(width.saturating_sub(1).max(1))),
+fn render_input(
+    frame: &mut Frame,
+    area: Rect,
+    input: &tui_input::Input,
+    cursor: &InputCursor,
+    color_theme: &ColorTheme,
+) {
+    let content = workspace::primary_canvas(area);
+    let prefix_text = if content.width >= SEARCH_PREFIX_MINIMUM_WIDTH {
+        SEARCH_PREFIX
+    } else {
+        ""
     };
-    let content = match cursor {
+    let prefix_width = Line::from(prefix_text).width();
+    let width = usize::from(content.width)
+        .saturating_sub(prefix_width)
+        .max(1);
+    let scroll = match cursor {
+        InputCursor::Native => input.visual_scroll(width),
+        InputCursor::Text(_) => input.visual_scroll(width.saturating_sub(1).max(1)),
+    };
+    let input_content = match cursor {
         InputCursor::Native => Line::raw(input.value()),
         InputCursor::Text(text) => {
             let byte_index = input
@@ -78,18 +102,31 @@ fn render_input(frame: &mut Frame, area: Rect, input: &tui_input::Input, cursor:
             Line::from(vec![Span::raw(before), Span::raw(text), Span::raw(after)])
         }
     };
+    let prefix_width = u16::try_from(prefix_width).unwrap_or(content.width);
+    let prefix_area = Rect::new(content.x, content.y, prefix_width.min(content.width), 1);
+    let input_area = Rect::new(
+        prefix_area.right(),
+        content.y,
+        content.width.saturating_sub(prefix_area.width),
+        1,
+    );
     frame.render_widget(
-        Paragraph::new(content).scroll((0, scroll as u16)).block(
-            Block::bordered()
-                .title(" Search ")
-                .padding(Padding::horizontal(1)),
-        ),
-        area,
+        Paragraph::new(prefix_text).style(Style::new().fg(color_theme.muted)),
+        prefix_area,
+    );
+    frame.render_widget(
+        Paragraph::new(input_content).scroll((0, scroll as u16)),
+        input_area,
+    );
+    workspace::render_divider(
+        frame,
+        Rect::new(area.x, area.bottom().saturating_sub(1), area.width, 1),
+        color_theme,
     );
 
     if matches!(cursor, InputCursor::Native) {
         let cursor = input.visual_cursor().max(scroll) - scroll;
-        frame.set_cursor_position((area.x + cursor as u16 + 2, area.y + 1));
+        frame.set_cursor_position((input_area.x + cursor as u16, input_area.y));
     }
 }
 
@@ -103,15 +140,13 @@ fn render_results(
     ui: &UiSettings,
 ) {
     let results = outcome.results();
-    let title = if matches!(outcome, SearchOutcome::Results { .. }) {
-        format!(" Results · {} ", results.len())
+    let count = if matches!(outcome, SearchOutcome::Results { .. }) {
+        Some(result_count_label(results.len()))
     } else {
-        " Results ".to_owned()
+        None
     };
-    let block = Block::bordered()
-        .title(title)
-        .padding(Padding::horizontal(1));
-    let content = block.inner(area);
+    let content =
+        workspace::render_primary_heading(frame, area, "Results", count.as_deref(), color_theme);
     let lines = match outcome {
         SearchOutcome::Empty => search_prompt_lines(color_theme),
         SearchOutcome::InvalidNotation(error) => vec![Line::from(format!("Error: {error}"))],
@@ -127,16 +162,21 @@ fn render_results(
                     color_theme,
                     ui,
                 );
-                selectable_list_line(line, selected, content.width, color_theme.list.selection)
+                selectable_list_line(line, selected, content.width, color_theme.selection)
             })
             .collect(),
     };
 
-    frame.render_widget(Paragraph::new(lines).block(block), area);
+    frame.render_widget(Paragraph::new(lines), content);
     frame.render_widget(
-        ViewportScrollbar::new(results.len(), visible_results).style(color_theme.base_style()),
-        scrollbar::area_after(content),
+        ViewportScrollbar::new(results.len(), visible_results).style(color_theme.border_style()),
+        scrollbar::area_for_primary(frame.area(), area, content),
     );
+}
+
+pub fn result_count_label(count: usize) -> String {
+    let noun = if count == 1 { "result" } else { "results" };
+    format!("{count} {noun}")
 }
 
 fn search_prompt_lines(color_theme: &ColorTheme) -> Vec<Line<'static>> {
@@ -146,13 +186,10 @@ fn search_prompt_lines(color_theme: &ColorTheme) -> Vec<Line<'static>> {
             Style::new().add_modifier(Modifier::BOLD),
         ),
         Line::from(vec![
-            Span::styled(
-                "Examples",
-                Style::new().fg(color_theme.search_message.example_label),
-            ),
+            Span::styled("Examples", color_theme.heading_style()),
             Span::styled(
                 "  rightwards arrow · U+2192 · →",
-                Style::new().fg(color_theme.search_message.detail),
+                Style::new().fg(color_theme.muted),
             ),
         ]),
     ]
@@ -166,7 +203,7 @@ fn no_results_lines(color_theme: &ColorTheme) -> Vec<Line<'static>> {
         ),
         Line::styled(
             "Try another name, code point, or character",
-            Style::new().fg(color_theme.search_message.detail),
+            Style::new().fg(color_theme.muted),
         ),
     ]
 }
@@ -184,7 +221,7 @@ fn result_line(
     let representation_width = Line::from(representation).width();
     let literal_match = result.direct_match() == Some(SearchDirectMatchKind::LiteralCharacter);
     let code_point_match = result.direct_match() == Some(SearchDirectMatchKind::CodePointNotation);
-    let match_style = color_theme.search_match.style(selected);
+    let match_style = color_theme.match_style(selected);
     let mut spans = vec![Span::raw(format!("{} ", ui.selection_marker(selected)))];
     if matches!(representation_width, 1 | 2) {
         spans.push(match_span(
@@ -253,11 +290,7 @@ fn name_spans(name: &str, query: Option<&str>, style: Style) -> Vec<Span<'static
 }
 
 fn render_empty_preview(frame: &mut Frame, area: Rect, color_theme: &ColorTheme) {
-    let block = Block::bordered()
-        .title(" Selection Preview ")
-        .padding(Padding::horizontal(1));
-    let content = block.inner(area);
-    frame.render_widget(block, area);
+    let content = workspace::render_rail_heading(frame, area, "Selection", None, color_theme);
 
     let message = Rect::new(
         content.x,
@@ -267,7 +300,7 @@ fn render_empty_preview(frame: &mut Frame, area: Rect, color_theme: &ColorTheme)
     );
     frame.render_widget(
         Paragraph::new("No preview")
-            .style(Style::new().fg(color_theme.selection_preview.empty))
+            .style(Style::new().fg(color_theme.muted))
             .alignment(Alignment::Center),
         message,
     );
@@ -288,7 +321,9 @@ mod tests {
         let backend = TestBackend::new(width, 3);
         let mut terminal = Terminal::new(backend).unwrap();
         terminal
-            .draw(|frame| render_input(frame, frame.area(), input, cursor))
+            .draw(|frame| {
+                render_input(frame, frame.area(), input, cursor, &ColorTheme::default());
+            })
             .unwrap();
         terminal.backend().clone()
     }
@@ -300,8 +335,8 @@ mod tests {
         let buffer = backend.buffer();
 
         assert!(!backend.cursor_visible());
-        for (x, symbol) in [(2, "a"), (3, "|"), (4, "b"), (5, "c")] {
-            assert_eq!(buffer[(x, 1)].symbol(), symbol);
+        for (x, symbol) in [(1, "a"), (2, "|"), (3, "b"), (4, "c")] {
+            assert_eq!(buffer[(x, 0)].symbol(), symbol);
         }
         assert_eq!(input.value(), "abc");
     }
@@ -313,15 +348,15 @@ mod tests {
             &InputCursor::Text("|".to_owned()),
             12,
         );
-        assert_eq!(empty.buffer()[(2, 1)].symbol(), "|");
+        assert_eq!(empty.buffer()[(1, 0)].symbol(), "|");
 
         let input = tui_input::Input::new("a界b".to_owned()).with_cursor(2);
         let backend = rendered_input(&input, &InputCursor::Text("|".to_owned()), 12);
         let buffer = backend.buffer();
-        assert_eq!(buffer[(2, 1)].symbol(), "a");
-        assert_eq!(buffer[(3, 1)].symbol(), "界");
-        assert_eq!(buffer[(5, 1)].symbol(), "|");
-        assert_eq!(buffer[(6, 1)].symbol(), "b");
+        assert_eq!(buffer[(1, 0)].symbol(), "a");
+        assert_eq!(buffer[(2, 0)].symbol(), "界");
+        assert_eq!(buffer[(4, 0)].symbol(), "|");
+        assert_eq!(buffer[(5, 0)].symbol(), "b");
     }
 
     #[test]
@@ -329,16 +364,17 @@ mod tests {
         let input = tui_input::Input::new("abcde".to_owned());
         let backend = rendered_input(&input, &InputCursor::Text("|".to_owned()), 8);
         let buffer = backend.buffer();
-        for (x, symbol) in [(2, "c"), (3, "d"), (4, "e"), (5, "|")] {
-            assert_eq!(buffer[(x, 1)].symbol(), symbol);
+        for (x, symbol) in [(1, "b"), (2, "c"), (3, "d"), (4, "e"), (5, "|")] {
+            assert_eq!(buffer[(x, 0)].symbol(), symbol);
         }
 
         let wide_input = tui_input::Input::new("ab界c".to_owned()).with_cursor(3);
         let backend = rendered_input(&wide_input, &InputCursor::Text("|".to_owned()), 8);
         let buffer = backend.buffer();
-        assert_eq!(buffer[(2, 1)].symbol(), "b");
-        assert_eq!(buffer[(3, 1)].symbol(), "界");
-        assert_eq!(buffer[(5, 1)].symbol(), "|");
+        assert_eq!(buffer[(1, 0)].symbol(), "a");
+        assert_eq!(buffer[(2, 0)].symbol(), "b");
+        assert_eq!(buffer[(3, 0)].symbol(), "界");
+        assert_eq!(buffer[(5, 0)].symbol(), "|");
     }
 
     #[rstest]
@@ -391,7 +427,7 @@ mod tests {
         let highlighted = line
             .spans
             .iter()
-            .filter(|span| span.style == color_theme.search_match.style(false))
+            .filter(|span| span.style == color_theme.match_style(false))
             .map(|span| span.content.as_ref())
             .collect::<Vec<_>>();
 
@@ -410,7 +446,7 @@ mod tests {
         let highlighted = line
             .spans
             .iter()
-            .filter(|span| span.style == color_theme.search_match.style(true))
+            .filter(|span| span.style == color_theme.match_style(true))
             .map(|span| span.content.as_ref())
             .collect::<Vec<_>>();
 
@@ -441,14 +477,10 @@ mod tests {
     #[test]
     fn highlights_every_occurrence_in_a_primary_name() {
         let color_theme = ColorTheme::default();
-        let spans = name_spans(
-            "FACE TO FACE",
-            Some("FACE"),
-            color_theme.search_match.style(false),
-        );
+        let spans = name_spans("FACE TO FACE", Some("FACE"), color_theme.match_style(false));
         let highlighted = spans
             .iter()
-            .filter(|span| span.style == color_theme.search_match.style(false))
+            .filter(|span| span.style == color_theme.match_style(false))
             .map(|span| span.content.as_ref())
             .collect::<Vec<_>>();
 
