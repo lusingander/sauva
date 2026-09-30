@@ -1,9 +1,9 @@
 use ratatui::{
     Frame,
     layout::{Alignment, Rect},
-    style::Style,
+    style::{Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Padding, Paragraph},
+    widgets::{Block, Paragraph},
 };
 
 use crate::{
@@ -29,7 +29,7 @@ pub fn render(
     let area = frame.area();
     frame.render_widget(Block::default().style(color_theme.base_style()), area);
     let Some(layout) = calculate(area) else {
-        render_size_warning(frame, area);
+        render_size_warning(frame, area, color_theme);
         return;
     };
 
@@ -139,18 +139,42 @@ fn header_status(state: &AppState) -> String {
     }
 }
 
-fn render_size_warning(frame: &mut Frame, area: Rect) {
+fn render_size_warning(frame: &mut Frame, area: Rect, color_theme: &ColorTheme) {
     let (minimum_width, minimum_height) = MINIMUM_SIZE;
     frame.render_widget(
-        Paragraph::new(format!(
-            "Terminal too small\nMinimum: {minimum_width}x{minimum_height}"
-        ))
-        .block(
-            Block::bordered()
-                .title(" sauva ")
-                .padding(Padding::horizontal(1)),
-        ),
-        area,
+        Paragraph::new(Line::from(Span::styled(
+            " sauva",
+            color_theme.accent_style(),
+        ))),
+        Rect::new(area.x, area.y, area.width, area.height.min(1)),
+    );
+
+    let content = Rect::new(
+        area.x.saturating_add(1),
+        area.y.saturating_add(2),
+        area.width.saturating_sub(2),
+        area.height.saturating_sub(2),
+    );
+    let label = Style::new().fg(color_theme.muted);
+    frame.render_widget(
+        Paragraph::new(vec![
+            Line::from(Span::styled(
+                "Terminal too small",
+                Style::new()
+                    .fg(color_theme.status.warning)
+                    .add_modifier(Modifier::BOLD),
+            )),
+            Line::default(),
+            Line::from(vec![
+                Span::styled("Required  ", label),
+                Span::raw(format!("{minimum_width} × {minimum_height}")),
+            ]),
+            Line::from(vec![
+                Span::styled("Current   ", label),
+                Span::raw(format!("{} × {}", area.width, area.height)),
+            ]),
+        ]),
+        content,
     );
 }
 
