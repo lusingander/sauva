@@ -52,7 +52,7 @@ pub fn calculate(area: Rect) -> Option<UiLayout> {
     }
 
     let [header, main, footer] = Layout::vertical([
-        Constraint::Length(1),
+        Constraint::Length(2),
         Constraint::Min(1),
         Constraint::Length(1),
     ])
@@ -181,24 +181,24 @@ mod tests {
     #[case(
         STANDARD_SIZE,
         UiLayout {
-            header: Rect::new(0, 0, 100, 1),
-            main: Rect::new(0, 1, 100, 28),
+            header: Rect::new(0, 0, 100, 2),
+            main: Rect::new(0, 2, 100, 27),
             footer: Rect::new(0, 29, 100, 1),
         }
     )]
     #[case(
         MINIMUM_SIZE,
         UiLayout {
-            header: Rect::new(0, 0, 60, 1),
-            main: Rect::new(0, 1, 60, 14),
+            header: Rect::new(0, 0, 60, 2),
+            main: Rect::new(0, 2, 60, 13),
             footer: Rect::new(0, 15, 60, 1),
         }
     )]
     #[case(
         WIDE_SIZE,
         UiLayout {
-            header: Rect::new(0, 0, 140, 1),
-            main: Rect::new(0, 1, 140, 38),
+            header: Rect::new(0, 0, 140, 2),
+            main: Rect::new(0, 2, 140, 37),
             footer: Rect::new(0, 39, 140, 1),
         }
     )]
@@ -356,17 +356,17 @@ mod tests {
 
     #[test]
     fn calculates_browser_list_height_from_the_terminal_area() {
-        assert_eq!(browser_list_height(Rect::new(0, 0, 100, 30)), 26);
-        assert_eq!(browser_list_height(Rect::new(0, 0, 60, 16)), 12);
-        assert_eq!(browser_list_height(Rect::new(0, 0, 140, 40)), 36);
+        assert_eq!(browser_list_height(Rect::new(0, 0, 100, 30)), 25);
+        assert_eq!(browser_list_height(Rect::new(0, 0, 60, 16)), 11);
+        assert_eq!(browser_list_height(Rect::new(0, 0, 140, 40)), 35);
         assert_eq!(browser_list_height(Rect::new(0, 0, 59, 15)), 0);
     }
 
     #[test]
     fn calculates_search_result_height_from_the_terminal_area() {
-        assert_eq!(search_result_height(Rect::new(0, 0, 100, 30)), 24);
-        assert_eq!(search_result_height(Rect::new(0, 0, 60, 16)), 10);
-        assert_eq!(search_result_height(Rect::new(0, 0, 140, 40)), 34);
+        assert_eq!(search_result_height(Rect::new(0, 0, 100, 30)), 23);
+        assert_eq!(search_result_height(Rect::new(0, 0, 60, 16)), 9);
+        assert_eq!(search_result_height(Rect::new(0, 0, 140, 40)), 33);
         assert_eq!(search_result_height(Rect::new(0, 0, 59, 15)), 0);
     }
 }

@@ -107,9 +107,9 @@ fn section(area: Rect) -> SectionLayout {
     SectionLayout {
         heading: Rect::new(area.x, area.y, area.width, area.height.min(1)),
         content: Rect::new(
-            area.x,
+            area.x.saturating_add(1),
             area.y.saturating_add(1),
-            area.width,
+            area.width.saturating_sub(1),
             area.height.saturating_sub(1),
         ),
     }
@@ -134,7 +134,7 @@ mod tests {
             primary_section(Rect::new(0, 1, 60, 28)),
             SectionLayout {
                 heading: Rect::new(1, 1, 57, 1),
-                content: Rect::new(1, 2, 57, 26),
+                content: Rect::new(2, 2, 56, 26),
             }
         );
     }
@@ -145,7 +145,7 @@ mod tests {
             rail_section(Rect::new(60, 1, 40, 28)),
             SectionLayout {
                 heading: Rect::new(62, 1, 37, 1),
-                content: Rect::new(62, 2, 37, 26),
+                content: Rect::new(63, 2, 36, 26),
             }
         );
     }

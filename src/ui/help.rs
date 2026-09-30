@@ -574,7 +574,7 @@ fn footer_width(items: &[RenderedShortHelpItem]) -> usize {
 }
 
 fn footer_item_width(item: &RenderedShortHelpItem) -> usize {
-    Line::from(format!("{}: {}", item.keys, item.description)).width()
+    Line::from(format!("{} {}", item.keys, item.description)).width()
 }
 
 fn footer_line(items: &[RenderedShortHelpItem], color_theme: &ColorTheme) -> Line<'static> {
@@ -592,7 +592,7 @@ fn footer_line(items: &[RenderedShortHelpItem], color_theme: &ColorTheme) -> Lin
             Style::new().fg(color_theme.key),
         ));
         spans.push(Span::styled(
-            format!(": {}", item.description),
+            format!(" {}", item.description),
             Style::new().fg(color_theme.muted),
         ));
     }
@@ -630,11 +630,20 @@ fn help_sections(area: Rect) -> HelpSections {
 
     HelpSections {
         about_label,
-        about,
+        about: indent_body(about),
         divider,
         keybindings_label,
-        help,
+        help: indent_body(help),
     }
+}
+
+fn indent_body(area: Rect) -> Rect {
+    Rect::new(
+        area.x.saturating_add(1),
+        area.y,
+        area.width.saturating_sub(1),
+        area.height,
+    )
 }
 
 #[cfg(test)]
@@ -696,7 +705,7 @@ mod tests {
 
         let metrics = viewport_metrics(Rect::new(0, 0, width, height), &state, &keymap);
 
-        assert_eq!(metrics.viewport_height, 5);
+        assert_eq!(metrics.viewport_height, 4);
         assert!(metrics.document_height > metrics.viewport_height);
     }
 
@@ -709,10 +718,10 @@ mod tests {
 
         assert!(Line::from(wide.as_str()).width() <= 140);
         assert!(Line::from(narrow.as_str()).width() <= 60);
-        assert!(wide.contains("C-u/C-d: Page"));
-        assert!(!narrow.contains("C-u/C-d: Page"));
-        assert!(narrow.contains("q: Quit"));
-        assert!(narrow.contains("F1: Help"));
+        assert!(wide.contains("C-u/C-d Page"));
+        assert!(!narrow.contains("C-u/C-d Page"));
+        assert!(narrow.contains("q Quit"));
+        assert!(narrow.contains("F1 Help"));
     }
 
     #[test]
@@ -792,7 +801,7 @@ mod tests {
                 &keymap,
                 &ColorTheme::default(),
             ))
-            .contains("BS: Sequence")
+            .contains("BS Sequence")
         );
     }
 
@@ -828,8 +837,8 @@ mod tests {
         .collect::<Vec<_>>()
         .join("\n");
 
-        assert!(footer.contains("h/n: Point"));
-        assert!(!footer.contains("/: Search"));
+        assert!(footer.contains("h/n Point"));
+        assert!(!footer.contains("/ Search"));
         assert!(help.contains("<n>"));
         assert!(!help.contains("<l>  <Right>"));
         assert!(!help.contains("Open search"));
