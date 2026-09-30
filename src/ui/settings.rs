@@ -1,6 +1,6 @@
 use garde::Validate;
 use ratatui::text::Line;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use umbra::optional;
 
 #[optional(
@@ -8,7 +8,7 @@ use umbra::optional;
     attrs = [serde(deny_unknown_fields)],
     visibility = pub
 )]
-#[derive(Debug, Clone, Default, PartialEq, Eq, Validate)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Validate)]
 pub struct UiSettings {
     #[garde(custom(validate_selection_cursor))]
     pub selection_cursor: String,
@@ -16,7 +16,7 @@ pub struct UiSettings {
     pub input_cursor: InputCursor,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum InputCursor {
     #[default]

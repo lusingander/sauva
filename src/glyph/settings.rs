@@ -1,7 +1,7 @@
 use std::{fmt, str::FromStr};
 
 use garde::Validate;
-use serde::{Deserialize, Deserializer, de::Error as _};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error as _};
 use umbra::optional;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -72,6 +72,21 @@ impl<'de> Deserialize<'de> for RgbaColor {
     }
 }
 
+impl Serialize for RgbaColor {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let [red, green, blue, alpha] = self.channels();
+        let value = if alpha == u8::MAX {
+            format!("#{red:02x}{green:02x}{blue:02x}")
+        } else {
+            format!("#{red:02x}{green:02x}{blue:02x}{alpha:02x}")
+        };
+        serializer.serialize_str(&value)
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ParseRgbaColorError {
     InvalidFormat,
@@ -90,7 +105,7 @@ impl std::error::Error for ParseRgbaColorError {}
     attrs = [serde(deny_unknown_fields)],
     visibility = pub
 )]
-#[derive(Debug, Clone, PartialEq, Eq, Validate)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Validate)]
 pub struct GlyphPreviewSettings {
     #[garde(inner(custom(validate_font_family)))]
     pub font_families: Vec<String>,

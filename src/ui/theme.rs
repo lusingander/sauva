@@ -1,5 +1,5 @@
 use ratatui::style::{Color, Modifier, Style};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize, Serializer};
 use smart_default::SmartDefault;
 use umbra::optional;
 
@@ -7,11 +7,13 @@ use umbra::optional;
     derives = [Debug, Deserialize],
     attrs = [serde(deny_unknown_fields)]
 )]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, SmartDefault)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, SmartDefault)]
 pub struct SelectionColors {
     #[default(Color::Black)]
+    #[serde(serialize_with = "serialize_color")]
     pub fg: Color,
     #[default(Color::Cyan)]
+    #[serde(serialize_with = "serialize_color")]
     pub bg: Color,
 }
 
@@ -25,11 +27,13 @@ impl SelectionColors {
     derives = [Debug, Deserialize],
     attrs = [serde(deny_unknown_fields)]
 )]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, SmartDefault)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, SmartDefault)]
 pub struct StatusColors {
     #[default(Color::Green)]
+    #[serde(serialize_with = "serialize_color")]
     pub info: Color,
     #[default(Color::Yellow)]
+    #[serde(serialize_with = "serialize_color")]
     pub warning: Color,
 }
 
@@ -38,30 +42,67 @@ pub struct StatusColors {
     attrs = [serde(deny_unknown_fields)],
     visibility = pub
 )]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, SmartDefault)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, SmartDefault)]
 pub struct ColorTheme {
     #[default(Color::Reset)]
+    #[serde(serialize_with = "serialize_color")]
     pub fg: Color,
     #[default(Color::Reset)]
+    #[serde(serialize_with = "serialize_color")]
     pub bg: Color,
     #[default(Color::DarkGray)]
+    #[serde(serialize_with = "serialize_color")]
     pub muted: Color,
     #[default(Color::Cyan)]
+    #[serde(serialize_with = "serialize_color")]
     pub accent: Color,
     #[default(Color::Blue)]
+    #[serde(serialize_with = "serialize_color")]
     pub heading: Color,
     #[default(Color::DarkGray)]
+    #[serde(serialize_with = "serialize_color")]
     pub border: Color,
     #[default(Color::Yellow)]
+    #[serde(serialize_with = "serialize_color")]
     pub r#match: Color,
     #[default(Color::Yellow)]
+    #[serde(serialize_with = "serialize_color")]
     pub key: Color,
     #[default(Color::Blue)]
+    #[serde(serialize_with = "serialize_color")]
     pub link: Color,
     #[nested]
     pub selection: SelectionColors,
     #[nested]
     pub status: StatusColors,
+}
+
+fn serialize_color<S>(color: &Color, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let value = match color {
+        Color::Reset => "reset".to_owned(),
+        Color::Black => "black".to_owned(),
+        Color::Red => "red".to_owned(),
+        Color::Green => "green".to_owned(),
+        Color::Yellow => "yellow".to_owned(),
+        Color::Blue => "blue".to_owned(),
+        Color::Magenta => "magenta".to_owned(),
+        Color::Cyan => "cyan".to_owned(),
+        Color::Gray => "gray".to_owned(),
+        Color::DarkGray => "darkgray".to_owned(),
+        Color::LightRed => "light-red".to_owned(),
+        Color::LightGreen => "light-green".to_owned(),
+        Color::LightYellow => "light-yellow".to_owned(),
+        Color::LightBlue => "light-blue".to_owned(),
+        Color::LightMagenta => "light-magenta".to_owned(),
+        Color::LightCyan => "light-cyan".to_owned(),
+        Color::White => "white".to_owned(),
+        Color::Rgb(red, green, blue) => format!("#{red:02x}{green:02x}{blue:02x}"),
+        Color::Indexed(index) => index.to_string(),
+    };
+    serializer.serialize_str(&value)
 }
 
 impl ColorTheme {

@@ -18,6 +18,7 @@ pub struct LaunchOptions {
     target: Option<LaunchTarget>,
     demo: Option<Demo>,
     graphics: GraphicsMode,
+    print_default_config: bool,
 }
 
 impl LaunchOptions {
@@ -35,6 +36,10 @@ impl LaunchOptions {
         } else {
             self.graphics
         }
+    }
+
+    pub const fn print_default_config(&self) -> bool {
+        self.print_default_config
     }
 }
 
@@ -57,6 +62,10 @@ struct Cli {
     /// Control glyph preview graphics
     #[arg(short, long, value_enum, default_value_t, value_name = "MODE")]
     graphics: GraphicsMode,
+
+    /// Print the complete default configuration to standard output
+    #[arg(long, exclusive = true)]
+    print_default_config: bool,
 
     /// Show a deterministic UI state
     #[arg(long, value_enum, value_name = "STATE", hide = true)]
@@ -107,6 +116,7 @@ impl From<Cli> for LaunchOptions {
             target: cli.input.or(cli.text),
             demo: cli.demo,
             graphics: cli.graphics,
+            print_default_config: cli.print_default_config,
         }
     }
 }
@@ -176,6 +186,7 @@ mod tests {
         assert_eq!(options.target(), None);
         assert_eq!(options.demo(), None);
         assert_eq!(options.graphics(), GraphicsMode::Auto);
+        assert!(!options.print_default_config());
     }
 
     #[rstest]
@@ -326,6 +337,26 @@ mod tests {
         assert!(help.contains("-t, --text <TEXT>"));
         assert!(help.contains("--graphics <MODE>"));
         assert!(help.contains("possible values: auto, force, iterm2, off"));
+        assert!(help.contains("--print-default-config"));
+    }
+
+    #[test]
+    fn print_default_config_is_a_standalone_action() {
+        let options = try_parse(&["sauva", "--print-default-config"]).unwrap();
+
+        assert!(options.print_default_config());
+        assert_eq!(options.target(), None);
+
+        for arguments in [
+            &["sauva", "--print-default-config", "A"][..],
+            &["sauva", "--print-default-config", "--text", "A"][..],
+            &["sauva", "--print-default-config", "--graphics", "off"][..],
+        ] {
+            assert_eq!(
+                try_parse(arguments).unwrap_err().kind(),
+                clap::error::ErrorKind::ArgumentConflict
+            );
+        }
     }
 
     #[test]

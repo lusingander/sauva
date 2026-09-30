@@ -52,10 +52,11 @@ Arguments:
   [INPUT]  Text or code point to inspect
 
 Options:
-  -t, --text <TEXT>      Treat the input as literal text, without code point notation parsing
-  -g, --graphics <MODE>  Control glyph preview graphics [default: auto] [possible values: auto, force, iterm2, off]
-  -h, --help             Print help
-  -V, --version          Print version
+  -t, --text <TEXT>           Treat the input as literal text, without code point notation parsing
+  -g, --graphics <MODE>       Control glyph preview graphics [default: auto] [possible values: auto, force, iterm2, off]
+      --print-default-config  Print the complete default configuration to standard output
+  -h, --help                  Print help
+  -V, --version               Print version
 ```
 
 #### Specifying `INPUT`
@@ -104,6 +105,13 @@ sauva loads the first applicable configuration path in this order:
 3. `$HOME/.config/sauva/config.toml`
 
 If the default file does not exist, built-in settings are used. A missing file specified by `SAUVA_CONFIG_FILE`, or an invalid configuration file, causes startup to fail.
+
+The complete built-in configuration can be printed without starting the TUI or loading a local configuration file:
+
+```
+sauva --print-default-config
+sauva --print-default-config > config.toml
+```
 
 All settings are optional. The following example shows the main configuration areas:
 
