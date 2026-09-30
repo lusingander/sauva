@@ -14,6 +14,7 @@ use crate::{
 const LABEL_WIDTH: u16 = 17;
 const GLYPH_GAP_HEIGHT: u16 = 1;
 const MINIMUM_GLYPH_HEIGHT: u16 = 8;
+const PREFERRED_SELECTION_HEIGHT: u16 = 9;
 
 pub fn render(
     frame: &mut Frame,
@@ -26,7 +27,8 @@ pub fn render(
     let entries = details.entries();
 
     let content = workspace::render_rail_heading(frame, area, "Selection", None, color_theme);
-    let details_height = key_value::required_height(content.width, LABEL_WIDTH, &entries);
+    let details_height =
+        key_value::required_height(content.width, LABEL_WIDTH, &entries).min(content.height);
     key_value::render_entries(
         frame,
         Rect::new(content.x, content.y, content.width, details_height),
@@ -67,7 +69,8 @@ struct InlineGlyphLayout {
 
 fn glyph_layout_for_entries(area: Rect, entries: &[KeyValue<'_>]) -> Option<InlineGlyphLayout> {
     let content = workspace::rail_section(area).content;
-    let details_height = key_value::required_height(content.width, LABEL_WIDTH, entries);
+    let details_height = key_value::required_height(content.width, LABEL_WIDTH, entries)
+        .max(PREFERRED_SELECTION_HEIGHT);
     let divider_y = content.y.saturating_add(details_height);
     let heading_y = divider_y.saturating_add(GLYPH_GAP_HEIGHT);
     let glyph_y = heading_y.saturating_add(1);
@@ -119,13 +122,23 @@ mod tests {
     use super::*;
 
     #[test]
-    fn uses_the_space_below_uncompressed_details_for_the_glyph() {
-        let area = Rect::new(60, 3, 40, 26);
+    fn reserves_selection_space_before_placing_the_glyph() {
+        let area = Rect::new(60, 2, 40, 27);
         let code_point = CodePoint::new(0x0041).unwrap();
 
         assert_eq!(
             glyph_area(area, code_point),
-            Some(Rect::new(62, 13, 36, 15))
+            Some(Rect::new(63, 14, 36, 14))
+        );
+    }
+
+    #[test]
+    fn keeps_the_glyph_position_stable_for_common_wrapping_differences() {
+        let area = Rect::new(60, 2, 40, 27);
+
+        assert_eq!(
+            glyph_area(area, CodePoint::new(0x0041).unwrap()),
+            glyph_area(area, CodePoint::new(0x2192).unwrap())
         );
     }
 

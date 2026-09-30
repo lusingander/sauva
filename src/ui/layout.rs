@@ -12,6 +12,7 @@ const AUXILIARY_WIDTH: u16 = 40;
 const CODE_POINT_GRID_WIDTH: u16 = 60;
 const CODE_POINT_CONTEXT_MINIMUM_WIDTH: u16 = 40;
 pub const GLYPH_MAXIMUM_WIDTH: u16 = 36;
+pub const GLYPH_MAXIMUM_HEIGHT: u16 = 20;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct UiLayout {
@@ -145,11 +146,12 @@ fn code_point_grid_and_context(area: Rect) -> BrowserLayout {
 
 pub fn centered_glyph_area(area: Rect) -> Rect {
     let width = area.width.min(GLYPH_MAXIMUM_WIDTH);
+    let height = area.height.min(GLYPH_MAXIMUM_HEIGHT);
     Rect::new(
         area.x + area.width.saturating_sub(width) / 2,
-        area.y,
+        area.y + area.height.saturating_sub(height) / 2,
         width,
-        area.height,
+        height,
     )
 }
 
@@ -293,7 +295,7 @@ mod tests {
             details: Rect::new(0, 3, 60, 26),
             preview: Some(GlyphPreviewLayout {
                 panel: Rect::new(60, 3, 40, 26),
-                placeholder: Rect::new(62, 6, 36, 22),
+                placeholder: Rect::new(62, 7, 36, 20),
             }),
         }
     )]
@@ -303,7 +305,7 @@ mod tests {
             details: Rect::new(0, 3, 100, 36),
             preview: Some(GlyphPreviewLayout {
                 panel: Rect::new(100, 3, 40, 36),
-                placeholder: Rect::new(102, 6, 36, 32),
+                placeholder: Rect::new(102, 12, 36, 20),
             }),
         }
     )]
