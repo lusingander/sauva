@@ -33,6 +33,10 @@ fn main() -> ExitCode {
 
 fn run() -> Result<(), Box<dyn Error>> {
     let options = cli::parse();
+    if options.print_default_config() {
+        print!("{}", config::default_toml()?);
+        return Ok(());
+    }
     let config = config::load()?;
     let mut state = initial_state(options.demo(), options.target());
 
