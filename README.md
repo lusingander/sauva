@@ -166,7 +166,7 @@ These are the main built-in controls. The available controls depend on the curre
 | <kbd>q</kbd> | Quit from the Inspector, Sequence, or Browse view |
 | <kbd>Esc</kbd> | Cancel Search or Browse; quit from the Inspector or Sequence view |
 | <kbd>h</kbd> <kbd>j</kbd> <kbd>k</kbd> <kbd>l</kbd> or arrow keys | Move the selection |
-| <kbd>/</kbd> | Search by character, code point, or Unicode name |
+| <kbd>/</kbd> | Search by character, code point, Unicode name, or formal name alias |
 | <kbd>p</kbd> <kbd>r</kbd> <kbd>b</kbd> <kbd>c</kbd> | Browse planes, ranges, blocks, or code points |
 | <kbd>Enter</kbd> | Open the selected item; inspect a code point from Sequence or Browse |
 | <kbd>Backspace</kbd> | Return to the previous Browse screen, or return from Inspector to the input Sequence |

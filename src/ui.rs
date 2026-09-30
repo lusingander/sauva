@@ -38,14 +38,21 @@ pub fn glyph_preview_request(area: Rect, state: &AppState) -> Option<GlyphPrevie
         View::Browser => state.browse().and_then(|browse| {
             layout::browser(shell.main, browse.level())
                 .context
-                .and_then(|context| selection_preview::glyph_area(context, code_point))
+                .and_then(|context| selection_preview::glyph_area(context, code_point, None))
         }),
-        View::Search => layout::search(shell.main)
-            .preview
-            .and_then(|preview| selection_preview::glyph_area(preview, code_point)),
+        View::Search => {
+            let matched_alias = state
+                .search()
+                .and_then(|search| search.selected_result())
+                .and_then(|result| result.preferred_alias_match())
+                .map(|alias_match| alias_match.alias());
+            layout::search(shell.main).preview.and_then(|preview| {
+                selection_preview::glyph_area(preview, code_point, matched_alias)
+            })
+        }
         View::Sequence => layout::sequence(shell.main)
             .context
-            .and_then(|context| selection_preview::glyph_area(context, code_point)),
+            .and_then(|context| selection_preview::glyph_area(context, code_point, None)),
     }?;
     Some(GlyphPreviewRequest {
         code_point,

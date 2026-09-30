@@ -116,7 +116,7 @@ fn inspects_a_text_sequence_and_preserves_its_position_across_search() -> termle
     })?;
 
     terminal.send(Key::Char('/'))?;
-    terminal.wait_until(|screen| screen.contains("Search by Unicode name"))?;
+    terminal.wait_until(|screen| screen.contains("Search by name or alias"))?;
     terminal.send_str("Ω")?;
     terminal.wait_until(|screen| {
         screen.contains("U+03A9") && screen.contains("GREEK CAPITAL LETTER OMEGA")
@@ -151,7 +151,7 @@ fn searches_for_a_name_and_opens_the_result_in_the_inspector() -> termlens::Resu
     terminal.send(Key::Char('/'))?;
     terminal.wait_until(|screen| {
         screen.contains("Search")
-            && screen.contains("Search by Unicode name, code point, or character")
+            && screen.contains("Search by name or alias, code point, or character")
     })?;
     terminal.send_str("rightwards arrow")?;
     terminal.wait_until(|screen| {
@@ -173,12 +173,41 @@ fn searches_for_a_name_and_opens_the_result_in_the_inspector() -> termlens::Resu
 }
 
 #[test]
+fn searches_for_a_name_alias_and_explains_the_match() -> termlens::Result<()> {
+    let mut terminal = spawn("off")?;
+    terminal.snapshot_after(|screen| screen.contains("LATIN CAPITAL LETTER A"))?;
+
+    terminal.send(Key::Char('/'))?;
+    terminal.wait_until(|screen| screen.contains("Search by name or alias"))?;
+    terminal.send_str("latin capital letter gha")?;
+    terminal.wait_until(|screen| {
+        screen.contains("U+01A2")
+            && screen.contains("LATIN CAPITAL LETTER GHA")
+            && screen.contains("Matched Alias")
+            && screen.contains("correction")
+            && screen.contains("LATIN CAPITAL LETTER OI")
+    })?;
+
+    terminal.send(Key::Enter)?;
+    terminal.wait_until(|screen| {
+        screen.contains("Identity")
+            && screen.contains("U+01A2")
+            && screen.contains("LATIN CAPITAL LETTER OI")
+    })?;
+
+    terminal.send(Key::Char('q'))?;
+    let status = terminal.wait_exit()?;
+    assert!(status.success(), "exit status: {status}");
+    Ok(())
+}
+
+#[test]
 fn reopens_search_and_corrects_a_query_with_no_results() -> termlens::Result<()> {
     let mut terminal = spawn("off")?;
     terminal.snapshot_after(|screen| screen.contains("LATIN CAPITAL LETTER A"))?;
 
     terminal.send(Key::Char('/'))?;
-    terminal.wait_until(|screen| screen.contains("Search by Unicode name"))?;
+    terminal.wait_until(|screen| screen.contains("Search by name or alias"))?;
     terminal.send_str("rightwards arrox")?;
     terminal.snapshot_after(|screen| {
         screen.contains("rightwards arrox") && screen.contains("No matching characters")
@@ -222,7 +251,7 @@ fn keeps_the_search_result_selected_across_terminal_resizes() -> termlens::Resul
     terminal.snapshot_after(|screen| screen.contains("LATIN CAPITAL LETTER A"))?;
 
     terminal.send(Key::Char('/'))?;
-    terminal.wait_until(|screen| screen.contains("Search by Unicode name"))?;
+    terminal.wait_until(|screen| screen.contains("Search by name or alias"))?;
     terminal.send_str("U+2192")?;
     terminal.snapshot_after(|screen| {
         screen.contains("Search")
@@ -265,7 +294,7 @@ fn search_help_does_not_edit_the_query_or_lose_the_result() -> termlens::Result<
     terminal.snapshot_after(|screen| screen.contains("LATIN CAPITAL LETTER A"))?;
 
     terminal.send(Key::Char('/'))?;
-    terminal.wait_until(|screen| screen.contains("Search by Unicode name"))?;
+    terminal.wait_until(|screen| screen.contains("Search by name or alias"))?;
     terminal.send_str("U+2192")?;
     terminal
         .wait_until(|screen| screen.contains("1 result") && screen.contains("RIGHTWARDS ARROW"))?;

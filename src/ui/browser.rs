@@ -85,6 +85,7 @@ pub fn render(
                     frame,
                     context,
                     browse.cursor(),
+                    None,
                     state.glyph_preview(),
                     color_theme,
                 );

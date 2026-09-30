@@ -948,6 +948,22 @@ mod tests {
     }
 
     #[test]
+    fn search_alias_results_standard() {
+        let state = fixtures::search_alias_results();
+        let (width, height) = STANDARD_SIZE;
+
+        insta::assert_snapshot!(render_to_text(&state, width, height));
+    }
+
+    #[test]
+    fn search_alias_results_wide() {
+        let state = fixtures::search_alias_results();
+        let (width, height) = WIDE_SIZE;
+
+        insta::assert_snapshot!(render_to_text(&state, width, height));
+    }
+
+    #[test]
     fn search_name_results_minimum_with_scrolled_viewport() {
         let state = fixtures::search_name_results_minimum();
         let (width, height) = MINIMUM_SIZE;

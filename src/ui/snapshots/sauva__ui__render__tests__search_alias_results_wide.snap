@@ -1,0 +1,44 @@
+---
+source: src/ui/render.rs
+expression: "render_to_text(&state, width, height)"
+---
+ sauva / Search                                                                                                           1 result · U+01A2
+
+ Search  latin capital letter gha                                                                   │ Selection
+────────────────────────────────────────────────────────────────────────────────────────────────────│  Character        Ƣ
+ Results                                                                                  1 result  │  Code Point       U+01A2
+    Ƣ   U+01A2    LATIN CAPITAL LETTER GHA · correction alias                                       │  Primary Name
+                                                                                                    │    LATIN CAPITAL LETTER OI
+                                                                                                    │  Matched Alias
+                                                                                                    │    LATIN CAPITAL LETTER GHA
+                                                                                                    │  Alias Type       correction
+                                                                                                    │  Block            Latin Extended-B
+                                                                                                    │  General Category
+                                                                                                    │    Lu — Uppercase Letter
+                                                                                                    │ ─────────────────────────────────────
+                                                                                                    │ Glyph
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+ ↑/↓ Move  Enter Inspect  Esc Close  C-c Quit                                                                                       F1 Help

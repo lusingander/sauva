@@ -44,6 +44,9 @@ pub fn render(
                     frame,
                     preview,
                     result.code_point(),
+                    result
+                        .preferred_alias_match()
+                        .map(|alias_match| alias_match.alias()),
                     state.glyph_preview(),
                     color_theme,
                 );
@@ -158,6 +161,7 @@ fn render_results(
                 let line = result_line(
                     results[index],
                     outcome.name_query(),
+                    content.width,
                     selected,
                     color_theme,
                     ui,
@@ -182,13 +186,13 @@ pub fn result_count_label(count: usize) -> String {
 fn search_prompt_lines(color_theme: &ColorTheme) -> Vec<Line<'static>> {
     vec![
         Line::styled(
-            "Search by Unicode name, code point, or character",
+            "Search by name or alias, code point, or character",
             Style::new().add_modifier(Modifier::BOLD),
         ),
         Line::from(vec![
             Span::styled("Examples", color_theme.heading_style()),
             Span::styled(
-                "  rightwards arrow · U+2192 · →",
+                "  rightwards arrow · NULL · U+2192 · →",
                 Style::new().fg(color_theme.muted),
             ),
         ]),
@@ -202,7 +206,7 @@ fn no_results_lines(color_theme: &ColorTheme) -> Vec<Line<'static>> {
             Style::new().add_modifier(Modifier::BOLD),
         ),
         Line::styled(
-            "Try another name, code point, or character",
+            "Try another name or alias, code point, or character",
             Style::new().fg(color_theme.muted),
         ),
     ]
@@ -211,6 +215,7 @@ fn no_results_lines(color_theme: &ColorTheme) -> Vec<Line<'static>> {
 fn result_line(
     result: SearchResult,
     name_query: Option<&str>,
+    content_width: u16,
     selected: bool,
     color_theme: &ColorTheme,
     ui: &UiSettings,
@@ -252,11 +257,29 @@ fn result_line(
         ));
         spans.push(Span::raw(" — "));
     }
-    spans.extend(name_spans(
-        UnicodeDatabase::primary_name_or_fallback(code_point),
-        result.name_match().and(name_query),
-        match_style,
-    ));
+    if let Some(alias_match) = result.preferred_alias_match() {
+        let alias = alias_match.alias();
+        spans.extend(name_spans(alias.name(), name_query, match_style));
+        let annotation = format!(" · {} alias", alias.kind().label());
+        if Line::from(spans.clone()).width() + Line::from(annotation.as_str()).width()
+            <= usize::from(content_width)
+        {
+            spans.push(Span::styled(
+                annotation,
+                if selected {
+                    Style::new()
+                } else {
+                    Style::new().fg(color_theme.muted)
+                },
+            ));
+        }
+    } else {
+        spans.extend(name_spans(
+            UnicodeDatabase::primary_name_or_fallback(code_point),
+            result.name_match().and(name_query),
+            match_style,
+        ));
+    }
 
     Line::from(spans)
 }
@@ -391,12 +414,14 @@ mod tests {
             CodePoint::new(value).unwrap(),
             Some(SearchDirectMatchKind::CodePointNotation),
             None,
+            None,
         );
 
         assert_eq!(
             result_line(
                 result,
                 None,
+                u16::MAX,
                 true,
                 &ColorTheme::default(),
                 &UiSettings {
@@ -416,10 +441,12 @@ mod tests {
             CodePoint::new(0xface).unwrap(),
             Some(SearchDirectMatchKind::CodePointNotation),
             Some(SearchNameMatchKind::Substring),
+            None,
         );
         let line = result_line(
             result,
             Some("FACE"),
+            u16::MAX,
             false,
             &color_theme,
             &UiSettings::default(),
@@ -441,8 +468,16 @@ mod tests {
             CodePoint::new(0x200d).unwrap(),
             Some(SearchDirectMatchKind::LiteralCharacter),
             None,
+            None,
         );
-        let line = result_line(result, None, true, &color_theme, &UiSettings::default());
+        let line = result_line(
+            result,
+            None,
+            u16::MAX,
+            true,
+            &color_theme,
+            &UiSettings::default(),
+        );
         let highlighted = line
             .spans
             .iter()
@@ -459,12 +494,14 @@ mod tests {
             CodePoint::new(0x2192).unwrap(),
             Some(SearchDirectMatchKind::CodePointNotation),
             None,
+            None,
         );
 
         assert_eq!(
             result_line(
                 result,
                 None,
+                u16::MAX,
                 true,
                 &ColorTheme::default(),
                 &UiSettings::default(),
@@ -485,5 +522,61 @@ mod tests {
             .collect::<Vec<_>>();
 
         assert_eq!(highlighted, ["FACE", "FACE"]);
+    }
+
+    #[test]
+    fn shows_the_matched_alias_before_its_type() {
+        let SearchOutcome::Results {
+            name_query,
+            results,
+        } = crate::search::search("latin capital letter gha")
+        else {
+            panic!("expected alias search results");
+        };
+
+        let line = result_line(
+            results[0],
+            name_query.as_deref(),
+            u16::MAX,
+            true,
+            &ColorTheme::default(),
+            &UiSettings {
+                selection_cursor: ">".to_owned(),
+                ..Default::default()
+            },
+        );
+
+        assert_eq!(
+            line.to_string(),
+            "> Ƣ   U+01A2    LATIN CAPITAL LETTER GHA · correction alias"
+        );
+    }
+
+    #[test]
+    fn highlights_the_alias_that_caused_the_result() {
+        let color_theme = ColorTheme::default();
+        let SearchOutcome::Results {
+            name_query,
+            results,
+        } = crate::search::search("null")
+        else {
+            panic!("expected alias search results");
+        };
+        let line = result_line(
+            results[0],
+            name_query.as_deref(),
+            u16::MAX,
+            false,
+            &color_theme,
+            &UiSettings::default(),
+        );
+        let highlighted = line
+            .spans
+            .iter()
+            .filter(|span| span.style == color_theme.match_style(false))
+            .map(|span| span.content.as_ref())
+            .collect::<Vec<_>>();
+
+        assert_eq!(highlighted, ["NULL"]);
     }
 }
