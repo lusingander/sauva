@@ -1,6 +1,7 @@
 use ratatui::{
     Frame,
     layout::Rect,
+    style::Style,
     text::{Line, Span},
     widgets::Paragraph,
 };
@@ -303,10 +304,19 @@ fn render_code_point_table(
         .table_page()
         .expect("the code point table has a visible page");
     let mut rows = Vec::with_capacity(visible_rows.len() + 1);
-    rows.push(Line::from(table_column_header()));
+    rows.push(table_column_header(
+        usize::try_from(cursor.value() % 16).expect("a table column fits usize"),
+        color_theme,
+    ));
     rows.extend(visible_rows.map(|row| {
         let row_start = page_start.value() + row as u32 * 16;
-        let mut spans = vec![Span::raw(format!("{row_start:06X} "))];
+        let row_selected = cursor.value() >= row_start && cursor.value() < row_start + 16;
+        let row_style = if row_selected {
+            color_theme.accent_style()
+        } else {
+            Style::new().fg(color_theme.muted)
+        };
+        let mut spans = vec![Span::styled(format!("{row_start:06X} "), row_style)];
         for column in 0..16 {
             let code_point = CodePoint::new(row_start + column as u32)
                 .expect("table pages contain valid code points");
@@ -331,12 +341,17 @@ fn render_code_point_table(
     frame.render_widget(Paragraph::new(rows), content);
 }
 
-fn table_column_header() -> String {
-    let mut text = "       ".to_owned();
+fn table_column_header(selected_column: usize, color_theme: &ColorTheme) -> Line<'static> {
+    let mut spans = vec![Span::raw("       ")];
     for column in 0..16 {
-        text.push_str(&format!(" {column:X} "));
+        let style = if column == selected_column {
+            color_theme.accent_style()
+        } else {
+            Style::new().fg(color_theme.muted)
+        };
+        spans.push(Span::styled(format!(" {column:X} "), style));
     }
-    text
+    Line::from(spans)
 }
 
 fn table_cell(code_point: CodePoint, selected: bool, ui: &UiSettings) -> String {
@@ -386,7 +401,7 @@ mod tests {
 
     #[test]
     fn table_header_and_rows_fit_the_minimum_navigator_width() {
-        assert_eq!(Line::from(table_column_header()).width(), 55);
+        assert_eq!(table_column_header(0, &ColorTheme::default()).width(), 55);
 
         let cursor = CodePoint::new(0x0041).unwrap();
         let range = PlaneRange::for_code_point(cursor);

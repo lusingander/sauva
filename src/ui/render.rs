@@ -612,6 +612,33 @@ mod tests {
     }
 
     #[test]
+    fn code_point_table_axes_highlight_only_the_selected_row_and_column() {
+        let color_theme = test_color_theme();
+        let (width, height) = STANDARD_SIZE;
+        let buffer = render_to_buffer(&fixtures::browse_code_points(), width, height, &color_theme);
+
+        assert_eq!(buffer.cell((10, 3)).unwrap().fg, color_theme.muted);
+        assert_eq!(buffer.cell((13, 3)).unwrap().fg, color_theme.accent);
+        assert_eq!(buffer.cell((2, 4)).unwrap().fg, color_theme.muted);
+        assert_eq!(buffer.cell((2, 8)).unwrap().fg, color_theme.accent);
+        assert!(
+            buffer
+                .cell((13, 3))
+                .unwrap()
+                .modifier
+                .contains(Modifier::BOLD)
+        );
+        assert!(
+            buffer
+                .cell((2, 8))
+                .unwrap()
+                .modifier
+                .contains(Modifier::BOLD)
+        );
+        assert_eq!(buffer.cell((13, 8)).unwrap().bg, color_theme.selection.bg);
+    }
+
+    #[test]
     fn configured_selection_cursor_is_rendered_in_every_selection_view() {
         let color_theme = test_color_theme();
         let ui = UiSettings {
