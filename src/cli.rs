@@ -10,7 +10,7 @@ const INPUT_ARGUMENT_HELP: &str =
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum LaunchTarget {
     CodePoint(CodePoint),
-    Sequence(Vec<CodePoint>),
+    Sequence(String),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -143,11 +143,11 @@ fn parse_input(input: &str) -> Result<LaunchTarget, String> {
 }
 
 fn parse_text(input: &str) -> Result<LaunchTarget, String> {
-    let code_points = input.chars().map(CodePoint::from).collect::<Vec<_>>();
-    match code_points.as_slice() {
-        [] => Err("text must not be empty".to_owned()),
-        [code_point] => Ok(LaunchTarget::CodePoint(*code_point)),
-        _ => Ok(LaunchTarget::Sequence(code_points)),
+    let mut characters = input.chars();
+    match (characters.next(), characters.next()) {
+        (None, _) => Err("text must not be empty".to_owned()),
+        (Some(character), None) => Ok(LaunchTarget::CodePoint(CodePoint::from(character))),
+        _ => Ok(LaunchTarget::Sequence(input.to_owned())),
     }
 }
 
@@ -216,13 +216,14 @@ mod tests {
     fn accepts_literal_sequences(#[case] argument: &str, #[case] expected: &[u32]) {
         let options = try_parse(&["sauva", argument]).unwrap();
 
-        let Some(LaunchTarget::Sequence(code_points)) = options.target() else {
+        let Some(LaunchTarget::Sequence(source)) = options.target() else {
             panic!("expected a sequence");
         };
+        assert_eq!(source, argument);
         assert_eq!(
-            code_points
-                .iter()
-                .map(|code_point| code_point.value())
+            source
+                .chars()
+                .map(|character| CodePoint::from(character).value())
                 .collect::<Vec<_>>(),
             expected
         );
@@ -232,15 +233,9 @@ mod tests {
     fn text_option_bypasses_code_point_notation_parsing() {
         let options = try_parse(&["sauva", "--text", "41"]).unwrap();
 
-        let Some(LaunchTarget::Sequence(code_points)) = options.target() else {
-            panic!("expected a sequence");
-        };
         assert_eq!(
-            code_points
-                .iter()
-                .map(|code_point| code_point.value())
-                .collect::<Vec<_>>(),
-            [0x0034, 0x0031]
+            options.target(),
+            Some(&LaunchTarget::Sequence("41".to_owned()))
         );
     }
 
@@ -248,25 +243,43 @@ mod tests {
     fn short_text_option_bypasses_code_point_notation_parsing() {
         let options = try_parse(&["sauva", "-t", "41"]).unwrap();
 
-        let Some(LaunchTarget::Sequence(code_points)) = options.target() else {
-            panic!("expected a sequence");
-        };
         assert_eq!(
-            code_points
-                .iter()
-                .map(|code_point| code_point.value())
-                .collect::<Vec<_>>(),
-            [0x0034, 0x0031]
+            options.target(),
+            Some(&LaunchTarget::Sequence("41".to_owned()))
         );
     }
 
-    #[test]
-    fn one_character_text_still_selects_a_code_point() {
-        let options = try_parse(&["sauva", "--text", "A"]).unwrap();
+    #[rstest]
+    #[case(" \tA\r\n ")]
+    #[case("q\u{0301}\u{0323}")]
+    #[case("A\u{001b}B")]
+    fn preserves_literal_source_verbatim(#[case] source: &str) {
+        for arguments in [
+            &["sauva", source][..],
+            &["sauva", "--text", source],
+            &["sauva", "-t", source],
+        ] {
+            let options = try_parse(arguments).unwrap();
+            assert_eq!(
+                options.target(),
+                Some(&LaunchTarget::Sequence(source.to_owned()))
+            );
+        }
+    }
+
+    #[rstest]
+    #[case('A')]
+    #[case('é')]
+    #[case('\r')]
+    #[case('\u{0301}')]
+    #[case('👩')]
+    fn one_character_text_still_selects_a_code_point(#[case] character: char) {
+        let input = character.to_string();
+        let options = try_parse(&["sauva", "--text", &input]).unwrap();
 
         assert_eq!(
             options.target(),
-            Some(&LaunchTarget::CodePoint(CodePoint::from('A')))
+            Some(&LaunchTarget::CodePoint(CodePoint::from(character)))
         );
     }
 

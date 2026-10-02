@@ -48,7 +48,7 @@ pub fn render(
     let rows = visible
         .clone()
         .map(|index| {
-            let code_point = sequence.code_points()[index];
+            let code_point = sequence.code_points()[index].code_point();
             let selected = sequence.selected_index() == index;
             let marker = ui.selection_marker(selected);
             let representation = UnicodeDatabase::display_representation(code_point);
@@ -78,14 +78,11 @@ mod tests {
     use ratatui::{Terminal, backend::TestBackend};
 
     use super::*;
-    use crate::{
-        app::{Action, AppState, update},
-        unicode::CodePoint,
-    };
+    use crate::app::{Action, AppState, update};
 
     #[test]
     fn renders_positions_code_points_and_names_in_input_order() {
-        let mut state = AppState::with_sequence("A→A".chars().map(CodePoint::from).collect());
+        let mut state = AppState::with_sequence("A→A".to_owned());
         update(&mut state, Action::ResizeSequenceViewport(27));
         let backend = TestBackend::new(100, 29);
         let mut terminal = Terminal::new(backend).unwrap();
