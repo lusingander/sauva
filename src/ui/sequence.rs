@@ -25,11 +25,10 @@ pub fn render(
         .sequence()
         .expect("the sequence view always has sequence state");
     if let Some(context) = layout.context {
-        selection_preview::render(
+        selection_preview::render_sequence(
             frame,
             context,
-            sequence.selected(),
-            None,
+            sequence,
             state.glyph_preview(),
             color_theme,
         );

@@ -1,7 +1,7 @@
 use std::fs;
 
 use tempfile::tempdir;
-use termlens::{Key, Terminal};
+use termlens::{Color, Key, Terminal};
 
 fn spawn(graphics: &str) -> termlens::Result<Terminal> {
     termlens::bin!("sauva", size(100, 30), args(["--graphics", graphics]))
@@ -140,6 +140,73 @@ fn inspects_a_text_sequence_and_preserves_its_position_across_search() -> termle
     terminal.send(Key::Char('q'))?;
     let status = terminal.wait_exit()?;
     assert!(status.success(), "exit status: {status}");
+    Ok(())
+}
+
+#[test]
+fn sequence_clusters_keep_the_cursor_and_highlight_in_the_row_body() -> termlens::Result<()> {
+    let directory = tempdir()?;
+    let path = directory.path().join("config.toml");
+    fs::write(&path, "[ui]\nselection_cursor = \"▸\"\n")?;
+    let mut terminal = termlens::bin!(
+        "sauva",
+        size(100, 30),
+        env("SAUVA_CONFIG_FILE", &path),
+        args(["--text", "A\u{0301} 👩‍💻", "--graphics", "off"])
+    )?;
+    terminal.wait_until(|screen| {
+        screen.contains("6 code points · 3 graphemes") && screen.contains("1/3 · member 1/2")
+    })?;
+
+    terminal.send(Key::Down)?;
+    let screen = terminal.snapshot_after(|screen| {
+        screen.contains("2/6 · U+0301") && screen.contains("1/3 · member 2/2")
+    })?;
+    assert_eq!(screen.cell(4, 4).unwrap().contents(), "└");
+    assert_eq!(screen.cell(4, 4).unwrap().style().bg, Color::Default);
+    assert_eq!(screen.cell(4, 4).unwrap().style().fg, Color::Indexed(8));
+    assert_eq!(screen.cell(4, 6).unwrap().contents(), "▸");
+    assert_eq!(screen.cell(4, 6).unwrap().style().bg, Color::Indexed(6));
+    assert_eq!(screen.cell(4, 57).unwrap().style().bg, Color::Indexed(6));
+    insta::assert_snapshot!(screen.with_styles());
+
+    terminal.send(Key::Enter)?;
+    terminal.wait_until(|screen| {
+        screen.contains("Sequence 2/6 / Inspector") && screen.contains("U+0301")
+    })?;
+    terminal.send(Key::Backspace)?;
+    terminal.wait_until(|screen| {
+        screen.contains("2/6 · U+0301") && screen.contains("1/3 · member 2/2")
+    })?;
+
+    for _ in 0..3 {
+        terminal.send(Key::Down)?;
+    }
+    let screen = terminal.snapshot_after(|screen| {
+        screen.contains("5/6 · U+200D") && screen.contains("3/3 · member 2/3")
+    })?;
+    assert_eq!(screen.cell(7, 4).unwrap().contents(), "│");
+    assert_eq!(screen.cell(7, 4).unwrap().style().bg, Color::Default);
+    assert_eq!(screen.cell(7, 6).unwrap().contents(), "▸");
+    assert_eq!(screen.cell(7, 6).unwrap().style().bg, Color::Indexed(6));
+
+    terminal.send(Key::Enter)?;
+    terminal.wait_until(|screen| {
+        screen.contains("Sequence 5/6 / Inspector") && screen.contains("U+200D")
+    })?;
+    terminal.send(Key::Backspace)?;
+    terminal.wait_until(|screen| screen.contains("3/3 · member 2/3"))?;
+    terminal.resize(60, 16)?;
+    terminal.wait_until(|screen| {
+        screen.contains("5/6 · U+200D") && screen.contains("6 code points · 3 graphemes")
+    })?;
+    terminal.resize(100, 30)?;
+    terminal.wait_until(|screen| {
+        screen.contains("5/6 · U+200D") && screen.contains("3/3 · member 2/3")
+    })?;
+
+    terminal.send(Key::Char('q'))?;
+    assert!(terminal.wait_exit()?.success());
     Ok(())
 }
 

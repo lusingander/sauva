@@ -754,6 +754,36 @@ mod tests {
     }
 
     #[test]
+    fn sequence_selected_combining_standard() {
+        let mut state = fixtures::sequence();
+        update(
+            &mut state,
+            Action::MoveSequence(crate::sequence::SequenceMove::Next),
+        );
+        let ui = UiSettings {
+            selection_cursor: "▸".to_owned(),
+            ..Default::default()
+        };
+        let (width, height) = STANDARD_SIZE;
+        let buffer = render_to_buffer_with_ui(&state, width, height, &ColorTheme::default(), &ui);
+
+        insta::assert_snapshot!(buffer_to_text(&buffer));
+    }
+
+    #[test]
+    fn sequence_wrapped_coordinate_standard() {
+        let mut state =
+            AppState::with_sequence(format!("{}A{}", "X".repeat(10), "\u{0301}".repeat(11)));
+        update(
+            &mut state,
+            Action::MoveSequence(crate::sequence::SequenceMove::Last),
+        );
+        let (width, height) = STANDARD_SIZE;
+
+        insta::assert_snapshot!(render_to_text(&state, width, height));
+    }
+
+    #[test]
     fn glyph_wide() {
         let state = fixtures::glyph_wide();
         let (width, height) = WIDE_SIZE;
