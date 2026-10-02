@@ -130,6 +130,19 @@ pub enum NormalizationForm {
     Nfkd,
 }
 
+impl NormalizationForm {
+    pub const ALL: [Self; 4] = [Self::Nfc, Self::Nfd, Self::Nfkc, Self::Nfkd];
+
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::Nfc => "NFC",
+            Self::Nfd => "NFD",
+            Self::Nfkc => "NFKC",
+            Self::Nfkd => "NFKD",
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NormalizationAnalysis {
     nfc: NormalizationResult,

@@ -1,6 +1,11 @@
 mod code_point;
 mod database;
 mod decomposition;
+#[cfg_attr(
+    not(test),
+    expect(dead_code, reason = "Used by the forthcoming normalization view.")
+)]
+pub mod diff;
 mod display;
 mod encoding;
 mod generated;
