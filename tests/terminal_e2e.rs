@@ -286,6 +286,90 @@ fn normalization_respects_custom_keys_colors_and_contextual_help() -> termlens::
 }
 
 #[test]
+fn normalization_result_links_expansions_and_adjacent_changes_to_separate_original_rows()
+-> termlens::Result<()> {
+    let mut terminal = termlens::bin!("sauva", size(100, 30), args(["ﬃ①②", "--graphics", "off"]))?;
+    terminal.wait_until(|screen| screen.contains("3 code points"))?;
+    terminal.send(Key::Char('n'))?;
+    terminal.send(Key::Down)?;
+    terminal.send(Key::Down)?;
+    terminal.wait_until(|screen| screen.contains("NFKC Result"))?;
+    terminal.send(Key::Enter)?;
+    let screen = terminal.snapshot_after(|screen| {
+        screen.contains("Sequence / NFKC Result") && screen.contains("1/5 · U+0066")
+    })?;
+    assert_eq!(screen.cell(3, 6).unwrap().style().bg, Color::Indexed(6));
+    assert_ne!(screen.cell(4, 6).unwrap().style().bg, Color::Indexed(6));
+    for (position, point) in [("2/5", "U+0066"), ("3/5", "U+0069")] {
+        terminal.send(Key::Down)?;
+        let screen =
+            terminal.snapshot_after(|screen| screen.contains(&format!("{position} · {point}")))?;
+        assert_eq!(screen.cell(3, 6).unwrap().style().bg, Color::Indexed(6));
+        assert_ne!(screen.cell(4, 6).unwrap().style().bg, Color::Indexed(6));
+    }
+    terminal.send(Key::Down)?;
+    let screen = terminal.snapshot_after(|screen| screen.contains("4/5 · U+0031"))?;
+    assert_ne!(screen.cell(3, 6).unwrap().style().bg, Color::Indexed(6));
+    assert_eq!(screen.cell(4, 6).unwrap().style().bg, Color::Indexed(6));
+    assert_ne!(screen.cell(5, 6).unwrap().style().bg, Color::Indexed(6));
+    insta::assert_snapshot!(screen.with_styles());
+    terminal.send(Key::Down)?;
+    let screen = terminal.snapshot_after(|screen| screen.contains("5/5 · U+0032"))?;
+    assert_ne!(screen.cell(4, 6).unwrap().style().bg, Color::Indexed(6));
+    assert_eq!(screen.cell(5, 6).unwrap().style().bg, Color::Indexed(6));
+    terminal.send(Key::Enter)?;
+    terminal.wait_until(|screen| screen.contains("Sequence / NFKC Result 5/5 / Inspector"))?;
+    terminal.send(Key::Backspace)?;
+    terminal.send(Key::F(1))?;
+    terminal.wait_until(|screen| screen.contains("Keybindings · Normalization Result"))?;
+    terminal.send(Key::F(1))?;
+    terminal.send(Key::Char('q'))?;
+    assert!(terminal.wait_exit()?.success());
+    Ok(())
+}
+
+#[test]
+fn normalization_reference_scrolls_on_jumps_and_resizes_without_moving_the_original_selection()
+-> termlens::Result<()> {
+    let source = "ﬃ".repeat(50);
+    let mut terminal = termlens::bin!(
+        "sauva",
+        size(100, 16),
+        args([source.as_str(), "--graphics", "off"])
+    )?;
+    terminal.wait_until(|screen| screen.contains("50 code points"))?;
+    terminal.send(Key::Down)?;
+    terminal.send(Key::Down)?;
+    terminal.send(Key::Char('n'))?;
+    terminal.send(Key::Down)?;
+    terminal.send(Key::Down)?;
+    terminal.wait_until(|screen| screen.contains("NFKC Result"))?;
+    terminal.send(Key::Enter)?;
+    terminal.wait_until(|screen| screen.contains("Sequence / NFKC Result"))?;
+    terminal.send(Key::Char('G'))?;
+    let screen = terminal.snapshot_after(|screen| screen.contains("150/150 · U+0069"))?;
+    assert_eq!(screen.cell(13, 7).unwrap().style().bg, Color::Indexed(6));
+    terminal.resize(60, 16)?;
+    let screen = terminal.snapshot_after(|screen| {
+        screen.size() == (60, 16)
+            && screen.contains("150/150 · U+0069")
+            && screen.contains("150 CP · 150 GC")
+    })?;
+    assert_eq!(screen.cell(13, 7).unwrap().style().bg, Color::Indexed(6));
+    insta::assert_snapshot!(screen.with_styles());
+    terminal.send(Key::Char('g'))?;
+    let screen = terminal.snapshot_after(|screen| screen.contains("1/150 · U+0066"))?;
+    assert_eq!(screen.cell(3, 7).unwrap().style().bg, Color::Indexed(6));
+    terminal.send(Key::Esc)?;
+    terminal.wait_until(|screen| screen.contains("Sequence / Normalization"))?;
+    terminal.send(Key::Esc)?;
+    terminal.wait_until(|screen| screen.contains("3/50 · U+FB03"))?;
+    terminal.send(Key::Char('q'))?;
+    assert!(terminal.wait_exit()?.success());
+    Ok(())
+}
+
+#[test]
 fn sequence_clusters_keep_the_cursor_and_highlight_in_the_row_body() -> termlens::Result<()> {
     let assert_cluster_highlight =
         |screen: &termlens::Screen, selected_rows: std::ops::Range<u16>| {

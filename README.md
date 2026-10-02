@@ -71,6 +71,10 @@ Select a form with <kbd>j</kbd>/<kbd>k</kbd> or the arrow keys. Changed grapheme
 
 <kbd>Enter</kbd> opens the selected result as a code-point sequence, including results containing only one code point. <kbd>Backspace</kbd> returns from Inspector to that result, and <kbd>Backspace</kbd> or <kbd>Esc</kbd> returns from the result to comparison, then from comparison to the original Sequence. The original input and its selection are preserved, and each form keeps its own result selection.
 
+The result view shows a compact Original reference alongside the navigable result. Original contains grapheme numbers and boundaries, code-point positions, and code-point notation without character names. Selecting a result code point highlights and reveals the corresponding Original grapheme or range; adjacent independent changes retain separate correspondences even when the comparison preview groups them together. The reference scrolls independently without moving the original Sequence selection. If the two lists cannot fit horizontally, the reference appears above the result. Glyph previews remain available in Inspector.
+
+Within the comparison preview, code-point separators are highlighted only inside the same changed grapheme, not between graphemes or after the last code point.
+
 <kbd>y</kbd> copies the exact selected normalization result, including unchanged results. Display escapes and highlighting are not copied.
 
 ```

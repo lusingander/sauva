@@ -417,6 +417,54 @@ mod tests {
     }
 
     #[test]
+    fn pairings_cover_both_strings_and_preserve_identical_runs() {
+        let pieces = [
+            "A",
+            "\u{0301}",
+            "①",
+            "ﬃ",
+            "ᄀ",
+            "ㅏ",
+            "é",
+            " ",
+            "\r\n",
+            "👩‍💻",
+        ];
+        for first in pieces {
+            for second in pieces {
+                for third in pieces {
+                    let original = TextAnalysis::new(format!("{first}{second}{third}"));
+                    for form in NormalizationForm::ALL {
+                        let result = TextAnalysis::new(original.normalized_text(form).to_owned());
+                        let changes = NormalizationDiff::new(&original, &result, form);
+                        let before = graphemes(&original);
+                        let after = graphemes(&result);
+                        let (mut a, mut b) = (0, 0);
+                        for pair in &changes.pairings {
+                            assert_eq!(pair.original.start, a);
+                            assert_eq!(pair.result.start, b);
+                            assert!(pair.original.end <= before.len());
+                            assert!(pair.result.end <= after.len());
+                            if !pair.changed {
+                                assert_eq!(
+                                    before[pair.original.clone()],
+                                    after[pair.result.clone()]
+                                );
+                            }
+                            (a, b) = (pair.original.end, pair.result.end);
+                        }
+                        assert_eq!((a, b), (before.len(), after.len()));
+                        for index in 0..after.len() {
+                            assert!(changes.original_graphemes(index).is_some());
+                        }
+                        assert_eq!(changes.original_graphemes(after.len()), None);
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn aligns_large_regular_inputs_without_quadratic_work() {
         let source = "① ".repeat(10_000);
         let changes = diff(&source, NormalizationForm::Nfkc);
