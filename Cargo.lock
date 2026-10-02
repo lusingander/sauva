@@ -1877,6 +1877,8 @@ dependencies = [
  "toml",
  "tui-input",
  "umbra",
+ "unicode-normalization",
+ "unicode-segmentation",
  "yeslogic-fontconfig-sys",
 ]
 
