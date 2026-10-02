@@ -3,18 +3,18 @@ source: tests/terminal_e2e.rs
 expression: screen.with_styles()
 ---
 size: 100x30  cursor: hidden
- sauva / Sequence                                                                      2/6 · U+0301
+ sauva / Sequence                                                                     2/8 · U+1F1F5
 
- Code Points                   6 code points · 3 graphemes  │ Selection
-  1 ┌   1  U+0041    A — LATIN CAPITAL LETTER A             │  Character        ◌́
-    └ ▸ 2  U+0301    ◌́ — COMBINING ACUTE ACCENT             │  Code Point       U+0301
-  2 •   3  U+0020    <SPACE> — SPACE                        │  Primary Name
-  3 ┌   4  U+1F469   👩 — WOMAN                             │    COMBINING ACUTE ACCENT
-    │   5  U+200D    <DEFAULT IGNORABLE> — ZERO WIDTH JOIN  │  Grapheme         1/3 · member 2/2
-    └   6  U+1F4BB   💻 — PERSONAL COMPUTER                 │  Block
-                                                            │    Combining Diacritical Marks
-                                                            │  General Category
-                                                            │    Mn — Nonspacing Mark
+ Code Points                   8 code points · 4 graphemes  │ Selection
+  1 ┌   1  U+1F1EF   🇯 — REGIONAL INDICATOR SYMBOL LETTER   │  Character        🇵
+    └ ▸ 2  U+1F1F5   🇵 — REGIONAL INDICATOR SYMBOL LETTER   │  Code Point       U+1F1F5
+  2 •   3  U+0058    X — LATIN CAPITAL LETTER X             │  Primary Name
+  3 ┌   4  U+000D    <CONTROL> — No Primary Name            │    REGIONAL INDICATOR SYMBOL LETTER P
+    └   5  U+000A    <CONTROL> — No Primary Name            │  Grapheme         1/4 · member 2/2
+  4 ┌   6  U+1F468   👨 — MAN                               │  Block
+    │   7  U+200D    <DEFAULT IGNORABLE> — ZERO WIDTH JOIN  │    Enclosed Alphanumeric Supplement
+    └   8  U+1F527   🔧 — WRENCH                            │  General Category So — Other Symbol
+                                                            │
                                                             │ ─────────────────────────────────────
                                                             │ Glyph
                                                             │
@@ -35,7 +35,7 @@ size: 100x30  cursor: hidden
  k/j Move  g/G Ends  Enter Inspect  q Quit                                                  F1 Help
 
 styles:
-0: 0-5 fg=6 bold; 87-99 fg=8
+0: 0-5 fg=6 bold; 86-99 fg=8
 2: 1-11 fg=4 bold; 31-57 fg=8; 60 fg=8; 62-70 fg=4 bold
 3: 2-5 fg=8; 60 fg=8; 63-79 fg=8
 4: 2-5 fg=8; 6-57 fg=0 bg=6; 60 fg=8; 63-79 fg=8
@@ -43,9 +43,9 @@ styles:
 6: 2-5 fg=8; 60 fg=8; 63-64 fg=8
 7: 2-5 fg=8; 60 fg=8; 63-79 fg=8
 8: 2-5 fg=8; 60 fg=8; 63-67 fg=8
-9: 60 fg=8; 63-64 fg=8
-10: 60 fg=8; 63-78 fg=8
-11: 60 fg=8; 63-64 fg=8
+9: 2-5 fg=8; 60 fg=8; 63-64 fg=8
+10: 2-5 fg=8; 60 fg=8; 63-79 fg=8
+11: 60 fg=8
 12: 60 fg=8; 62-98 fg=8
 13: 60 fg=8; 62-98 fg=4 bold
 14: 60 fg=8

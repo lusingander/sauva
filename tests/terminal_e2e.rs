@@ -152,15 +152,15 @@ fn sequence_clusters_keep_the_cursor_and_highlight_in_the_row_body() -> termlens
         "sauva",
         size(100, 30),
         env("SAUVA_CONFIG_FILE", &path),
-        args(["--text", "A\u{0301} 👩‍💻", "--graphics", "off"])
+        args(["--text", "🇯🇵X\r\n👨‍🔧", "--graphics", "off"])
     )?;
     terminal.wait_until(|screen| {
-        screen.contains("6 code points · 3 graphemes") && screen.contains("1/3 · member 1/2")
+        screen.contains("8 code points · 4 graphemes") && screen.contains("1/4 · member 1/2")
     })?;
 
     terminal.send(Key::Down)?;
     let screen = terminal.snapshot_after(|screen| {
-        screen.contains("2/6 · U+0301") && screen.contains("1/3 · member 2/2")
+        screen.contains("2/8 · U+1F1F5") && screen.contains("1/4 · member 2/2")
     })?;
     assert_eq!(screen.cell(4, 4).unwrap().contents(), "└");
     assert_eq!(screen.cell(4, 4).unwrap().style().bg, Color::Default);
@@ -172,37 +172,56 @@ fn sequence_clusters_keep_the_cursor_and_highlight_in_the_row_body() -> termlens
 
     terminal.send(Key::Enter)?;
     terminal.wait_until(|screen| {
-        screen.contains("Sequence 2/6 / Inspector") && screen.contains("U+0301")
+        screen.contains("Sequence 2/8 / Inspector") && screen.contains("U+1F1F5")
     })?;
     terminal.send(Key::Backspace)?;
     terminal.wait_until(|screen| {
-        screen.contains("2/6 · U+0301") && screen.contains("1/3 · member 2/2")
+        screen.contains("2/8 · U+1F1F5") && screen.contains("1/4 · member 2/2")
     })?;
 
-    for _ in 0..3 {
+    terminal.send(Key::Down)?;
+    let screen = terminal.snapshot_after(|screen| {
+        screen.contains("3/8 · U+0058") && screen.contains("2/4 · member 1/1")
+    })?;
+    assert_eq!(screen.cell(5, 4).unwrap().contents(), "•");
+
+    terminal.send(Key::Down)?;
+    terminal.wait_until(|screen| {
+        screen.contains("4/8 · U+000D") && screen.contains("3/4 · member 1/2")
+    })?;
+    terminal.send(Key::Down)?;
+    let screen = terminal.snapshot_after(|screen| {
+        screen.contains("5/8 · U+000A") && screen.contains("3/4 · member 2/2")
+    })?;
+    assert!(screen.row_text(6).contains("<CONTROL>"));
+    assert!(screen.row_text(7).contains("<CONTROL>"));
+    assert_eq!(screen.cell(6, 4).unwrap().contents(), "┌");
+    assert_eq!(screen.cell(7, 4).unwrap().contents(), "└");
+
+    for _ in 0..2 {
         terminal.send(Key::Down)?;
     }
     let screen = terminal.snapshot_after(|screen| {
-        screen.contains("5/6 · U+200D") && screen.contains("3/3 · member 2/3")
+        screen.contains("7/8 · U+200D") && screen.contains("4/4 · member 2/3")
     })?;
-    assert_eq!(screen.cell(7, 4).unwrap().contents(), "│");
-    assert_eq!(screen.cell(7, 4).unwrap().style().bg, Color::Default);
-    assert_eq!(screen.cell(7, 6).unwrap().contents(), "▸");
-    assert_eq!(screen.cell(7, 6).unwrap().style().bg, Color::Indexed(6));
+    assert_eq!(screen.cell(9, 4).unwrap().contents(), "│");
+    assert_eq!(screen.cell(9, 4).unwrap().style().bg, Color::Default);
+    assert_eq!(screen.cell(9, 6).unwrap().contents(), "▸");
+    assert_eq!(screen.cell(9, 6).unwrap().style().bg, Color::Indexed(6));
 
     terminal.send(Key::Enter)?;
     terminal.wait_until(|screen| {
-        screen.contains("Sequence 5/6 / Inspector") && screen.contains("U+200D")
+        screen.contains("Sequence 7/8 / Inspector") && screen.contains("U+200D")
     })?;
     terminal.send(Key::Backspace)?;
-    terminal.wait_until(|screen| screen.contains("3/3 · member 2/3"))?;
+    terminal.wait_until(|screen| screen.contains("4/4 · member 2/3"))?;
     terminal.resize(60, 16)?;
     terminal.wait_until(|screen| {
-        screen.contains("5/6 · U+200D") && screen.contains("6 code points · 3 graphemes")
+        screen.contains("7/8 · U+200D") && screen.contains("8 code points · 4 graphemes")
     })?;
     terminal.resize(100, 30)?;
     terminal.wait_until(|screen| {
-        screen.contains("5/6 · U+200D") && screen.contains("3/3 · member 2/3")
+        screen.contains("7/8 · U+200D") && screen.contains("4/4 · member 2/3")
     })?;
 
     terminal.send(Key::Char('q'))?;
