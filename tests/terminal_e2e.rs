@@ -271,7 +271,7 @@ fn normalization_respects_custom_keys_colors_and_contextual_help() -> termlens::
     terminal.wait_until(|screen| screen.contains("NFD Result"))?;
     terminal.send(Key::F(2))?;
     terminal.wait_until(|screen| {
-        screen.contains("Keybindings · Sequence / Normalization")
+        screen.contains("Keybindings · Normalization")
             && screen.contains("Copy the exact normalized text")
     })?;
     terminal.send(Key::F(2))?;

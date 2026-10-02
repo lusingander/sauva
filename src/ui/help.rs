@@ -638,7 +638,7 @@ pub fn context_label(context: Context) -> &'static str {
         Context::Inspector => "Inspector",
         Context::Search => "Search",
         Context::Sequence => "Sequence",
-        Context::Normalization => "Sequence / Normalization",
+        Context::Normalization => "Normalization",
         Context::NormalizationResult => "Normalization Result",
         Context::BrowsePlane => "Browse Planes",
         Context::BrowseRange => "Browse Ranges",

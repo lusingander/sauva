@@ -68,13 +68,21 @@ fn render_header(frame: &mut Frame, area: Rect, state: &AppState, color_theme: &
     } else {
         header_status(state)
     };
+    let status_width = (Line::from(status.as_str()).width() + 1) as u16;
+    let left = Rect::new(
+        area.x,
+        area.y,
+        area.width.saturating_sub(status_width + 1),
+        area.height,
+    );
+    let location = compact_location(&location, usize::from(left.width.saturating_sub(9)));
 
     frame.render_widget(
         Paragraph::new(Line::from(vec![
             Span::styled(" sauva", color_theme.accent_style()),
             Span::styled(format!(" / {location}"), color_theme.base_style()),
         ])),
-        area,
+        left,
     );
     frame.render_widget(
         Paragraph::new(Line::styled(
@@ -94,7 +102,10 @@ fn header_location(state: &AppState, context: Context) -> String {
                 format!(
                     "{} {}/{} / Inspector",
                     if state.showing_normalization_result() {
-                        format!("{} Result", state.normalization().unwrap().form().label())
+                        format!(
+                            "Sequence / {} Result",
+                            state.normalization().unwrap().form().label()
+                        )
                     } else {
                         "Sequence".to_owned()
                     },
@@ -111,7 +122,37 @@ fn header_location(state: &AppState, context: Context) -> String {
             "Sequence / {} Result",
             state.normalization().unwrap().form().label()
         ),
+        Context::Normalization => "Sequence / Normalization".to_owned(),
         _ => help::context_label(context).to_owned(),
+    }
+}
+
+/// Keep the current screen visible without letting a long breadcrumb overlap
+/// the right-aligned status. Drop parent segments before shortening the leaf.
+fn compact_location(location: &str, width: usize) -> String {
+    if Line::from(location).width() <= width {
+        return location.to_owned();
+    }
+    let mut leaf = location;
+    while let Some((_, rest)) = leaf.split_once(" / ") {
+        leaf = rest;
+        let shortened = format!("… / {leaf}");
+        if Line::from(shortened.as_str()).width() <= width {
+            return shortened;
+        }
+    }
+    let mut suffix = String::new();
+    for character in leaf.chars().rev() {
+        let candidate = format!("{character}{suffix}");
+        if Line::from(candidate.as_str()).width() + 1 > width {
+            break;
+        }
+        suffix = candidate;
+    }
+    if width == 0 {
+        String::new()
+    } else {
+        format!("…{suffix}")
     }
 }
 
@@ -251,6 +292,43 @@ mod tests {
         },
         ui::theme::{DifferenceColors, SelectionColors, StatusColors},
     };
+
+    #[test]
+    fn result_inspector_breadcrumb_preserves_sequence_parent() {
+        let mut state = AppState::with_sequence("A\u{0301}".to_owned());
+        update(&mut state, Action::OpenNormalization);
+        update(&mut state, Action::InspectNormalizationResult);
+        update(&mut state, Action::InspectSequenceCodePoint);
+        let header = render_to_text(&state, 60, 16)
+            .lines()
+            .next()
+            .unwrap()
+            .to_owned();
+        assert!(
+            header.contains("sauva / Sequence / NFC Result 1/1 / Inspector"),
+            "{header}"
+        );
+        assert!(header.ends_with("U+00C1"), "{header}");
+    }
+
+    #[test]
+    fn long_breadcrumbs_keep_the_leaf_and_fit_the_available_width() {
+        let location = "Sequence / NFC Result 100000/100000 / Inspector";
+        assert_eq!(compact_location(location, 30), "… / Inspector");
+        assert_eq!(compact_location("NFC Result", 7), "…Result");
+        assert_eq!(compact_location(location, 0), "");
+    }
+
+    #[test]
+    fn normalization_help_uses_the_screen_name_not_the_breadcrumb() {
+        let mut state = AppState::with_sequence("A\u{0301}".to_owned());
+        update(&mut state, Action::OpenNormalization);
+        update(&mut state, Action::ToggleHelp);
+        let text = render_to_text(&state, 100, 30);
+        assert!(text.lines().next().unwrap().ends_with("Normalization"));
+        assert!(text.contains("Keybindings · Normalization"));
+        assert!(!text.contains("Sequence / Normalization"));
+    }
 
     fn render_to_text(state: &AppState, width: u16, height: u16) -> String {
         let buffer = render_to_buffer(state, width, height, &ColorTheme::default());
