@@ -144,6 +144,148 @@ fn inspects_a_text_sequence_and_preserves_its_position_across_search() -> termle
 }
 
 #[test]
+fn normalization_comparison_highlights_changes_and_preserves_navigation() -> termlens::Result<()> {
+    let mut terminal = termlens::bin!(
+        "sauva",
+        size(100, 30),
+        args(["A\u{0301} ①👩‍💻", "--graphics", "off"])
+    )?;
+    terminal.wait_until(|screen| screen.contains("7 code points"))?;
+    terminal.send(Key::Down)?;
+    terminal.send(Key::Char('n'))?;
+    let screen = terminal.snapshot_after(|screen| {
+        screen.contains("NFC Result") && screen.contains("1 changed region")
+    })?;
+    assert!(screen.contains("7 CP · 18 Bytes · 4 GC"), "{screen}");
+    assert_eq!(screen.cell(3, 2).unwrap().style().bg, Color::Indexed(3));
+    assert_eq!(screen.cell(4, 2).unwrap().style().bg, Color::Indexed(3));
+    assert_eq!(screen.cell(7, 1).unwrap().style().bg, Color::Indexed(6));
+    terminal.send(Key::Down)?;
+    terminal.wait_until(|screen| {
+        screen.contains("NFD Result") && screen.contains("Same as Original")
+    })?;
+    terminal.send(Key::Down)?;
+    let screen = terminal.snapshot_after(|screen| {
+        screen.contains("NFKC Result") && screen.contains("2 changed regions")
+    })?;
+    // vt100 measures emoji scalars separately, so this snapshot is for layout
+    // and styles. TestBackend snapshots verify the complete ZWJ cluster.
+    insta::assert_snapshot!(screen.with_styles());
+    terminal.send(Key::Enter)?;
+    terminal.wait_until(|screen| {
+        screen.contains("Sequence / NFKC Result") && screen.contains("6 code points")
+    })?;
+    terminal.send(Key::Down)?;
+    terminal.send(Key::Down)?;
+    terminal.send(Key::Enter)?;
+    terminal.wait_until(|screen| {
+        screen.contains("NFKC Result 3/6 / Inspector") && screen.contains("DIGIT ONE")
+    })?;
+    terminal.send(Key::Backspace)?;
+    terminal.wait_until(|screen| screen.contains("Sequence / NFKC Result"))?;
+    terminal.send(Key::Backspace)?;
+    terminal.wait_until(|screen| {
+        screen.contains("Sequence / Normalization") && screen.contains("NFKC Result")
+    })?;
+    terminal.send(Key::Enter)?;
+    terminal.send(Key::Enter)?;
+    terminal.wait_until(|screen| screen.contains("NFKC Result 3/6 / Inspector"))?;
+    terminal.send(Key::Backspace)?;
+    terminal.send(Key::Esc)?;
+    terminal.wait_until(|screen| screen.contains("Sequence / Normalization"))?;
+    terminal.send(Key::Esc)?;
+    terminal.wait_until(|screen| screen.contains("7 code points"))?;
+    terminal.send(Key::Enter)?;
+    terminal.wait_until(|screen| {
+        screen.contains("Sequence 2/7 / Inspector") && screen.contains("COMBINING ACUTE ACCENT")
+    })?;
+    terminal.send(Key::Char('q'))?;
+    assert!(terminal.wait_exit()?.success());
+    Ok(())
+}
+
+#[test]
+fn normalization_fits_the_minimum_terminal_and_opens_single_point_results() -> termlens::Result<()>
+{
+    let mut terminal = termlens::bin!(
+        "sauva",
+        size(60, 16),
+        args(["A\u{0301}", "--graphics", "off"])
+    )?;
+    terminal.wait_until(|screen| screen.contains("2 code points"))?;
+    terminal.send(Key::Char('n'))?;
+    let screen = terminal
+        .snapshot_after(|screen| screen.contains("NFC Result") && screen.contains("U+00C1"))?;
+    assert!(screen.contains("NFKD"), "{screen}");
+    assert!(screen.contains("2 CP · 3 Bytes · 1 GC"), "{screen}");
+    insta::assert_snapshot!(screen.with_styles());
+    terminal.send(Key::Enter)?;
+    terminal.wait_until(|screen| {
+        screen.contains("Sequence / NFC Result") && screen.contains("1 code point · 1 grapheme")
+    })?;
+    terminal.send(Key::Enter)?;
+    terminal.wait_until(|screen| screen.contains("NFC Result 1/1 / Inspector"))?;
+    terminal.send(Key::Backspace)?;
+    terminal.send(Key::Esc)?;
+    terminal.wait_until(|screen| screen.contains("Sequence / Normalization"))?;
+    terminal.send(Key::Esc)?;
+    terminal.wait_until(|screen| screen.contains("2 code points"))?;
+    terminal.send(Key::Char('q'))?;
+    assert!(terminal.wait_exit()?.success());
+    Ok(())
+}
+
+#[test]
+fn normalization_respects_custom_keys_colors_and_contextual_help() -> termlens::Result<()> {
+    let directory = tempdir()?;
+    let path = directory.path().join("config.toml");
+    fs::write(
+        &path,
+        r#"
+        [color.difference]
+        fg = "white"
+        bg = "magenta"
+        [keybindings.global]
+        help = ["f2"]
+        [keybindings.sequence]
+        normalize = ["a"]
+        [keybindings.normalization]
+        move_down = ["l"]
+        activate = ["i"]
+        [keybindings.normalization_result]
+        back = ["b"]
+    "#,
+    )?;
+    let mut terminal = termlens::bin!(
+        "sauva",
+        size(100, 30),
+        env("SAUVA_CONFIG_FILE", &path),
+        args(["A\u{0301} ①", "--graphics", "off"])
+    )?;
+    terminal.wait_until(|screen| screen.contains("4 code points"))?;
+    terminal.send(Key::Char('a'))?;
+    let screen = terminal.snapshot_after(|screen| screen.contains("NFC Result"))?;
+    assert_eq!(screen.cell(3, 2).unwrap().style().bg, Color::Indexed(5));
+    assert_eq!(screen.cell(3, 2).unwrap().style().fg, Color::Indexed(15));
+    terminal.send(Key::Char('l'))?;
+    terminal.wait_until(|screen| screen.contains("NFD Result"))?;
+    terminal.send(Key::F(2))?;
+    terminal.wait_until(|screen| {
+        screen.contains("Keybindings · Sequence / Normalization")
+            && screen.contains("Copy the exact normalized text")
+    })?;
+    terminal.send(Key::F(2))?;
+    terminal.wait_until(|screen| screen.contains("NFD Result"))?;
+    terminal.send(Key::Char('i'))?;
+    terminal.wait_until(|screen| screen.contains("Sequence / NFD Result"))?;
+    terminal.send(Key::Char('b'))?;
+    terminal.wait_until(|screen| screen.contains("Sequence / Normalization"))?;
+    terminal.send(Key::Char('q'))?;
+    assert!(terminal.wait_exit()?.success());
+    Ok(())
+}
+
+#[test]
 fn sequence_clusters_keep_the_cursor_and_highlight_in_the_row_body() -> termlens::Result<()> {
     let assert_cluster_highlight =
         |screen: &termlens::Screen, selected_rows: std::ops::Range<u16>| {

@@ -123,6 +123,21 @@
       },
       "additionalProperties": false
     },
+    "differenceColors": {
+      "description": "Changed normalization spans, separate from the selection cursor. Underlining also identifies these spans.",
+      "type": "object",
+      "properties": {
+        "fg": {
+          "allOf": [{ "$ref": "#/definitions/color" }],
+          "default": "black"
+        },
+        "bg": {
+          "allOf": [{ "$ref": "#/definitions/color" }],
+          "default": "yellow"
+        }
+      },
+      "additionalProperties": false
+    },
     "statusColors": {
       "type": "object",
       "properties": {
@@ -223,6 +238,9 @@
         },
         "selection": {
           "$ref": "#/definitions/selectionColors"
+        },
+        "difference": {
+          "$ref": "#/definitions/differenceColors"
         },
         "status": {
           "$ref": "#/definitions/statusColors"
@@ -418,7 +436,39 @@
         },
         "activate": {
           "$ref": "#/definitions/keyArray"
+        },
+        "normalize": {
+          "$ref": "#/definitions/keyArray"
         }
+      },
+      "additionalProperties": false
+    },
+    "normalizationKeybindings": {
+      "type": "object",
+      "properties": {
+        "quit": { "$ref": "#/definitions/keyArray" },
+        "close": { "$ref": "#/definitions/keyArray" },
+        "back": { "$ref": "#/definitions/keyArray" },
+        "move_up": { "$ref": "#/definitions/keyArray" },
+        "move_down": { "$ref": "#/definitions/keyArray" },
+        "first": { "$ref": "#/definitions/keyArray" },
+        "last": { "$ref": "#/definitions/keyArray" },
+        "activate": { "$ref": "#/definitions/keyArray" },
+        "copy_value": { "$ref": "#/definitions/keyArray" }
+      },
+      "additionalProperties": false
+    },
+    "normalizationResultKeybindings": {
+      "type": "object",
+      "properties": {
+        "quit": { "$ref": "#/definitions/keyArray" },
+        "close": { "$ref": "#/definitions/keyArray" },
+        "back": { "$ref": "#/definitions/keyArray" },
+        "move_up": { "$ref": "#/definitions/keyArray" },
+        "move_down": { "$ref": "#/definitions/keyArray" },
+        "first": { "$ref": "#/definitions/keyArray" },
+        "last": { "$ref": "#/definitions/keyArray" },
+        "activate": { "$ref": "#/definitions/keyArray" }
       },
       "additionalProperties": false
     },
@@ -608,6 +658,12 @@
         },
         "sequence": {
           "$ref": "#/definitions/sequenceKeybindings"
+        },
+        "normalization": {
+          "$ref": "#/definitions/normalizationKeybindings"
+        },
+        "normalization_result": {
+          "$ref": "#/definitions/normalizationResultKeybindings"
         },
         "browse_plane": {
           "$ref": "#/definitions/browsePlaneKeybindings"

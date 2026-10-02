@@ -40,7 +40,12 @@ pub fn render(
     } else {
         "graphemes"
     };
-    let count_label = format!("{count} code points · {grapheme_count} {grapheme_unit}");
+    let code_point_unit = if count == 1 {
+        "code point"
+    } else {
+        "code points"
+    };
+    let count_label = format!("{count} {code_point_unit} · {grapheme_count} {grapheme_unit}");
     let content = workspace::render_primary_heading(
         frame,
         layout.navigator,

@@ -65,6 +65,14 @@ One character opens its code point directly in the Inspector. A sequence of char
 
 The Sequence view groups rows by extended grapheme cluster and shows cluster numbers and boundaries.
 
+Press <kbd>n</kbd> in Sequence to compare NFC, NFD, NFKC, and NFKD in the Normalization view. The original summary and the comparison table both use the order **CP → Bytes → GC** (code points, UTF-8 bytes, and grapheme clusters).
+
+Select a form with <kbd>j</kbd>/<kbd>k</kbd> or the arrow keys. Changed grapheme spans and their code points are highlighted in the Original and Result previews. Long previews show the first change with surrounding context and an ellipsis; very large contextual changes may be grouped into one explicitly labeled span.
+
+<kbd>Enter</kbd> opens the selected result as a code-point sequence, including results containing only one code point. <kbd>Backspace</kbd> returns from Inspector to that result, and <kbd>Backspace</kbd> or <kbd>Esc</kbd> returns from the result to comparison, then from comparison to the original Sequence. The original input and its selection are preserved, and each form keeps its own result selection.
+
+<kbd>y</kbd> copies the exact selected normalization result, including unchanged results. Display escapes and highlighting are not copied.
+
 ```
 sauva あ
 sauva 'Á👩‍💻'
@@ -136,6 +144,10 @@ link = "blue"
 fg = "black"
 bg = "cyan"
 
+[color.difference]
+fg = "black"
+bg = "yellow"
+
 [color.status]
 info = "green"
 warning = "yellow"
@@ -165,14 +177,15 @@ These are the main built-in controls. The available controls depend on the curre
 | --- | --- |
 | <kbd>F1</kbd> | Open or close contextual help |
 | <kbd>Ctrl+c</kbd> | Quit from any view |
-| <kbd>q</kbd> | Quit from the Inspector, Sequence, or Browse view |
-| <kbd>Esc</kbd> | Cancel Search or Browse; quit from the Inspector or Sequence view |
+| <kbd>q</kbd> | Quit from Inspector, Sequence, Normalization, or Browse |
+| <kbd>Esc</kbd> | Cancel Search or Browse; go back from Normalization or its result; quit from Inspector or the original Sequence |
 | <kbd>h</kbd> <kbd>j</kbd> <kbd>k</kbd> <kbd>l</kbd> or arrow keys | Move the selection |
 | <kbd>/</kbd> | Search by character, code point, Unicode name, or formal name alias |
 | <kbd>p</kbd> <kbd>r</kbd> <kbd>b</kbd> <kbd>c</kbd> | Browse planes, ranges, blocks, or code points |
-| <kbd>Enter</kbd> | Open the selected item; inspect a code point from Sequence or Browse |
-| <kbd>Backspace</kbd> | Return to the previous Browse screen, or return from Inspector to the input Sequence |
-| <kbd>y</kbd> | Copy the selected Inspector value |
+| <kbd>n</kbd> | Compare normalization forms from the original Sequence |
+| <kbd>Enter</kbd> | Open the selected item or normalization result; inspect a code point from Sequence or Browse |
+| <kbd>Backspace</kbd> | Go back in Browse or Normalization; return from Inspector to its Sequence |
+| <kbd>y</kbd> | Copy the selected Inspector value or exact normalization result |
 
 Press <kbd>F1</kbd> to view all controls for the current screen.
 
@@ -191,6 +204,16 @@ help = ["f2"]
 next_code_point = ["l", "right", "n"]
 back = ["backspace"]
 browse_planes = []
+
+[keybindings.sequence]
+normalize = ["n"]
+
+[keybindings.normalization]
+activate = ["enter"]
+copy_value = ["y"]
+
+[keybindings.normalization_result]
+back = ["backspace"]
 ```
 
 Keys may be a single character, a named key such as `enter`, `esc`, `left`, or `f1`, or a modifier followed by one character, such as `ctrl-n`, `alt-j`, or `shift-g`. Conflicting and invalid bindings are rejected at startup.
