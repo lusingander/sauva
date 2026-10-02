@@ -119,15 +119,7 @@ fn handle_clipboard_request(state: &mut AppState, clipboard: &mut impl Clipboard
     let status = match request.value() {
         None => FooterStatus::warning(format!("No value to copy: {}", request.label())),
         Some(value) => match clipboard.write_text(value) {
-            Ok(()) => {
-                let message = if request.field_id() == crate::inspector::InspectorFieldId::Character
-                {
-                    format!("Copied Character: {}", request.code_point())
-                } else {
-                    format!("Copied {}", request.label())
-                };
-                FooterStatus::info(message)
-            }
+            Ok(()) => FooterStatus::info(request.success_message()),
             Err(error) => FooterStatus::warning(error.to_string()),
         },
     };
@@ -211,6 +203,36 @@ mod tests {
         let status = state.footer_status().unwrap();
         assert_eq!(status.level(), FooterStatusLevel::Info);
         assert_eq!(status.message(), "Copied Character: U+0041");
+    }
+
+    #[test]
+    fn copies_normalized_text_without_copying_escapes_or_echoing_controls() {
+        let mut state = AppState::with_sequence("A\u{0301}\t\n\u{1b}①".to_owned());
+        let mut clipboard = TestClipboard::succeeding();
+        update(&mut state, Action::OpenNormalization);
+        update(&mut state, Action::CopyNormalizationResult);
+        handle_clipboard_request(&mut state, &mut clipboard);
+        assert_eq!(clipboard.writes, ["Á\t\n\u{1b}①"]);
+        assert_eq!(
+            state.footer_status().unwrap().message(),
+            "Copied NFC Result"
+        );
+        assert_eq!(
+            state.footer_status().unwrap().level(),
+            FooterStatusLevel::Info
+        );
+        update(
+            &mut state,
+            Action::MoveNormalization(crate::normalization::NormalizationMove::Next),
+        );
+        assert!(state.footer_status().is_none());
+        let mut failing = TestClipboard::failing(ClipboardError::Unavailable);
+        update(&mut state, Action::CopyNormalizationResult);
+        handle_clipboard_request(&mut state, &mut failing);
+        assert_eq!(
+            state.footer_status().unwrap().message(),
+            "Clipboard is unavailable"
+        );
     }
 
     #[test]

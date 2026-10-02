@@ -92,7 +92,12 @@ fn header_location(state: &AppState, context: Context) -> String {
             || "Inspector".to_owned(),
             |sequence| {
                 format!(
-                    "Sequence {}/{} / Inspector",
+                    "{} {}/{} / Inspector",
+                    if state.showing_normalization_result() {
+                        format!("{} Result", state.normalization().unwrap().form().label())
+                    } else {
+                        "Sequence".to_owned()
+                    },
                     sequence.selected_index() + 1,
                     sequence.code_points().len()
                 )
@@ -102,6 +107,10 @@ fn header_location(state: &AppState, context: Context) -> String {
         Context::BrowseRange => "Browse / Ranges".to_owned(),
         Context::BrowseBlock => "Browse / Blocks".to_owned(),
         Context::BrowseCodePoints => "Browse / Code Points".to_owned(),
+        Context::NormalizationResult => format!(
+            "Sequence / {} Result",
+            state.normalization().unwrap().form().label()
+        ),
         _ => help::context_label(context).to_owned(),
     }
 }

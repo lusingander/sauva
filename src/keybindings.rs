@@ -41,6 +41,7 @@ pub enum Context {
     Search,
     Sequence,
     Normalization,
+    NormalizationResult,
     BrowsePlane,
     BrowseRange,
     BrowseBlock,
@@ -56,6 +57,7 @@ impl Context {
             Self::Search => "search",
             Self::Sequence => "sequence",
             Self::Normalization => "normalization",
+            Self::NormalizationResult => "normalization_result",
             Self::BrowsePlane => "browse_plane",
             Self::BrowseRange => "browse_range",
             Self::BrowseBlock => "browse_block",
@@ -294,6 +296,9 @@ pub struct Keybindings {
     normalization: NormalizationKeybindings,
     #[garde(dive)]
     #[nested]
+    normalization_result: NormalizationResultKeybindings,
+    #[garde(dive)]
+    #[nested]
     browse_plane: BrowsePlaneKeybindings,
     #[garde(dive)]
     #[nested]
@@ -317,6 +322,7 @@ impl Keybindings {
         self.search.append_bindings(&mut bindings);
         self.sequence.append_bindings(&mut bindings);
         self.normalization.append_bindings(&mut bindings);
+        self.normalization_result.append_bindings(&mut bindings);
         self.browse_plane.append_bindings(&mut bindings);
         self.browse_range.append_bindings(&mut bindings);
         self.browse_block.append_bindings(&mut bindings);
@@ -411,6 +417,19 @@ keybinding_context!(NormalizationKeybindings, Context::Normalization, {
     move_down => (Command::MoveDown, ["j", "down"]),
     first => (Command::First, ["g"]),
     last => (Command::Last, ["G"]),
+    activate => (Command::Activate, ["enter"]),
+    copy_value => (Command::CopyValue, ["y"]),
+});
+
+keybinding_context!(NormalizationResultKeybindings, Context::NormalizationResult, {
+    quit => (Command::Quit, ["q"]),
+    close => (Command::Close, ["esc"]),
+    back => (Command::Back, ["backspace"]),
+    move_up => (Command::MoveUp, ["k", "up"]),
+    move_down => (Command::MoveDown, ["j", "down"]),
+    first => (Command::First, ["g"]),
+    last => (Command::Last, ["G"]),
+    activate => (Command::Activate, ["enter"]),
 });
 
 keybinding_context!(BrowsePlaneKeybindings, Context::BrowsePlane, {
@@ -753,6 +772,7 @@ impl ResolvedKeymap {
             Context::Search,
             Context::Sequence,
             Context::Normalization,
+            Context::NormalizationResult,
             Context::BrowsePlane,
             Context::BrowseRange,
             Context::BrowseBlock,

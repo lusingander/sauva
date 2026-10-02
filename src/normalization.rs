@@ -79,6 +79,12 @@ impl NormalizationState {
             .expect("the selected comparison is prepared")
     }
 
+    pub fn comparison_mut(&mut self) -> &mut NormalizationComparison {
+        self.comparisons[self.selected]
+            .as_mut()
+            .expect("the selected comparison is prepared")
+    }
+
     pub fn move_selection(&mut self, movement: NormalizationMove, original: &TextAnalysis) {
         self.selected = match movement {
             NormalizationMove::Previous => self.selected.saturating_sub(1),

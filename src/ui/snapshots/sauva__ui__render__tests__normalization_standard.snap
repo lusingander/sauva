@@ -31,4 +31,4 @@ expression: "render_to_text(&state, STANDARD_SIZE.0, STANDARD_SIZE.1)"
 
 
 
- k/j Form  BS/Esc Sequence  q Quit                                                          F1 Help
+ k/j Form  Enter Inspect  y Copy  BS/Esc Sequence  q Quit                                   F1 Help

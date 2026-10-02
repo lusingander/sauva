@@ -357,7 +357,7 @@ fn help_items(context: Context, has_sequence: bool) -> Vec<HelpItem> {
             item(C::BrowseRanges, "Browse ranges"),
             item(C::BrowseBlocks, "Browse blocks"),
             item(C::BrowseCodePoints, "Browse code points"),
-            item(C::Back, "Return to the input sequence"),
+            item(C::Back, "Return to the sequence"),
             item(C::Quit, "Quit"),
         ],
         Context::Search => vec![
@@ -381,8 +381,20 @@ fn help_items(context: Context, has_sequence: bool) -> Vec<HelpItem> {
             item(C::MoveDown, "Select the next normalization form"),
             item(C::First, "Select NFC"),
             item(C::Last, "Select NFKD"),
+            item(C::Activate, "Inspect the selected normalization result"),
+            item(C::CopyValue, "Copy the exact normalized text"),
             item(C::Back, "Return to the original sequence"),
             item(C::Close, "Return to the original sequence"),
+            item(C::Quit, "Quit"),
+        ],
+        Context::NormalizationResult => vec![
+            item(C::MoveUp, "Select the previous code point"),
+            item(C::MoveDown, "Select the next code point"),
+            item(C::First, "Select the first code point"),
+            item(C::Last, "Select the last code point"),
+            item(C::Activate, "Inspect the selected code point"),
+            item(C::Back, "Return to normalization comparison"),
+            item(C::Close, "Return to normalization comparison"),
             item(C::Quit, "Quit"),
         ],
         Context::BrowsePlane => vec![
@@ -493,7 +505,15 @@ fn short_help_items(context: Context, has_sequence: bool) -> Vec<ShortHelpItem> 
         ],
         Context::Normalization => vec![
             short(&[C::MoveUp, C::MoveDown], "Form", 1),
+            short(&[C::Activate], "Inspect", 1),
+            short(&[C::CopyValue], "Copy", 1),
             short(&[C::Back, C::Close], "Sequence", 0),
+            short(&[C::Quit], "Quit", 3),
+        ],
+        Context::NormalizationResult => vec![
+            short(&[C::MoveUp, C::MoveDown], "Move", 1),
+            short(&[C::Activate], "Inspect", 1),
+            short(&[C::Back, C::Close], "Back", 0),
             short(&[C::Quit], "Quit", 3),
         ],
         Context::BrowsePlane => vec![
@@ -619,6 +639,7 @@ pub fn context_label(context: Context) -> &'static str {
         Context::Search => "Search",
         Context::Sequence => "Sequence",
         Context::Normalization => "Sequence / Normalization",
+        Context::NormalizationResult => "Normalization Result",
         Context::BrowsePlane => "Browse Planes",
         Context::BrowseRange => "Browse Ranges",
         Context::BrowseBlock => "Browse Blocks",
@@ -803,8 +824,8 @@ mod tests {
         )
         .to_string();
 
-        assert!(!without_sequence.contains("Return to the input sequence"));
-        assert!(with_sequence.contains("Return to the input sequence"));
+        assert!(!without_sequence.contains("Return to the sequence"));
+        assert!(with_sequence.contains("Return to the sequence"));
         assert!(
             footer_text(footer(
                 Context::Inspector,
