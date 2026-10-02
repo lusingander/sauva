@@ -4,6 +4,7 @@ pub mod help;
 pub mod inspector;
 mod key_value;
 pub mod layout;
+mod normalization;
 pub mod render;
 mod scrollbar;
 mod search;
@@ -56,6 +57,7 @@ pub fn glyph_preview_request(area: Rect, state: &AppState) -> Option<GlyphPrevie
                 .context
                 .and_then(|context| selection_preview::glyph_area_for_sequence(context, sequence))
         }
+        View::Normalization => None,
     }?;
     Some(GlyphPreviewRequest {
         code_point,

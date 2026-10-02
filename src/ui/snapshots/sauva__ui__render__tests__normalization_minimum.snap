@@ -1,0 +1,20 @@
+---
+source: src/ui/render.rs
+expression: "render_to_text(&state, MINIMUM_SIZE.0, MINIMUM_SIZE.1)"
+---
+ sauva / Sequence / Normalization                       NFC
+
+ Original                           7 CP · 18 Bytes · 4 GC
+  Á␠①👩‍💻
+  U+0041 U+0301 U+0020 U+2460 U+1F469 U+200D U+1F4BB
+
+   Form  vs Original                         CP  Bytes  GC
+   NFC   Changed                              6     17   4
+   NFD   Unchanged                            7     18   4
+   NFKC  Changed                              6     15   4
+   NFKD  Changed                              7     16   4
+
+ NFC Result                               1 changed region
+  Á␠①👩‍💻
+  U+00C1 U+0020 U+2460 U+1F469 U+200D U+1F4BB
+ k/j Form  BS/Esc Sequence  q Quit                  F1 Help

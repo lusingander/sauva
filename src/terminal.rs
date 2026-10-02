@@ -159,6 +159,7 @@ fn resize_active_view(state: &mut AppState, area: Rect, keymap: &ResolvedKeymap)
         View::Browser => Action::ResizeBrowserViewport(browser_list_height(area)),
         View::Search => Action::ResizeSearchViewport(search_result_height(area)),
         View::Sequence => Action::ResizeSequenceViewport(sequence_list_height(area)),
+        View::Normalization => return,
     };
     update(state, action);
 }

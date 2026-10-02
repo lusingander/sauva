@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use tui_input::backend::crossterm::to_input_request;
 use umbra::optional;
 
-const ALL_COMMANDS: [Command; 24] = [
+const ALL_COMMANDS: [Command; 25] = [
     Command::Quit,
     Command::Help,
     Command::Close,
@@ -31,6 +31,7 @@ const ALL_COMMANDS: [Command; 24] = [
     Command::InspectResult,
     Command::Activate,
     Command::Back,
+    Command::Normalize,
 ];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -39,6 +40,7 @@ pub enum Context {
     Inspector,
     Search,
     Sequence,
+    Normalization,
     BrowsePlane,
     BrowseRange,
     BrowseBlock,
@@ -53,6 +55,7 @@ impl Context {
             Self::Inspector => "inspector",
             Self::Search => "search",
             Self::Sequence => "sequence",
+            Self::Normalization => "normalization",
             Self::BrowsePlane => "browse_plane",
             Self::BrowseRange => "browse_range",
             Self::BrowseBlock => "browse_block",
@@ -88,6 +91,7 @@ pub enum Command {
     InspectResult,
     Activate,
     Back,
+    Normalize,
 }
 
 impl Command {
@@ -135,6 +139,7 @@ impl Command {
             Self::InspectResult => "inspect_result",
             Self::Activate => "activate",
             Self::Back => "back",
+            Self::Normalize => "normalize",
         }
     }
 }
@@ -286,6 +291,9 @@ pub struct Keybindings {
     sequence: SequenceKeybindings,
     #[garde(dive)]
     #[nested]
+    normalization: NormalizationKeybindings,
+    #[garde(dive)]
+    #[nested]
     browse_plane: BrowsePlaneKeybindings,
     #[garde(dive)]
     #[nested]
@@ -308,6 +316,7 @@ impl Keybindings {
         self.inspector.append_bindings(&mut bindings);
         self.search.append_bindings(&mut bindings);
         self.sequence.append_bindings(&mut bindings);
+        self.normalization.append_bindings(&mut bindings);
         self.browse_plane.append_bindings(&mut bindings);
         self.browse_range.append_bindings(&mut bindings);
         self.browse_block.append_bindings(&mut bindings);
@@ -391,6 +400,17 @@ keybinding_context!(SequenceKeybindings, Context::Sequence, {
     first => (Command::First, ["g"]),
     last => (Command::Last, ["G"]),
     activate => (Command::Activate, ["enter"]),
+    normalize => (Command::Normalize, ["n"]),
+});
+
+keybinding_context!(NormalizationKeybindings, Context::Normalization, {
+    quit => (Command::Quit, ["q"]),
+    close => (Command::Close, ["esc"]),
+    back => (Command::Back, ["backspace"]),
+    move_up => (Command::MoveUp, ["k", "up"]),
+    move_down => (Command::MoveDown, ["j", "down"]),
+    first => (Command::First, ["g"]),
+    last => (Command::Last, ["G"]),
 });
 
 keybinding_context!(BrowsePlaneKeybindings, Context::BrowsePlane, {
@@ -732,6 +752,7 @@ impl ResolvedKeymap {
             Context::Inspector,
             Context::Search,
             Context::Sequence,
+            Context::Normalization,
             Context::BrowsePlane,
             Context::BrowseRange,
             Context::BrowseBlock,

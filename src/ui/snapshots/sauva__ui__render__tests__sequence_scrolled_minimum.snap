@@ -17,4 +17,4 @@ expression: buffer_to_text(&buffer)
     │   14  U+0301    ◌́ — COMBINING ACUTE ACCENT          ┃
     └ ▸ 15  U+0301    ◌́ — COMBINING ACUTE ACCENT
 
- k/j Move  g/G Ends  Enter Inspect  q Quit          F1 Help
+ k/j Move  Enter Inspect  n Normalize  q Quit       F1 Help

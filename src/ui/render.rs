@@ -13,7 +13,7 @@ use crate::{
     ui::{
         browser, glyph_preview, help, inspector,
         layout::{MINIMUM_SIZE, calculate},
-        search, sequence,
+        normalization, search, sequence,
         settings::UiSettings,
         theme::ColorTheme,
     },
@@ -48,6 +48,9 @@ pub fn render(
             View::Browser => browser::render(frame, layout.main, state, color_theme, ui),
             View::Search => search::render(frame, layout.main, state, color_theme, ui),
             View::Sequence => sequence::render(frame, layout.main, state, color_theme, ui),
+            View::Normalization => {
+                normalization::render(frame, layout.main, state, color_theme, ui)
+            }
         }
     }
     render_footer(frame, layout.footer, state, keymap, color_theme);
@@ -106,6 +109,7 @@ fn header_location(state: &AppState, context: Context) -> String {
 fn header_status(state: &AppState) -> String {
     match state.view() {
         View::Inspector => state.selected().to_string(),
+        View::Normalization => state.normalization().unwrap().form().label().to_owned(),
         View::Browser => state
             .browse()
             .map_or_else(String::new, |browse| browse.cursor().to_string()),
@@ -351,6 +355,10 @@ mod tests {
             selection: SelectionColors {
                 fg: Color::White,
                 bg: Color::DarkGray,
+            },
+            difference: SelectionColors {
+                fg: Color::Black,
+                bg: Color::Yellow,
             },
             status: StatusColors {
                 info: Color::LightGreen,
@@ -722,6 +730,64 @@ mod tests {
         let (width, height) = MINIMUM_SIZE;
 
         insta::assert_snapshot!(render_to_text(&state, width, height));
+    }
+
+    #[test]
+    fn normalization_standard() {
+        let mut state = AppState::with_sequence("A\u{0301} ①👩‍💻".to_owned());
+        update(&mut state, Action::OpenNormalization);
+        update(
+            &mut state,
+            Action::MoveNormalization(crate::normalization::NormalizationMove::Next),
+        );
+        update(
+            &mut state,
+            Action::MoveNormalization(crate::normalization::NormalizationMove::Next),
+        );
+        insta::assert_snapshot!(render_to_text(&state, STANDARD_SIZE.0, STANDARD_SIZE.1));
+    }
+
+    #[test]
+    fn normalization_minimum() {
+        let mut state = AppState::with_sequence("A\u{0301} ①👩‍💻".to_owned());
+        update(&mut state, Action::OpenNormalization);
+        insta::assert_snapshot!(render_to_text(&state, MINIMUM_SIZE.0, MINIMUM_SIZE.1));
+    }
+
+    #[test]
+    fn normalization_long_minimum() {
+        let mut state = AppState::with_sequence(format!(
+            "{}A\u{0301} ①{}",
+            "ASCII ".repeat(100),
+            " tail".repeat(100)
+        ));
+        update(&mut state, Action::OpenNormalization);
+        insta::assert_snapshot!(render_to_text(&state, MINIMUM_SIZE.0, MINIMUM_SIZE.1));
+    }
+
+    #[test]
+    fn normalization_unchanged_controls_minimum() {
+        let mut state = AppState::with_sequence("é\t\r\n\u{1b}\u{202e}\u{fe0f}".to_owned());
+        update(&mut state, Action::OpenNormalization);
+        insta::assert_snapshot!(render_to_text(&state, MINIMUM_SIZE.0, MINIMUM_SIZE.1));
+    }
+
+    #[test]
+    fn normalization_keeps_the_cursor_and_difference_colors_separate() {
+        let mut state = AppState::with_sequence("A\u{0301} ①👩‍💻".to_owned());
+        update(&mut state, Action::OpenNormalization);
+        let theme = test_color_theme();
+        let buffer = render_to_buffer(&state, 60, 16, &theme);
+        for (x, y) in [(2, 3), (2, 4), (2, 13), (2, 14)] {
+            let cell = buffer.cell((x, y)).unwrap();
+            assert_eq!(cell.bg, theme.difference.bg);
+            assert_eq!(cell.fg, theme.difference.fg);
+            assert!(cell.modifier.contains(Modifier::UNDERLINED));
+        }
+        for x in 1..58 {
+            assert_eq!(buffer.cell((x, 7)).unwrap().bg, theme.selection.bg);
+        }
+        assert_eq!(buffer.cell((16, 4)).unwrap().bg, theme.bg);
     }
 
     #[test]

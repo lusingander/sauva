@@ -373,6 +373,16 @@ fn help_items(context: Context, has_sequence: bool) -> Vec<HelpItem> {
             item(C::First, "Select the first code point"),
             item(C::Last, "Select the last code point"),
             item(C::Activate, "Inspect the selected code point"),
+            item(C::Normalize, "Compare Unicode normalization forms"),
+            item(C::Quit, "Quit"),
+        ],
+        Context::Normalization => vec![
+            item(C::MoveUp, "Select the previous normalization form"),
+            item(C::MoveDown, "Select the next normalization form"),
+            item(C::First, "Select NFC"),
+            item(C::Last, "Select NFKD"),
+            item(C::Back, "Return to the original sequence"),
+            item(C::Close, "Return to the original sequence"),
             item(C::Quit, "Quit"),
         ],
         Context::BrowsePlane => vec![
@@ -478,7 +488,13 @@ fn short_help_items(context: Context, has_sequence: bool) -> Vec<ShortHelpItem> 
             short(&[C::MoveUp, C::MoveDown], "Move", 1),
             short(&[C::First, C::Last], "Ends", 3),
             short(&[C::Activate], "Inspect", 1),
+            short(&[C::Normalize], "Normalize", 1),
             short(&[C::Quit], "Quit", 0),
+        ],
+        Context::Normalization => vec![
+            short(&[C::MoveUp, C::MoveDown], "Form", 1),
+            short(&[C::Back, C::Close], "Sequence", 0),
+            short(&[C::Quit], "Quit", 3),
         ],
         Context::BrowsePlane => vec![
             short(&[C::MoveUp, C::MoveDown], "Move", 1),
@@ -602,6 +618,7 @@ pub fn context_label(context: Context) -> &'static str {
         Context::Inspector => "Inspector",
         Context::Search => "Search",
         Context::Sequence => "Sequence",
+        Context::Normalization => "Sequence / Normalization",
         Context::BrowsePlane => "Browse Planes",
         Context::BrowseRange => "Browse Ranges",
         Context::BrowseBlock => "Browse Blocks",

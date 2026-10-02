@@ -73,6 +73,10 @@ pub struct ColorTheme {
     pub link: Color,
     #[nested]
     pub selection: SelectionColors,
+    /// Background emphasis for changed normalization spans, independent of the cursor.
+    #[default(SelectionColors { fg: Color::Black, bg: Color::Yellow })]
+    #[nested]
+    pub difference: SelectionColors,
     #[nested]
     pub status: StatusColors,
 }
@@ -128,6 +132,10 @@ impl ColorTheme {
         } else {
             Style::new().fg(self.r#match).add_modifier(Modifier::BOLD)
         }
+    }
+
+    pub fn difference_style(self) -> Style {
+        self.difference.style().add_modifier(Modifier::UNDERLINED)
     }
 }
 

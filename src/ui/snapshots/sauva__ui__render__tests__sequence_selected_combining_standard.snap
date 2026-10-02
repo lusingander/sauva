@@ -31,4 +31,4 @@ expression: buffer_to_text(&buffer)
                                                             │
                                                             │
                                                             │
- k/j Move  g/G Ends  Enter Inspect  q Quit                                                  F1 Help
+ k/j Move  g/G Ends  Enter Inspect  n Normalize  q Quit                                     F1 Help

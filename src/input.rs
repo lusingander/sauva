@@ -9,6 +9,7 @@ use crate::{
     help::HelpMove,
     inspector::InspectorMove,
     keybindings::{Command, Context, KeyChord, ResolvedKeymap},
+    normalization::NormalizationMove,
     search::SearchMove,
     sequence::SequenceMove,
 };
@@ -60,6 +61,7 @@ pub fn context_for_state(state: &AppState) -> Context {
         View::Inspector => Context::Inspector,
         View::Search => Context::Search,
         View::Sequence => Context::Sequence,
+        View::Normalization => Context::Normalization,
         View::Browser => match state
             .browse()
             .expect("the browser view always has browse state")
@@ -112,6 +114,12 @@ fn action_for_command(context: Context, command: Command) -> Option<Action> {
         (X::Sequence, C::First) => Some(Action::MoveSequence(SequenceMove::First)),
         (X::Sequence, C::Last) => Some(Action::MoveSequence(SequenceMove::Last)),
         (X::Sequence, C::Activate) => Some(Action::InspectSequenceCodePoint),
+        (X::Sequence, C::Normalize) => Some(Action::OpenNormalization),
+        (X::Normalization, C::MoveUp) => Some(Action::MoveNormalization(NormalizationMove::Previous)),
+        (X::Normalization, C::MoveDown) => Some(Action::MoveNormalization(NormalizationMove::Next)),
+        (X::Normalization, C::First) => Some(Action::MoveNormalization(NormalizationMove::First)),
+        (X::Normalization, C::Last) => Some(Action::MoveNormalization(NormalizationMove::Last)),
+        (X::Normalization, C::Back | C::Close) => Some(Action::CloseNormalization),
         (X::BrowsePlane | X::BrowseRange | X::BrowseBlock | X::BrowseCodePoints, C::MoveUp) => Some(Action::MoveBrowser(BrowseMove::Up)),
         (X::BrowsePlane | X::BrowseRange | X::BrowseBlock | X::BrowseCodePoints, C::MoveDown) => Some(Action::MoveBrowser(BrowseMove::Down)),
         (X::BrowsePlane | X::BrowseRange | X::BrowseBlock | X::BrowseCodePoints, C::First) => Some(Action::MoveBrowser(BrowseMove::First)),
