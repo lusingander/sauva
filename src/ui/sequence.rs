@@ -59,6 +59,7 @@ pub fn render(
         content.height,
     );
     let visible = sequence.visible_range();
+    let selected_grapheme = sequence.code_points()[sequence.selected_index()].grapheme_index();
     let (gutter_rows, rows): (Vec<_>, Vec<_>) = visible
         .clone()
         .map(|index| {
@@ -80,7 +81,11 @@ pub fn render(
             };
             let gutter_row = Line::styled(
                 format!("{grapheme_label:>grapheme_width$} {boundary} "),
-                Style::new().fg(color_theme.muted),
+                if point.grapheme_index() == selected_grapheme {
+                    color_theme.accent_style()
+                } else {
+                    Style::new().fg(color_theme.muted)
+                },
             );
             let code_point = point.code_point();
             let selected = sequence.selected_index() == index;
@@ -111,7 +116,13 @@ pub fn render(
 
 #[cfg(test)]
 mod tests {
-    use ratatui::{Terminal, backend::TestBackend, buffer::Buffer, style::Color, widgets::Block};
+    use ratatui::{
+        Terminal,
+        backend::TestBackend,
+        buffer::Buffer,
+        style::{Color, Modifier},
+        widgets::Block,
+    };
     use rstest::rstest;
 
     use super::*;
@@ -220,10 +231,10 @@ mod tests {
     #[case(">")]
     #[case("▸")]
     #[case(" ")]
-    fn highlights_only_the_body_and_reserves_the_cursor_cell(
+    fn highlights_only_the_body_background_and_reserves_the_cursor_cell(
         #[case] selection_cursor: &str,
         #[values(60, 100)] width: u16,
-        #[values(0, 1, 4, 5)] selected_index: usize,
+        #[values(0, 1, 2, 3, 4, 5)] selected_index: usize,
     ) {
         let mut state = AppState::with_sequence("A\u{0301} 👩‍💻".to_owned());
         for _ in 0..selected_index {
@@ -233,6 +244,7 @@ mod tests {
             fg: Color::White,
             bg: Color::Blue,
             muted: Color::Yellow,
+            accent: Color::Magenta,
             selection: SelectionColors {
                 fg: Color::Black,
                 bg: Color::Green,
@@ -244,12 +256,22 @@ mod tests {
             ..Default::default()
         };
         let buffer = render_to_buffer(&state, width, 16, &theme, &ui);
-        for row in 0..6 {
+        let grapheme_indices = [0, 0, 1, 2, 2, 2];
+        for (row, grapheme_index) in grapheme_indices.into_iter().enumerate() {
             let y = row as u16 + 1;
             let selected = row == selected_index;
+            let grapheme_selected = grapheme_index == grapheme_indices[selected_index];
             for x in 2..6 {
                 let cell = buffer.cell((x, y)).unwrap();
-                assert_eq!(cell.fg, theme.muted);
+                assert_eq!(
+                    cell.fg,
+                    if grapheme_selected {
+                        theme.accent
+                    } else {
+                        theme.muted
+                    }
+                );
+                assert_eq!(cell.modifier.contains(Modifier::BOLD), grapheme_selected);
                 assert_eq!(cell.bg, theme.bg);
             }
             assert_eq!(
@@ -275,6 +297,7 @@ mod tests {
                         theme.fg
                     }
                 );
+                assert!(!cell.modifier.contains(Modifier::BOLD));
                 // Ratatui resets cells hidden by wide glyphs; they are not
                 // independently drawn by the terminal.
                 x += Line::from(cell.symbol()).width().max(1) as u16;
@@ -321,12 +344,12 @@ mod tests {
     #[test]
     fn scrolling_does_not_invent_cluster_boundaries() {
         let mut state = AppState::with_sequence("A\u{0301}\u{0300}\u{0323}Z".to_owned());
-        for (movement, expected) in [
-            (SequenceMove::First, ["1 ┌ ", "  │ "]),
-            (SequenceMove::Next, ["1 ┌ ", "  │ "]),
-            (SequenceMove::Next, ["1 │ ", "  │ "]),
-            (SequenceMove::Next, ["1 │ ", "  └ "]),
-            (SequenceMove::Next, ["1 └ ", "2 • "]),
+        for (movement, expected, highlighted) in [
+            (SequenceMove::First, ["1 ┌ ", "  │ "], [true, true]),
+            (SequenceMove::Next, ["1 ┌ ", "  │ "], [true, true]),
+            (SequenceMove::Next, ["1 │ ", "  │ "], [true, true]),
+            (SequenceMove::Next, ["1 │ ", "  └ "], [true, true]),
+            (SequenceMove::Next, ["1 └ ", "2 • "], [false, true]),
         ] {
             update(&mut state, Action::MoveSequence(movement));
             let buffer = render_to_buffer(
@@ -338,6 +361,22 @@ mod tests {
             );
             assert_eq!(row_text(&buffer, 2, 1, 4), expected[0]);
             assert_eq!(row_text(&buffer, 2, 2, 4), expected[1]);
+            let theme = ColorTheme::default();
+            for (row, highlighted) in highlighted.into_iter().enumerate() {
+                for x in 2..6 {
+                    let cell = buffer.cell((x, row as u16 + 1)).unwrap();
+                    assert_eq!(
+                        cell.fg,
+                        if highlighted {
+                            theme.accent
+                        } else {
+                            theme.muted
+                        }
+                    );
+                    assert_eq!(cell.modifier.contains(Modifier::BOLD), highlighted);
+                    assert_eq!(cell.bg, theme.bg);
+                }
+            }
         }
     }
 

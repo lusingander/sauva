@@ -37,8 +37,8 @@ size: 100x30  cursor: hidden
 styles:
 0: 0-5 fg=6 bold; 86-99 fg=8
 2: 1-11 fg=4 bold; 31-57 fg=8; 60 fg=8; 62-70 fg=4 bold
-3: 2-5 fg=8; 60 fg=8; 63-79 fg=8
-4: 2-5 fg=8; 6-57 fg=0 bg=6; 60 fg=8; 63-79 fg=8
+3: 2-5 fg=6 bold; 60 fg=8; 63-79 fg=8
+4: 2-5 fg=6 bold; 6-57 fg=0 bg=6; 60 fg=8; 63-79 fg=8
 5: 2-5 fg=8; 60 fg=8; 63-74 fg=8
 6: 2-5 fg=8; 60 fg=8; 63-64 fg=8
 7: 2-5 fg=8; 60 fg=8; 63-79 fg=8

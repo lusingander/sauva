@@ -145,6 +145,18 @@ fn inspects_a_text_sequence_and_preserves_its_position_across_search() -> termle
 
 #[test]
 fn sequence_clusters_keep_the_cursor_and_highlight_in_the_row_body() -> termlens::Result<()> {
+    let assert_cluster_highlight =
+        |screen: &termlens::Screen, selected_rows: std::ops::Range<u16>| {
+            for row in 3..11 {
+                let selected = selected_rows.contains(&row);
+                for column in 2..6 {
+                    let style = screen.cell(row, column).unwrap().style();
+                    assert_eq!(style.fg, Color::Indexed(if selected { 6 } else { 8 }));
+                    assert_eq!(style.bold, selected);
+                    assert_eq!(style.bg, Color::Default);
+                }
+            }
+        };
     let directory = tempdir()?;
     let path = directory.path().join("config.toml");
     fs::write(&path, "[ui]\nselection_cursor = \"▸\"\n")?;
@@ -154,9 +166,10 @@ fn sequence_clusters_keep_the_cursor_and_highlight_in_the_row_body() -> termlens
         env("SAUVA_CONFIG_FILE", &path),
         args(["--text", "🇯🇵X\r\n👨‍🔧", "--graphics", "off"])
     )?;
-    terminal.wait_until(|screen| {
+    let screen = terminal.snapshot_after(|screen| {
         screen.contains("8 code points · 4 graphemes") && screen.contains("1/4 · member 1/2")
     })?;
+    assert_cluster_highlight(&screen, 3..5);
 
     terminal.send(Key::Down)?;
     let screen = terminal.snapshot_after(|screen| {
@@ -164,7 +177,7 @@ fn sequence_clusters_keep_the_cursor_and_highlight_in_the_row_body() -> termlens
     })?;
     assert_eq!(screen.cell(4, 4).unwrap().contents(), "└");
     assert_eq!(screen.cell(4, 4).unwrap().style().bg, Color::Default);
-    assert_eq!(screen.cell(4, 4).unwrap().style().fg, Color::Indexed(8));
+    assert_cluster_highlight(&screen, 3..5);
     assert_eq!(screen.cell(4, 6).unwrap().contents(), "▸");
     assert_eq!(screen.cell(4, 6).unwrap().style().bg, Color::Indexed(6));
     assert_eq!(screen.cell(4, 57).unwrap().style().bg, Color::Indexed(6));
@@ -184,6 +197,7 @@ fn sequence_clusters_keep_the_cursor_and_highlight_in_the_row_body() -> termlens
         screen.contains("3/8 · U+0058") && screen.contains("2/4 · member 1/1")
     })?;
     assert_eq!(screen.cell(5, 4).unwrap().contents(), "•");
+    assert_cluster_highlight(&screen, 5..6);
 
     terminal.send(Key::Down)?;
     terminal.wait_until(|screen| {
@@ -197,6 +211,7 @@ fn sequence_clusters_keep_the_cursor_and_highlight_in_the_row_body() -> termlens
     assert!(screen.row_text(7).contains("<CONTROL>"));
     assert_eq!(screen.cell(6, 4).unwrap().contents(), "┌");
     assert_eq!(screen.cell(7, 4).unwrap().contents(), "└");
+    assert_cluster_highlight(&screen, 6..8);
 
     for _ in 0..2 {
         terminal.send(Key::Down)?;
@@ -206,6 +221,7 @@ fn sequence_clusters_keep_the_cursor_and_highlight_in_the_row_body() -> termlens
     })?;
     assert_eq!(screen.cell(9, 4).unwrap().contents(), "│");
     assert_eq!(screen.cell(9, 4).unwrap().style().bg, Color::Default);
+    assert_cluster_highlight(&screen, 8..11);
     assert_eq!(screen.cell(9, 6).unwrap().contents(), "▸");
     assert_eq!(screen.cell(9, 6).unwrap().style().bg, Color::Indexed(6));
 
@@ -220,9 +236,10 @@ fn sequence_clusters_keep_the_cursor_and_highlight_in_the_row_body() -> termlens
         screen.contains("7/8 · U+200D") && screen.contains("8 code points · 4 graphemes")
     })?;
     terminal.resize(100, 30)?;
-    terminal.wait_until(|screen| {
+    let screen = terminal.snapshot_after(|screen| {
         screen.contains("7/8 · U+200D") && screen.contains("4/4 · member 2/3")
     })?;
+    assert_cluster_highlight(&screen, 8..11);
 
     terminal.send(Key::Char('q'))?;
     assert!(terminal.wait_exit()?.success());
