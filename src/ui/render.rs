@@ -249,7 +249,7 @@ mod tests {
             MINIMUM_SIZE, STANDARD_SIZE, WIDE_SIZE, browser_list_height, search_result_height,
             sequence_list_height,
         },
-        ui::theme::{SelectionColors, StatusColors},
+        ui::theme::{DifferenceColors, SelectionColors, StatusColors},
     };
 
     fn render_to_text(state: &AppState, width: u16, height: u16) -> String {
@@ -365,7 +365,7 @@ mod tests {
                 fg: Color::White,
                 bg: Color::DarkGray,
             },
-            difference: SelectionColors {
+            difference: DifferenceColors {
                 fg: Color::Black,
                 bg: Color::Yellow,
             },
