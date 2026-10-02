@@ -367,6 +367,17 @@ mod tests {
             &mut state,
             Action::ResizeSequenceViewport(sequence_list_height(Rect::new(0, 0, width, height))),
         );
+        if state.showing_normalization_result() && state.view() == View::Sequence {
+            let (original, result) = crate::ui::normalization_result::viewport_heights(
+                Rect::new(0, 0, width, height),
+                &state,
+            );
+            update(
+                &mut state,
+                Action::ResizeNormalizationOriginalViewport(original),
+            );
+            update(&mut state, Action::ResizeSequenceViewport(result));
+        }
         let backend = TestBackend::new(width, height);
         let mut terminal = Terminal::new(backend).unwrap();
         terminal
@@ -875,6 +886,81 @@ mod tests {
             assert_eq!(buffer.cell((x, 7)).unwrap().bg, theme.selection.bg);
         }
         assert_eq!(buffer.cell((16, 4)).unwrap().bg, theme.bg);
+    }
+
+    fn nfkc_result(source: &str) -> AppState {
+        let mut state = AppState::with_sequence(source.to_owned());
+        update(&mut state, Action::OpenNormalization);
+        for _ in 0..2 {
+            update(
+                &mut state,
+                Action::MoveNormalization(crate::normalization::NormalizationMove::Next),
+            );
+        }
+        update(&mut state, Action::InspectNormalizationResult);
+        state
+    }
+
+    #[test]
+    fn normalization_result_standard() {
+        let mut state = nfkc_result("A\u{0301} ﬃ①👩‍💻");
+        update(
+            &mut state,
+            Action::MoveSequence(crate::sequence::SequenceMove::Next),
+        );
+        update(
+            &mut state,
+            Action::MoveSequence(crate::sequence::SequenceMove::Next),
+        );
+        insta::assert_snapshot!(render_to_text(&state, 100, 30));
+    }
+
+    #[test]
+    fn normalization_result_minimum() {
+        let state = nfkc_result("ﬃ①");
+        insta::assert_snapshot!(render_to_text(&state, 60, 16));
+    }
+
+    #[test]
+    fn normalization_result_decomposed_minimum() {
+        let mut state = AppState::with_sequence("éé".to_owned());
+        update(&mut state, Action::OpenNormalization);
+        update(
+            &mut state,
+            Action::MoveNormalization(crate::normalization::NormalizationMove::Next),
+        );
+        update(&mut state, Action::InspectNormalizationResult);
+        update(
+            &mut state,
+            Action::MoveSequence(crate::sequence::SequenceMove::Next),
+        );
+        insta::assert_snapshot!(render_to_text(&state, 60, 16));
+    }
+
+    #[test]
+    fn original_reference_marks_only_the_range_corresponding_to_the_result_selection() {
+        let mut state = nfkc_result("ﬃ①");
+        let theme = test_color_theme();
+        for index in 0..4 {
+            let buffer = render_to_buffer(&state, 60, 16, &theme);
+            let original_y = if index < 3 { 3 } else { 4 };
+            assert_eq!(buffer.cell((6, original_y)).unwrap().bg, theme.selection.bg);
+            assert_eq!(
+                buffer
+                    .cell((6, if original_y == 3 { 4 } else { 3 }))
+                    .unwrap()
+                    .bg,
+                theme.bg
+            );
+            let text = (2..22)
+                .map(|x| buffer.cell((x, original_y)).unwrap().symbol())
+                .collect::<String>();
+            assert!(text.contains(if index < 3 { "U+FB03" } else { "U+2460" }));
+            update(
+                &mut state,
+                Action::MoveSequence(crate::sequence::SequenceMove::Next),
+            );
+        }
     }
 
     #[test]

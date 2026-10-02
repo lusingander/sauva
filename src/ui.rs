@@ -5,6 +5,7 @@ pub mod inspector;
 mod key_value;
 pub mod layout;
 mod normalization;
+pub mod normalization_result;
 pub mod render;
 mod scrollbar;
 mod search;
@@ -51,6 +52,7 @@ pub fn glyph_preview_request(area: Rect, state: &AppState) -> Option<GlyphPrevie
                 selection_preview::glyph_area(preview, code_point, matched_alias)
             })
         }
+        View::Sequence if state.showing_normalization_result() => None,
         View::Sequence => {
             let sequence = state.sequence()?;
             layout::sequence(shell.main)
@@ -84,6 +86,19 @@ fn selectable_list_line(
 mod tests {
     use super::*;
     use crate::fixtures;
+
+    #[test]
+    fn normalization_result_uses_the_reference_pane_instead_of_a_glyph_preview() {
+        use crate::app::{Action, update};
+        let mut state = AppState::with_sequence("A\u{0301}".to_owned());
+        let area = Rect::new(0, 0, 100, 30);
+        assert!(glyph_preview_request(area, &state).is_some());
+        update(&mut state, Action::OpenNormalization);
+        update(&mut state, Action::InspectNormalizationResult);
+        assert_eq!(glyph_preview_request(area, &state), None);
+        update(&mut state, Action::InspectSequenceCodePoint);
+        assert!(glyph_preview_request(area, &state).is_some());
+    }
 
     #[test]
     fn requests_the_full_inspector_preview() {

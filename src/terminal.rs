@@ -23,7 +23,7 @@ use crate::{
     ui::{
         self, inspector,
         layout::{browser_list_height, search_result_height, sequence_list_height},
-        render,
+        normalization_result, render,
         settings::UiSettings,
         theme::ColorTheme,
     },
@@ -150,6 +150,11 @@ fn resize_active_view(state: &mut AppState, area: Rect, keymap: &ResolvedKeymap)
         }
         View::Browser => Action::ResizeBrowserViewport(browser_list_height(area)),
         View::Search => Action::ResizeSearchViewport(search_result_height(area)),
+        View::Sequence if state.showing_normalization_result() => {
+            let (original, result) = normalization_result::viewport_heights(area, state);
+            update(state, Action::ResizeNormalizationOriginalViewport(original));
+            Action::ResizeSequenceViewport(result)
+        }
         View::Sequence => Action::ResizeSequenceViewport(sequence_list_height(area)),
         View::Normalization => return,
     };

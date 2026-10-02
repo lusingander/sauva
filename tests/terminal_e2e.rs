@@ -221,7 +221,7 @@ fn normalization_fits_the_minimum_terminal_and_opens_single_point_results() -> t
     insta::assert_snapshot!(screen.with_styles());
     terminal.send(Key::Enter)?;
     terminal.wait_until(|screen| {
-        screen.contains("Sequence / NFC Result") && screen.contains("1 code point · 1 grapheme")
+        screen.contains("Sequence / NFC Result") && screen.contains("1 CP · 1 GC")
     })?;
     terminal.send(Key::Enter)?;
     terminal.wait_until(|screen| screen.contains("NFC Result 1/1 / Inspector"))?;

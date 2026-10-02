@@ -379,7 +379,7 @@ mod tests {
     fn code_point_separators_are_emphasized_only_inside_a_grapheme() {
         let original = TextAnalysis::new("A\u{0301}①②".to_owned());
         let theme = ColorTheme::default();
-        let (_, points, _) = preview(&original, &[0..3], 56, &theme);
+        let (_, points, _) = preview(&original, std::slice::from_ref(&(0..3)), 56, &theme);
         let spans = &points.spans;
         assert_eq!(
             spans
@@ -401,7 +401,7 @@ mod tests {
     fn clipped_code_point_previews_do_not_leave_highlighted_trailing_spaces() {
         let original = TextAnalysis::new("A\u{0301}①".to_owned());
         let theme = ColorTheme::default();
-        let (_, points, clipped) = preview(&original, &[0..2], 8, &theme);
+        let (_, points, clipped) = preview(&original, std::slice::from_ref(&(0..2)), 8, &theme);
         assert!(clipped);
         assert_eq!(points.spans.last().unwrap().content, " …");
         assert_ne!(points.spans.last().unwrap().style, theme.difference_style());

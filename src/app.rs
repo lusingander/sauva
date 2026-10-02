@@ -41,6 +41,7 @@ pub enum Action {
     ResizeSearchViewport(usize),
     MoveSequence(SequenceMove),
     ResizeSequenceViewport(usize),
+    ResizeNormalizationOriginalViewport(usize),
     InspectSequenceCodePoint,
     ReturnToSequence,
     OpenNormalization,
@@ -62,6 +63,7 @@ impl Action {
                 | Self::ResizeBrowserViewport(_)
                 | Self::ResizeSearchViewport(_)
                 | Self::ResizeSequenceViewport(_)
+                | Self::ResizeNormalizationOriginalViewport(_)
                 | Self::UpdateGlyphPreview(_)
                 | Self::ShowFooterStatus(_)
         )
@@ -224,6 +226,10 @@ impl AppState {
         } else {
             self.sequence.as_ref()
         }
+    }
+
+    pub fn original_sequence(&self) -> Option<&SequenceState> {
+        self.sequence.as_ref()
     }
 
     fn sequence_mut(&mut self) -> Option<&mut SequenceState> {
@@ -443,6 +449,7 @@ pub fn update(state: &mut AppState, action: Action) {
                 .sequence_mut()
                 .expect("the sequence view always has sequence state")
                 .move_selection(movement);
+            follow_normalization_selection(state);
             refresh_preview_for_change(state, previous_preview);
         }
         Action::MoveSequence(_) => {}
@@ -451,6 +458,17 @@ pub fn update(state: &mut AppState, action: Action) {
                 sequence.resize_viewport(height);
             }
         }
+        Action::ResizeNormalizationOriginalViewport(height)
+            if state.view == View::Sequence && state.showing_normalization_result =>
+        {
+            state
+                .normalization
+                .as_mut()
+                .unwrap()
+                .comparison_mut()
+                .resize_original_viewport(state.sequence.as_ref().unwrap().analysis(), height);
+        }
+        Action::ResizeNormalizationOriginalViewport(_) => {}
         Action::InspectSequenceCodePoint if state.view == View::Sequence => {
             let selected = state
                 .sequence()
@@ -495,6 +513,7 @@ pub fn update(state: &mut AppState, action: Action) {
             let previous_preview = state.preview_code_point();
             state.showing_normalization_result = true;
             state.view = View::Sequence;
+            follow_normalization_selection(state);
             refresh_preview_for_change(state, previous_preview);
         }
         Action::InspectNormalizationResult => {}
@@ -535,6 +554,17 @@ fn select_code_point(state: &mut AppState, code_point: CodePoint) {
     }
 }
 
+fn follow_normalization_selection(state: &mut AppState) {
+    if state.showing_normalization_result {
+        state
+            .normalization
+            .as_mut()
+            .unwrap()
+            .comparison_mut()
+            .follow_selection(state.sequence.as_ref().unwrap().analysis());
+    }
+}
+
 fn refresh_preview_for_change(state: &mut AppState, previous: Option<CodePoint>) {
     if state.preview_code_point() != previous {
         state.glyph_preview.selection_changed();
@@ -544,6 +574,65 @@ fn refresh_preview_for_change(state: &mut AppState, previous: Option<CodePoint>)
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn normalization_reference_follows_result_without_moving_the_input_cursor_or_viewport() {
+        let mut state = AppState::with_sequence("ﬃ".repeat(50));
+        update(&mut state, Action::ResizeSequenceViewport(4));
+        for _ in 0..10 {
+            update(&mut state, Action::MoveSequence(SequenceMove::Next));
+        }
+        let original_index = state.sequence().unwrap().selected_index();
+        let original_visible = state.sequence().unwrap().visible_range();
+        update(&mut state, Action::OpenNormalization);
+        for _ in 0..2 {
+            update(
+                &mut state,
+                Action::MoveNormalization(NormalizationMove::Next),
+            );
+        }
+        update(&mut state, Action::InspectNormalizationResult);
+        update(&mut state, Action::ResizeNormalizationOriginalViewport(4));
+        update(&mut state, Action::ResizeSequenceViewport(4));
+        let original = state.original_sequence().unwrap().analysis();
+        let comparison = state.normalization().unwrap().comparison();
+        assert_eq!(comparison.original_selection(original), 0..1);
+        assert_eq!(comparison.original_visible_range(original), 0..4);
+        update(&mut state, Action::MoveSequence(SequenceMove::Last));
+        let original = state.original_sequence().unwrap().analysis();
+        let comparison = state.normalization().unwrap().comparison();
+        assert_eq!(comparison.original_selection(original), 49..50);
+        assert_eq!(comparison.original_visible_range(original), 46..50);
+        assert_eq!(
+            state.original_sequence().unwrap().selected_index(),
+            original_index
+        );
+        assert_eq!(
+            state.original_sequence().unwrap().visible_range(),
+            original_visible
+        );
+        update(&mut state, Action::ReturnToNormalization);
+        update(&mut state, Action::CloseNormalization);
+        assert_eq!(state.sequence().unwrap().selected_index(), original_index);
+        assert_eq!(state.sequence().unwrap().visible_range(), original_visible);
+    }
+
+    #[test]
+    fn reference_highlights_all_source_members_of_a_composed_grapheme() {
+        let mut state = AppState::with_sequence("A\u{0301}B".to_owned());
+        update(&mut state, Action::OpenNormalization);
+        update(&mut state, Action::InspectNormalizationResult);
+        update(&mut state, Action::ResizeNormalizationOriginalViewport(2));
+        let original = state.original_sequence().unwrap().analysis();
+        let comparison = state.normalization().unwrap().comparison();
+        assert_eq!(comparison.original_selection(original), 0..2);
+        assert_eq!(comparison.original_visible_range(original), 0..2);
+        update(&mut state, Action::MoveSequence(SequenceMove::Next));
+        let original = state.original_sequence().unwrap().analysis();
+        let comparison = state.normalization().unwrap().comparison();
+        assert_eq!(comparison.original_selection(original), 2..3);
+        assert_eq!(comparison.original_visible_range(original), 1..3);
+    }
 
     #[test]
     fn normalization_preserves_the_source_selection_and_has_no_glyph_target() {
