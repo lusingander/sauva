@@ -63,6 +63,8 @@ Options:
 
 One character opens its code point directly in the Inspector. A sequence of characters opens the Sequence view, where each constituent code point can be selected and inspected.
 
+The Sequence view groups rows by extended grapheme cluster. A muted gutter shows cluster numbers and boundaries (`•` for a single code point, `┌│└` for multiple code points). Selection highlighting and `ui.selection_cursor` apply only to the row body, leaving the cluster gutter unchanged. Navigation and glyph previews remain code-point-based.
+
 ```
 sauva あ
 sauva 'Á👩‍💻'

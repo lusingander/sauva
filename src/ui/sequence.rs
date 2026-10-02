@@ -1,4 +1,4 @@
-use ratatui::{Frame, layout::Rect, text::Line, widgets::Paragraph};
+use ratatui::{Frame, layout::Rect, style::Style, text::Line, widgets::Paragraph};
 
 use crate::{
     app::AppState,
@@ -35,7 +35,13 @@ pub fn render(
         );
     }
     let count = sequence.code_points().len();
-    let count_label = format!("{count} code points");
+    let grapheme_count = sequence.analysis().graphemes().len();
+    let grapheme_unit = if grapheme_count == 1 {
+        "grapheme"
+    } else {
+        "graphemes"
+    };
+    let count_label = format!("{count} code points · {grapheme_count} {grapheme_unit}");
     let content = workspace::render_primary_heading(
         frame,
         layout.navigator,
@@ -44,29 +50,60 @@ pub fn render(
         color_theme,
     );
     let position_width = count.to_string().len();
+    let grapheme_width = grapheme_count.to_string().len();
+    let gutter_width = (grapheme_width as u16 + 3).min(content.width);
+    let gutter = Rect::new(content.x, content.y, gutter_width, content.height);
+    let body = Rect::new(
+        gutter.right(),
+        content.y,
+        content.width.saturating_sub(gutter_width),
+        content.height,
+    );
     let visible = sequence.visible_range();
-    let rows = visible
+    let (gutter_rows, rows): (Vec<_>, Vec<_>) = visible
         .clone()
         .map(|index| {
-            let code_point = sequence.code_points()[index].code_point();
+            let point = &sequence.code_points()[index];
+            let grapheme = &sequence.analysis().graphemes()[point.grapheme_index()];
+            let range = grapheme.code_point_range();
+            let boundary = match (index == range.start, index + 1 == range.end) {
+                (true, true) => "•",
+                (true, false) => "┌",
+                (false, true) => "└",
+                (false, false) => "│",
+            };
+            // Repeat the cluster number at the viewport's top, but keep the
+            // actual boundary symbol when its beginning is scrolled offscreen.
+            let grapheme_label = if index == range.start || index == visible.start {
+                (point.grapheme_index() + 1).to_string()
+            } else {
+                String::new()
+            };
+            let gutter_row = Line::styled(
+                format!("{grapheme_label:>grapheme_width$} {boundary} "),
+                Style::new().fg(color_theme.muted),
+            );
+            let code_point = point.code_point();
             let selected = sequence.selected_index() == index;
             let marker = ui.selection_marker(selected);
             let representation = UnicodeDatabase::display_representation(code_point);
             let name = UnicodeDatabase::primary_name_or_fallback(code_point);
             let code_point = format!("{code_point:<8}", code_point = code_point.to_string());
-            selectable_list_line(
+            let row = selectable_list_line(
                 Line::from(format!(
                     "{marker} {:>position_width$}  {code_point}  {representation} — {name}",
                     index + 1
                 )),
                 selected,
-                content.width,
+                body.width,
                 color_theme.selection,
-            )
+            );
+            (gutter_row, row)
         })
-        .collect::<Vec<_>>();
+        .unzip();
 
-    frame.render_widget(Paragraph::new(rows), content);
+    frame.render_widget(Paragraph::new(gutter_rows), gutter);
+    frame.render_widget(Paragraph::new(rows), body);
     frame.render_widget(
         ViewportScrollbar::new(count, visible).style(color_theme.border_style()),
         scrollbar::area_for_primary(frame.area(), layout.navigator, content),
@@ -75,10 +112,45 @@ pub fn render(
 
 #[cfg(test)]
 mod tests {
-    use ratatui::{Terminal, backend::TestBackend};
+    use ratatui::{Terminal, backend::TestBackend, buffer::Buffer, style::Color, widgets::Block};
+    use rstest::rstest;
 
     use super::*;
-    use crate::app::{Action, AppState, update};
+    use crate::{
+        app::{Action, AppState, update},
+        sequence::SequenceMove,
+        ui::theme::SelectionColors,
+    };
+
+    fn render_to_buffer(
+        state: &AppState,
+        width: u16,
+        height: u16,
+        color_theme: &ColorTheme,
+        ui: &UiSettings,
+    ) -> Buffer {
+        let mut state = state.clone();
+        let area = Rect::new(0, 0, width, height);
+        let content = workspace::primary_section(layout::sequence(area).navigator).content;
+        update(
+            &mut state,
+            Action::ResizeSequenceViewport(usize::from(content.height)),
+        );
+        let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
+        terminal
+            .draw(|frame| {
+                frame.render_widget(Block::default().style(color_theme.base_style()), area);
+                render(frame, area, &state, color_theme, ui);
+            })
+            .unwrap();
+        terminal.backend().buffer().clone()
+    }
+
+    fn row_text(buffer: &Buffer, x: u16, y: u16, width: u16) -> String {
+        (x..x + width)
+            .map(|x| buffer.cell((x, y)).unwrap().symbol())
+            .collect()
+    }
 
     #[test]
     fn renders_positions_code_points_and_names_in_input_order() {
@@ -114,5 +186,173 @@ mod tests {
         assert!(text.contains("1  U+0041"));
         assert!(text.contains("2  U+2192"));
         assert_eq!(text.matches("LATIN CAPITAL LETTER A").count(), 3);
+    }
+
+    #[test]
+    fn shows_cluster_boundaries_separately_from_code_point_positions() {
+        let state = AppState::with_sequence("A\u{0301} 👩‍💻".to_owned());
+        let buffer = render_to_buffer(
+            &state,
+            60,
+            16,
+            &ColorTheme::default(),
+            &UiSettings::default(),
+        );
+
+        let heading = row_text(&buffer, 0, 0, 60);
+        assert!(heading.contains("6 code points · 3 graphemes"));
+        for (row, prefix) in [
+            "1 ┌   1  U+0041",
+            "  └   2  U+0301",
+            "2 •   3  U+0020",
+            "3 ┌   4  U+1F469",
+            "  │   5  U+200D",
+            "  └   6  U+1F4BB",
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            assert!(row_text(&buffer, 2, row as u16 + 1, 56).starts_with(prefix));
+        }
+    }
+
+    #[rstest]
+    #[case("")]
+    #[case(">")]
+    #[case("▸")]
+    #[case(" ")]
+    fn highlights_only_the_body_and_reserves_the_cursor_cell(
+        #[case] selection_cursor: &str,
+        #[values(60, 100)] width: u16,
+        #[values(0, 1, 4, 5)] selected_index: usize,
+    ) {
+        let mut state = AppState::with_sequence("A\u{0301} 👩‍💻".to_owned());
+        for _ in 0..selected_index {
+            update(&mut state, Action::MoveSequence(SequenceMove::Next));
+        }
+        let theme = ColorTheme {
+            fg: Color::White,
+            bg: Color::Blue,
+            muted: Color::Yellow,
+            selection: SelectionColors {
+                fg: Color::Black,
+                bg: Color::Green,
+            },
+            ..Default::default()
+        };
+        let ui = UiSettings {
+            selection_cursor: selection_cursor.to_owned(),
+            ..Default::default()
+        };
+        let buffer = render_to_buffer(&state, width, 16, &theme, &ui);
+        for row in 0..6 {
+            let y = row as u16 + 1;
+            let selected = row == selected_index;
+            for x in 2..6 {
+                let cell = buffer.cell((x, y)).unwrap();
+                assert_eq!(cell.fg, theme.muted);
+                assert_eq!(cell.bg, theme.bg);
+            }
+            assert_eq!(
+                buffer.cell((6, y)).unwrap().symbol(),
+                ui.selection_marker(selected)
+            );
+            let mut x = 6;
+            while x < 58 {
+                let cell = buffer.cell((x, y)).unwrap();
+                assert_eq!(
+                    cell.bg,
+                    if selected {
+                        theme.selection.bg
+                    } else {
+                        theme.bg
+                    }
+                );
+                assert_eq!(
+                    cell.fg,
+                    if selected {
+                        theme.selection.fg
+                    } else {
+                        theme.fg
+                    }
+                );
+                // Ratatui resets cells hidden by wide glyphs; they are not
+                // independently drawn by the terminal.
+                x += Line::from(cell.symbol()).width().max(1) as u16;
+            }
+        }
+    }
+
+    #[test]
+    fn keeps_the_column_width_stable_for_multi_digit_cluster_numbers() {
+        let state = AppState::with_sequence("A".repeat(11));
+        let ui = UiSettings {
+            selection_cursor: ">".to_owned(),
+            ..Default::default()
+        };
+        let buffer = render_to_buffer(&state, 60, 16, &ColorTheme::default(), &ui);
+
+        assert_eq!(row_text(&buffer, 2, 1, 5), " 1 • ");
+        assert_eq!(row_text(&buffer, 2, 10, 5), "10 • ");
+        assert_eq!(row_text(&buffer, 2, 11, 5), "11 • ");
+        assert_eq!(buffer.cell((7, 1)).unwrap().symbol(), ">");
+        for y in 2..12 {
+            assert_eq!(buffer.cell((7, y)).unwrap().symbol(), " ");
+        }
+    }
+
+    #[test]
+    fn a_single_grapheme_still_lists_each_code_point() {
+        let state = AppState::with_sequence("🇯🇵".to_owned());
+        let buffer = render_to_buffer(
+            &state,
+            60,
+            16,
+            &ColorTheme::default(),
+            &UiSettings::default(),
+        );
+
+        assert!(row_text(&buffer, 0, 0, 60).contains("2 code points · 1 grapheme"));
+        assert_eq!(row_text(&buffer, 2, 1, 4), "1 ┌ ");
+        assert_eq!(row_text(&buffer, 2, 2, 4), "  └ ");
+        assert!(row_text(&buffer, 6, 1, 52).contains("U+1F1EF"));
+        assert!(row_text(&buffer, 6, 2, 52).contains("U+1F1F5"));
+    }
+
+    #[test]
+    fn scrolling_does_not_invent_cluster_boundaries() {
+        let mut state = AppState::with_sequence("A\u{0301}\u{0300}\u{0323}Z".to_owned());
+        for (movement, expected) in [
+            (SequenceMove::First, ["1 ┌ ", "  │ "]),
+            (SequenceMove::Next, ["1 ┌ ", "  │ "]),
+            (SequenceMove::Next, ["1 │ ", "  │ "]),
+            (SequenceMove::Next, ["1 │ ", "  └ "]),
+            (SequenceMove::Next, ["1 └ ", "2 • "]),
+        ] {
+            update(&mut state, Action::MoveSequence(movement));
+            let buffer = render_to_buffer(
+                &state,
+                60,
+                4,
+                &ColorTheme::default(),
+                &UiSettings::default(),
+            );
+            assert_eq!(row_text(&buffer, 2, 1, 4), expected[0]);
+            assert_eq!(row_text(&buffer, 2, 2, 4), expected[1]);
+        }
+    }
+
+    #[rstest]
+    fn tiny_areas_do_not_panic(
+        #[values(0, 1, 2, 3, 4, 8)] width: u16,
+        #[values(0, 1, 2, 3)] height: u16,
+    ) {
+        render_to_buffer(
+            &AppState::with_sequence("A\u{0301}".to_owned()),
+            width,
+            height,
+            &ColorTheme::default(),
+            &UiSettings::default(),
+        );
     }
 }

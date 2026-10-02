@@ -653,6 +653,7 @@ mod tests {
             (fixtures::browse_planes(), (2, 3)),
             (fixtures::browse_ranges(), (2, 3)),
             (fixtures::browse_code_points(), (12, 8)),
+            (fixtures::sequence(), (6, 3)),
         ] {
             let buffer = render_to_buffer_with_ui(&state, width, height, &color_theme, &ui);
 
@@ -721,6 +722,35 @@ mod tests {
         let (width, height) = MINIMUM_SIZE;
 
         insta::assert_snapshot!(render_to_text(&state, width, height));
+    }
+
+    #[test]
+    fn sequence_wide() {
+        let state = fixtures::sequence();
+        let (width, height) = WIDE_SIZE;
+
+        insta::assert_snapshot!(render_to_text(&state, width, height));
+    }
+
+    #[test]
+    fn sequence_scrolled_minimum() {
+        let mut state = AppState::with_sequence(format!("A{}B", "\u{0301}".repeat(14)));
+        update(
+            &mut state,
+            Action::MoveSequence(crate::sequence::SequenceMove::Last),
+        );
+        update(
+            &mut state,
+            Action::MoveSequence(crate::sequence::SequenceMove::Previous),
+        );
+        let ui = UiSettings {
+            selection_cursor: "▸".to_owned(),
+            ..Default::default()
+        };
+        let (width, height) = MINIMUM_SIZE;
+        let buffer = render_to_buffer_with_ui(&state, width, height, &ColorTheme::default(), &ui);
+
+        insta::assert_snapshot!(buffer_to_text(&buffer));
     }
 
     #[test]
