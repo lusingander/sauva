@@ -190,6 +190,7 @@ fn preview(
             (
                 safe_cluster(&analysis.source()[cluster.byte_range()]),
                 changes.iter().any(|range| range.contains(&index)),
+                None,
             )
         });
     let (text, clipped_text) = fit_preview(clusters, start > 0, width, theme.base_style(), theme);
@@ -201,13 +202,20 @@ fn preview(
     let points = analysis
         .code_points()
         .iter()
+        .enumerate()
         .skip(point_start)
-        .map(|point| {
+        .map(|(index, point)| {
+            let changed = changes
+                .iter()
+                .any(|range| range.contains(&point.grapheme_index()));
             (
-                format!("{} ", point.code_point()),
-                changes
-                    .iter()
-                    .any(|range| range.contains(&point.grapheme_index())),
+                point.code_point().to_string(),
+                changed,
+                (index > point_start).then(|| {
+                    changed
+                        && analysis.code_points()[index - 1].grapheme_index()
+                            == point.grapheme_index()
+                }),
             )
         });
     let (code_points, clipped_points) = fit_preview(
@@ -221,7 +229,7 @@ fn preview(
 }
 
 fn fit_preview(
-    atoms: impl Iterator<Item = (String, bool)>,
+    atoms: impl Iterator<Item = (String, bool, Option<bool>)>,
     leading: bool,
     width: usize,
     base: Style,
@@ -234,13 +242,23 @@ fn fit_preview(
         used = 2;
     }
     let mut truncated = false;
-    for (text, changed) in atoms {
-        let atom_width = Line::from(text.as_str()).width();
+    for (text, changed, separator) in atoms {
+        let atom_width = Line::from(text.as_str()).width() + usize::from(separator.is_some());
         if used + atom_width + 2 > width {
             truncated = true;
             break;
         }
         used += atom_width;
+        if let Some(changed) = separator {
+            spans.push(Span::styled(
+                " ",
+                if changed {
+                    theme.difference_style()
+                } else {
+                    base
+                },
+            ));
+        }
         spans.push(Span::styled(
             text,
             if changed {
@@ -352,8 +370,41 @@ mod tests {
                 .iter()
                 .filter(|span| span.style == theme.difference_style())
                 .count(),
-            2
+            3
         );
         assert_ne!(theme.difference_style(), theme.selection.style());
+    }
+
+    #[test]
+    fn code_point_separators_are_emphasized_only_inside_a_grapheme() {
+        let original = TextAnalysis::new("A\u{0301}①②".to_owned());
+        let theme = ColorTheme::default();
+        let (_, points, _) = preview(&original, &[0..3], 56, &theme);
+        let spans = &points.spans;
+        assert_eq!(
+            spans
+                .iter()
+                .map(|span| span.content.as_ref())
+                .collect::<String>(),
+            " U+0041 U+0301 U+2460 U+2461"
+        );
+        assert_eq!(spans[2].content, " ");
+        assert_eq!(spans[2].style, theme.difference_style());
+        for index in [4, 6] {
+            assert_eq!(spans[index].content, " ");
+            assert_ne!(spans[index].style, theme.difference_style());
+        }
+        assert_eq!(spans.last().unwrap().content, "U+2461");
+    }
+
+    #[test]
+    fn clipped_code_point_previews_do_not_leave_highlighted_trailing_spaces() {
+        let original = TextAnalysis::new("A\u{0301}①".to_owned());
+        let theme = ColorTheme::default();
+        let (_, points, clipped) = preview(&original, &[0..2], 8, &theme);
+        assert!(clipped);
+        assert_eq!(points.spans.last().unwrap().content, " …");
+        assert_ne!(points.spans.last().unwrap().style, theme.difference_style());
+        assert_eq!(points.spans[1].content, "U+0041");
     }
 }
