@@ -14,9 +14,20 @@ pub struct ChangeRegion {
     pub result: Range<usize>,
 }
 
+/// A verified grapheme pairing. Identical runs map by offset; replacements
+/// retain their own boundaries even when neighboring changes are merged for
+/// the overview. Contextual replacements need not have a scalar-level origin.
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct GraphemePairing {
+    original: Range<usize>,
+    result: Range<usize>,
+    changed: bool,
+}
+
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct NormalizationDiff {
     regions: Vec<ChangeRegion>,
+    pairings: Vec<GraphemePairing>,
     grouped: bool,
 }
 
@@ -35,6 +46,46 @@ impl NormalizationDiff {
         self.grouped
     }
 
+    /// Source graphemes corresponding to a selected result grapheme. This is
+    /// a range association, not a trace of individual normalization operations.
+    pub fn original_graphemes(&self, result_index: usize) -> Option<Range<usize>> {
+        let index = self
+            .pairings
+            .partition_point(|pair| pair.result.end <= result_index);
+        let pair = self
+            .pairings
+            .get(index)
+            .filter(|pair| pair.result.contains(&result_index))?;
+        if pair.changed {
+            Some(pair.original.clone())
+        } else {
+            let index = pair.original.start + result_index - pair.result.start;
+            Some(index..index + 1)
+        }
+    }
+
+    fn from_pairings(pairings: Vec<GraphemePairing>, grouped: bool) -> Self {
+        let mut regions: Vec<ChangeRegion> = Vec::new();
+        for pair in pairings.iter().filter(|pair| pair.changed) {
+            if let Some(previous) = regions.last_mut().filter(|region| {
+                region.original.end == pair.original.start && region.result.end == pair.result.start
+            }) {
+                previous.original.end = pair.original.end;
+                previous.result.end = pair.result.end;
+            } else {
+                regions.push(ChangeRegion {
+                    original: pair.original.clone(),
+                    result: pair.result.clone(),
+                });
+            }
+        }
+        Self {
+            regions,
+            pairings,
+            grouped,
+        }
+    }
+
     fn with_budget(
         original: &TextAnalysis,
         result: &TextAnalysis,
@@ -42,16 +93,20 @@ impl NormalizationDiff {
         budget: usize,
     ) -> Self {
         if original.source() == result.source() {
-            return Self::default();
+            return Self::from_pairings(
+                vec![GraphemePairing {
+                    original: 0..original.graphemes().len(),
+                    result: 0..result.graphemes().len(),
+                    changed: false,
+                }],
+                false,
+            );
         }
         // Most normalization changes can be aligned in linear time. This fast
         // path is accepted ONLY when every independently normalized piece
         // matches the whole-string result and ends on a result boundary.
-        if let Some(regions) = piece_alignment(original, result, form) {
-            return Self {
-                regions,
-                grouped: false,
-            };
+        if let Some(pairings) = piece_alignment(original, result, form) {
+            return Self::from_pairings(pairings, false);
         }
         let before = graphemes(original);
         let after = graphemes(result);
@@ -69,17 +124,29 @@ impl NormalizationDiff {
         let a = &before[prefix..before.len() - suffix];
         let b = &after[prefix..after.len() - suffix];
         let columns = b.len() + 1;
+        let mut pairings = Vec::new();
+        if prefix > 0 {
+            push_pairing(&mut pairings, 0..prefix, 0..prefix, false);
+        }
         let Some(cells) = (a.len() + 1)
             .checked_mul(columns)
             .filter(|cells| *cells <= budget)
         else {
-            return Self {
-                regions: vec![ChangeRegion {
-                    original: prefix..before.len() - suffix,
-                    result: prefix..after.len() - suffix,
-                }],
-                grouped: true,
-            };
+            push_pairing(
+                &mut pairings,
+                prefix..before.len() - suffix,
+                prefix..after.len() - suffix,
+                true,
+            );
+            if suffix > 0 {
+                push_pairing(
+                    &mut pairings,
+                    before.len() - suffix..before.len(),
+                    after.len() - suffix..after.len(),
+                    false,
+                );
+            }
+            return Self::from_pairings(pairings, true);
         };
         let mut lengths = vec![0usize; cells];
         for i in (0..a.len()).rev() {
@@ -91,10 +158,15 @@ impl NormalizationDiff {
                 };
             }
         }
-        let mut regions = Vec::new();
         let (mut i, mut j) = (0, 0);
         while i < a.len() || j < b.len() {
             if i < a.len() && j < b.len() && a[i] == b[j] {
+                push_pairing(
+                    &mut pairings,
+                    prefix + i..prefix + i + 1,
+                    prefix + j..prefix + j + 1,
+                    false,
+                );
                 i += 1;
                 j += 1;
                 continue;
@@ -113,15 +185,44 @@ impl NormalizationDiff {
                     j += 1;
                 }
             }
-            regions.push(ChangeRegion {
-                original: prefix + start_i..prefix + i,
-                result: prefix + start_j..prefix + j,
-            });
+            push_pairing(
+                &mut pairings,
+                prefix + start_i..prefix + i,
+                prefix + start_j..prefix + j,
+                true,
+            );
         }
-        Self {
-            regions,
-            grouped: false,
+        if suffix > 0 {
+            push_pairing(
+                &mut pairings,
+                before.len() - suffix..before.len(),
+                after.len() - suffix..after.len(),
+                false,
+            );
         }
+        Self::from_pairings(pairings, false)
+    }
+}
+
+fn push_pairing(
+    pairings: &mut Vec<GraphemePairing>,
+    original: Range<usize>,
+    result: Range<usize>,
+    changed: bool,
+) {
+    if !changed
+        && let Some(previous) = pairings.last_mut().filter(|pair| {
+            !pair.changed && pair.original.end == original.start && pair.result.end == result.start
+        })
+    {
+        previous.original.end = original.end;
+        previous.result.end = result.end;
+    } else {
+        pairings.push(GraphemePairing {
+            original,
+            result,
+            changed,
+        });
     }
 }
 
@@ -137,8 +238,8 @@ fn piece_alignment(
     original: &TextAnalysis,
     result: &TextAnalysis,
     form: NormalizationForm,
-) -> Option<Vec<ChangeRegion>> {
-    let mut regions: Vec<ChangeRegion> = Vec::new();
+) -> Option<Vec<GraphemePairing>> {
+    let mut pairings = Vec::new();
     let mut piece = String::new();
     let (mut byte, mut result_index) = (0, 0);
     for (index, cluster) in original.graphemes().iter().enumerate() {
@@ -168,23 +269,15 @@ fn piece_alignment(
         if boundary != end {
             return None;
         }
-        if source != piece {
-            if let Some(previous) = regions
-                .last_mut()
-                .filter(|region| region.original.end == index && region.result.end == start_index)
-            {
-                previous.original.end = index + 1;
-                previous.result.end = result_index;
-            } else {
-                regions.push(ChangeRegion {
-                    original: index..index + 1,
-                    result: start_index..result_index,
-                });
-            }
-        }
+        push_pairing(
+            &mut pairings,
+            index..index + 1,
+            start_index..result_index,
+            source != piece,
+        );
         byte = end;
     }
-    (byte == result.source().len()).then_some(regions)
+    (byte == result.source().len()).then_some(pairings)
 }
 
 #[cfg(test)]
@@ -195,6 +288,65 @@ mod tests {
         let original = TextAnalysis::new(source.to_owned());
         let result = TextAnalysis::new(original.normalized_text(form).to_owned());
         NormalizationDiff::new(&original, &result, form)
+    }
+
+    #[test]
+    fn adjacent_changes_keep_independent_selection_pairings() {
+        let changes = diff("①②③", NormalizationForm::Nfkc);
+        assert_eq!(
+            changes.regions(),
+            [ChangeRegion {
+                original: 0..3,
+                result: 0..3
+            }]
+        );
+        for index in 0..3 {
+            assert_eq!(changes.original_graphemes(index), Some(index..index + 1));
+        }
+        assert_eq!(changes.original_graphemes(3), None);
+    }
+
+    #[test]
+    fn pairs_expansions_separately_from_neighboring_changes_and_unchanged_runs() {
+        let changes = diff("xxﬃ①yy", NormalizationForm::Nfkc);
+        assert_eq!(
+            changes.regions(),
+            [ChangeRegion {
+                original: 2..4,
+                result: 2..6
+            }]
+        );
+        for (index, expected) in [
+            (0, 0..1),
+            (1, 1..2),
+            (2, 2..3),
+            (3, 2..3),
+            (4, 2..3),
+            (5, 3..4),
+            (6, 4..5),
+            (7, 5..6),
+        ] {
+            assert_eq!(changes.original_graphemes(index), Some(expected));
+        }
+    }
+
+    #[test]
+    fn retains_grapheme_pairings_for_composition_decomposition_and_contextual_changes() {
+        for (text, form) in [
+            ("A\u{0301}B\u{0301}", NormalizationForm::Nfc),
+            ("éé", NormalizationForm::Nfd),
+        ] {
+            let changes = diff(text, form);
+            assert_eq!(changes.original_graphemes(0), Some(0..1));
+            assert_eq!(changes.original_graphemes(1), Some(1..2));
+        }
+        let changes = diff("xᄀㅏy", NormalizationForm::Nfkc);
+        assert_eq!(changes.original_graphemes(0), Some(0..1));
+        assert_eq!(changes.original_graphemes(1), Some(1..3));
+        assert_eq!(changes.original_graphemes(2), Some(3..4));
+        let unchanged = diff("ABC", NormalizationForm::Nfc);
+        assert_eq!(unchanged.original_graphemes(2), Some(2..3));
+        assert_eq!(diff("", NormalizationForm::Nfc).original_graphemes(0), None);
     }
 
     #[test]
