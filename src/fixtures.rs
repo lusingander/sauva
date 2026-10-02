@@ -19,12 +19,7 @@ pub fn startup() -> AppState {
 
 #[cfg(test)]
 pub fn sequence() -> AppState {
-    let mut state = AppState::with_sequence(
-        "A\u{0301} 👩‍💻"
-            .chars()
-            .map(CodePoint::from)
-            .collect::<Vec<_>>(),
-    );
+    let mut state = AppState::with_sequence("A\u{0301} 👩‍💻".to_owned());
     update(
         &mut state,
         Action::UpdateGlyphPreview(GlyphPreviewUpdate::Configure {

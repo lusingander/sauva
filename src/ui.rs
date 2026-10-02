@@ -50,9 +50,12 @@ pub fn glyph_preview_request(area: Rect, state: &AppState) -> Option<GlyphPrevie
                 selection_preview::glyph_area(preview, code_point, matched_alias)
             })
         }
-        View::Sequence => layout::sequence(shell.main)
-            .context
-            .and_then(|context| selection_preview::glyph_area(context, code_point, None)),
+        View::Sequence => {
+            let sequence = state.sequence()?;
+            layout::sequence(shell.main)
+                .context
+                .and_then(|context| selection_preview::glyph_area_for_sequence(context, sequence))
+        }
     }?;
     Some(GlyphPreviewRequest {
         code_point,
@@ -124,5 +127,21 @@ mod tests {
             glyph_preview_request(Rect::new(0, 0, 100, 16), &fixtures::browse_code_points()),
             None
         );
+    }
+
+    #[test]
+    fn sequence_preview_remains_a_single_code_point_with_cluster_aware_geometry() {
+        let mut state =
+            AppState::with_sequence(format!("{}A{}", "X".repeat(10), "\u{0301}".repeat(11)));
+        crate::app::update(
+            &mut state,
+            crate::app::Action::MoveSequence(crate::sequence::SequenceMove::Last),
+        );
+
+        let request = glyph_preview_request(Rect::new(0, 0, 100, 30), &state).unwrap();
+
+        assert_eq!(request.code_point.value(), 0x0301);
+        assert_eq!(request.placeholder, Rect::new(63, 15, 36, 13));
+        assert_eq!(glyph_preview_request(Rect::new(0, 0, 60, 16), &state), None);
     }
 }

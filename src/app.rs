@@ -176,8 +176,8 @@ impl AppState {
         state
     }
 
-    pub fn with_sequence(code_points: Vec<CodePoint>) -> Self {
-        let sequence = SequenceState::new(code_points);
+    pub fn with_sequence(source: String) -> Self {
+        let sequence = SequenceState::new(source);
         let selected = sequence.selected();
         let mut state = Self::with_selected(selected);
         state.view = View::Sequence;
@@ -883,8 +883,7 @@ mod tests {
 
     #[test]
     fn sequence_selection_opens_the_inspector_and_returns_to_the_same_position() {
-        let mut state =
-            AppState::with_sequence("A→B".chars().map(CodePoint::from).collect::<Vec<_>>());
+        let mut state = AppState::with_sequence("A→B".to_owned());
         update(&mut state, Action::ResizeSequenceViewport(2));
         update(&mut state, Action::MoveSequence(SequenceMove::Next));
 
@@ -903,8 +902,7 @@ mod tests {
 
     #[test]
     fn search_from_a_sequence_inspector_does_not_change_the_sequence_position() {
-        let mut state =
-            AppState::with_sequence("A→B".chars().map(CodePoint::from).collect::<Vec<_>>());
+        let mut state = AppState::with_sequence("A→B".to_owned());
         update(&mut state, Action::MoveSequence(SequenceMove::Next));
         update(&mut state, Action::InspectSequenceCodePoint);
         update(&mut state, Action::OpenSearch);
@@ -921,9 +919,32 @@ mod tests {
     }
 
     #[test]
+    fn inspecting_and_searching_preserve_the_original_sequence_analysis() {
+        let mut state = AppState::with_sequence("A\u{0301} 👩‍💻".to_owned());
+        let analysis = state.sequence().unwrap().analysis().clone();
+        update(&mut state, Action::ResizeSequenceViewport(2));
+        update(&mut state, Action::MoveSequence(SequenceMove::Last));
+        update(&mut state, Action::MoveSequence(SequenceMove::Previous));
+        update(&mut state, Action::InspectSequenceCodePoint);
+        assert_eq!(state.selected().value(), 0x200d);
+
+        update(&mut state, Action::OpenSearch);
+        edit_search_query(&mut state, "Ω");
+        update(&mut state, Action::InspectSearchResult);
+        assert_eq!(state.selected().value(), 0x03a9);
+        update(&mut state, Action::ReturnToSequence);
+
+        assert_eq!(state.view(), View::Sequence);
+        assert_eq!(state.preview_code_point().unwrap().value(), 0x200d);
+        let sequence = state.sequence().unwrap();
+        assert_eq!(sequence.selected_index(), 4);
+        assert_eq!(sequence.visible_range(), 4..6);
+        assert_eq!(sequence.analysis(), &analysis);
+    }
+
+    #[test]
     fn browse_from_a_sequence_inspector_returns_through_the_inspector() {
-        let mut state =
-            AppState::with_sequence("AB".chars().map(CodePoint::from).collect::<Vec<_>>());
+        let mut state = AppState::with_sequence("AB".to_owned());
         update(&mut state, Action::InspectSequenceCodePoint);
         update(&mut state, Action::OpenBrowser(BrowseLevel::CodePointTable));
         update(&mut state, Action::MoveBrowser(BrowseMove::Right));

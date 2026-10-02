@@ -20,11 +20,11 @@ Show
 
 Sleep 2s
 
-Screenshot "./img/sequence.png"
-Sleep 100ms
-
 Type@300ms "jjjjjjjj"
 Sleep 500ms
+
+Screenshot "./img/sequence.png"
+Sleep 100ms
 
 Enter
 Sleep 1s

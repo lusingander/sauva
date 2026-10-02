@@ -63,6 +63,8 @@ Options:
 
 One character opens its code point directly in the Inspector. A sequence of characters opens the Sequence view, where each constituent code point can be selected and inspected.
 
+The Sequence view groups rows by extended grapheme cluster and shows cluster numbers and boundaries.
+
 ```
 sauva あ
 sauva 'Á👩‍💻'

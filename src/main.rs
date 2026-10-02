@@ -56,9 +56,7 @@ fn initial_state(demo: Option<cli::Demo>, target: Option<&cli::LaunchTarget>) ->
     if let Some(target) = target {
         return match target {
             cli::LaunchTarget::CodePoint(code_point) => app::AppState::with_selected(*code_point),
-            cli::LaunchTarget::Sequence(code_points) => {
-                app::AppState::with_sequence(code_points.clone())
-            }
+            cli::LaunchTarget::Sequence(source) => app::AppState::with_sequence(source.clone()),
         };
     }
 
@@ -113,11 +111,15 @@ mod tests {
 
     #[test]
     fn initial_sequence_opens_the_sequence_view() {
-        let code_points = "A→B".chars().map(CodePoint::from).collect::<Vec<_>>();
+        let source = "A\u{0301} 👩‍💻";
 
-        let state = initial_state(None, Some(&LaunchTarget::Sequence(code_points)));
+        let state = initial_state(None, Some(&LaunchTarget::Sequence(source.to_owned())));
 
         assert_eq!(state.view(), crate::app::View::Sequence);
         assert_eq!(state.sequence().unwrap().selected().value(), 0x0041);
+        let analysis = state.sequence().unwrap().analysis();
+        assert_eq!(analysis.source(), source);
+        assert_eq!(analysis.code_points().len(), 6);
+        assert_eq!(analysis.graphemes().len(), 3);
     }
 }

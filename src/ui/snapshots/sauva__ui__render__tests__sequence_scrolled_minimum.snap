@@ -1,0 +1,20 @@
+---
+source: src/ui/render.rs
+expression: buffer_to_text(&buffer)
+---
+ sauva / Sequence                            15/16 · U+0301
+
+ Code Points                  16 code points · 2 graphemes
+  1 │    5  U+0301    ◌́ — COMBINING ACUTE ACCENT
+    │    6  U+0301    ◌́ — COMBINING ACUTE ACCENT
+    │    7  U+0301    ◌́ — COMBINING ACUTE ACCENT
+    │    8  U+0301    ◌́ — COMBINING ACUTE ACCENT          ┃
+    │    9  U+0301    ◌́ — COMBINING ACUTE ACCENT          ┃
+    │   10  U+0301    ◌́ — COMBINING ACUTE ACCENT          ┃
+    │   11  U+0301    ◌́ — COMBINING ACUTE ACCENT          ┃
+    │   12  U+0301    ◌́ — COMBINING ACUTE ACCENT          ┃
+    │   13  U+0301    ◌́ — COMBINING ACUTE ACCENT          ┃
+    │   14  U+0301    ◌́ — COMBINING ACUTE ACCENT          ┃
+    └ ▸ 15  U+0301    ◌́ — COMBINING ACUTE ACCENT
+
+ k/j Move  g/G Ends  Enter Inspect  q Quit          F1 Help

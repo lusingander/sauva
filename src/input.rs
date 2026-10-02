@@ -133,7 +133,6 @@ mod tests {
     use tui_input::InputRequest;
 
     use super::*;
-    use crate::unicode::CodePoint;
 
     fn action_for_key(state: &AppState, key: KeyEvent) -> Option<Action> {
         super::action_for_key(state, key, &ResolvedKeymap::default())
@@ -666,7 +665,7 @@ mod tests {
         #[case] code: KeyCode,
         #[case] expected: Action,
     ) {
-        let state = AppState::with_sequence("AB".chars().map(CodePoint::from).collect());
+        let state = AppState::with_sequence("AB".to_owned());
 
         assert_eq!(
             action_for_key(&state, KeyEvent::new(code, KeyModifiers::NONE)),
@@ -676,7 +675,7 @@ mod tests {
 
     #[test]
     fn backspace_returns_from_a_sequence_inspector() {
-        let mut state = AppState::with_sequence("AB".chars().map(CodePoint::from).collect());
+        let mut state = AppState::with_sequence("AB".to_owned());
         crate::app::update(&mut state, Action::InspectSequenceCodePoint);
 
         assert_eq!(
