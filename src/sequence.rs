@@ -27,8 +27,8 @@ impl SequenceState {
     pub fn new(source: String) -> Self {
         let analysis = TextAnalysis::new(source);
         assert!(
-            analysis.code_points().len() > 1,
-            "a sequence contains at least two code points"
+            !analysis.code_points().is_empty(),
+            "a sequence contains at least one code point"
         );
         Self {
             analysis,
@@ -108,14 +108,29 @@ mod tests {
         assert_eq!(state.analysis().source(), "A→A");
     }
 
+    #[test]
+    #[should_panic(expected = "a sequence contains at least one code point")]
+    fn rejects_empty_inputs() {
+        SequenceState::new(String::new());
+    }
+
     #[rstest]
-    #[case("")]
     #[case("A")]
-    #[case("é")]
+    #[case("Á")]
     #[case("👩")]
-    #[should_panic(expected = "a sequence contains at least two code points")]
-    fn rejects_inputs_without_multiple_code_points(#[case] source: &str) {
-        SequenceState::new(source.to_owned());
+    fn supports_single_code_point_normalization_results(#[case] source: &str) {
+        let mut state = SequenceState::new(source.to_owned());
+        state.resize_viewport(1);
+        for movement in [
+            SequenceMove::Previous,
+            SequenceMove::Next,
+            SequenceMove::First,
+            SequenceMove::Last,
+        ] {
+            assert!(!state.move_selection(movement));
+        }
+        assert_eq!(state.visible_range(), 0..1);
+        assert_eq!(state.selected().to_char().unwrap().to_string(), source);
     }
 
     #[test]
