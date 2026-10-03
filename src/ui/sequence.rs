@@ -1,7 +1,10 @@
+use std::ops::Range;
+
 use ratatui::{Frame, layout::Rect, style::Style, text::Line, widgets::Paragraph};
 
 use crate::{
     app::AppState,
+    sequence::SequenceState,
     ui::{
         layout,
         scrollbar::{self, ViewportScrollbar},
@@ -10,7 +13,7 @@ use crate::{
         theme::ColorTheme,
         workspace,
     },
-    unicode::UnicodeDatabase,
+    unicode::{UnicodeDatabase, text::TextAnalysis},
 };
 
 pub fn render(
@@ -20,6 +23,10 @@ pub fn render(
     color_theme: &ColorTheme,
     ui: &UiSettings,
 ) {
+    if state.showing_normalization_result() {
+        super::normalization_result::render(frame, area, state, color_theme, ui);
+        return;
+    }
     let layout = layout::sequence(area);
     let sequence = state
         .sequence()
@@ -33,6 +40,24 @@ pub fn render(
             color_theme,
         );
     }
+    render_list(
+        frame,
+        layout.navigator,
+        sequence,
+        "Code Points",
+        color_theme,
+        ui,
+    );
+}
+
+pub(super) fn render_list(
+    frame: &mut Frame,
+    area: Rect,
+    sequence: &SequenceState,
+    title: &str,
+    color_theme: &ColorTheme,
+    ui: &UiSettings,
+) {
     let count = sequence.code_points().len();
     let grapheme_count = sequence.analysis().graphemes().len();
     let grapheme_unit = if grapheme_count == 1 {
@@ -40,14 +65,21 @@ pub fn render(
     } else {
         "graphemes"
     };
-    let count_label = format!("{count} code points · {grapheme_count} {grapheme_unit}");
-    let content = workspace::render_primary_heading(
-        frame,
-        layout.navigator,
-        "Code Points",
-        Some(&count_label),
-        color_theme,
-    );
+    let code_point_unit = if count == 1 {
+        "code point"
+    } else {
+        "code points"
+    };
+    let count_label = format!("{count} {code_point_unit} · {grapheme_count} {grapheme_unit}");
+    let count_label = if title.len() + 1 + Line::from(count_label.as_str()).width()
+        > usize::from(area.width.saturating_sub(3))
+    {
+        format!("{count} CP · {grapheme_count} GC")
+    } else {
+        count_label
+    };
+    let content =
+        workspace::render_primary_heading(frame, area, title, Some(&count_label), color_theme);
     let position_width = count.to_string().len();
     let grapheme_width = grapheme_count.to_string().len();
     let gutter_width = (grapheme_width as u16 + 3).min(content.width);
@@ -64,28 +96,13 @@ pub fn render(
         .clone()
         .map(|index| {
             let point = &sequence.code_points()[index];
-            let grapheme = &sequence.analysis().graphemes()[point.grapheme_index()];
-            let range = grapheme.code_point_range();
-            let boundary = match (index == range.start, index + 1 == range.end) {
-                (true, true) => "•",
-                (true, false) => "┌",
-                (false, true) => "└",
-                (false, false) => "│",
-            };
-            // Repeat the cluster number at the viewport's top, but keep the
-            // actual boundary symbol when its beginning is scrolled offscreen.
-            let grapheme_label = if index == range.start || index == visible.start {
-                (point.grapheme_index() + 1).to_string()
-            } else {
-                String::new()
-            };
-            let gutter_row = Line::styled(
-                format!("{grapheme_label:>grapheme_width$} {boundary} "),
-                if point.grapheme_index() == selected_grapheme {
-                    color_theme.accent_style()
-                } else {
-                    Style::new().fg(color_theme.muted)
-                },
+            let gutter_row = grapheme_gutter(
+                sequence.analysis(),
+                index,
+                visible.start,
+                &(selected_grapheme..selected_grapheme + 1),
+                grapheme_width,
+                color_theme,
             );
             let code_point = point.code_point();
             let selected = sequence.selected_index() == index;
@@ -110,8 +127,41 @@ pub fn render(
     frame.render_widget(Paragraph::new(rows), body);
     frame.render_widget(
         ViewportScrollbar::new(count, visible).style(color_theme.border_style()),
-        scrollbar::area_for_primary(frame.area(), layout.navigator, content),
+        scrollbar::area_for_primary(frame.area(), area, content),
     );
+}
+
+pub(super) fn grapheme_gutter(
+    analysis: &TextAnalysis,
+    index: usize,
+    viewport_start: usize,
+    marked: &Range<usize>,
+    width: usize,
+    theme: &ColorTheme,
+) -> Line<'static> {
+    let point = &analysis.code_points()[index];
+    let range = analysis.graphemes()[point.grapheme_index()].code_point_range();
+    let boundary = match (index == range.start, index + 1 == range.end) {
+        (true, true) => "•",
+        (true, false) => "┌",
+        (false, true) => "└",
+        (false, false) => "│",
+    };
+    // Repeat the cluster number at the viewport's top without inventing a
+    // cluster boundary when its beginning has scrolled offscreen.
+    let label = if index == range.start || index == viewport_start {
+        (point.grapheme_index() + 1).to_string()
+    } else {
+        String::new()
+    };
+    Line::styled(
+        format!("{label:>width$} {boundary} "),
+        if marked.contains(&point.grapheme_index()) {
+            theme.accent_style()
+        } else {
+            Style::new().fg(theme.muted)
+        },
+    )
 }
 
 #[cfg(test)]

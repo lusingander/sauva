@@ -28,6 +28,12 @@ pub struct BrowserLayout {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct NormalizationResultLayout {
+    pub original: Rect,
+    pub result: Rect,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct SearchLayout {
     pub input: Rect,
     pub results: Rect,
@@ -106,6 +112,15 @@ pub fn sequence(area: Rect) -> BrowserLayout {
     flexible_primary_and_auxiliary(area)
 }
 
+pub fn normalization_result(area: Rect, original_width: u16) -> NormalizationResultLayout {
+    let [original, result] = if area.width >= original_width.saturating_add(32) {
+        Layout::horizontal([Constraint::Length(original_width), Constraint::Min(32)]).areas(area)
+    } else {
+        Layout::vertical([Constraint::Length(area.height.min(5)), Constraint::Min(1)]).areas(area)
+    };
+    NormalizationResultLayout { original, result }
+}
+
 fn flexible_primary_and_auxiliary(area: Rect) -> BrowserLayout {
     if area.width < SPLIT_MINIMUM_WIDTH {
         return BrowserLayout {
@@ -178,6 +193,16 @@ mod tests {
     use rstest::rstest;
 
     use super::*;
+
+    #[test]
+    fn normalization_result_keeps_both_lists_readable_at_narrow_widths() {
+        let panes = normalization_result(Rect::new(0, 2, 60, 13), 24);
+        assert_eq!(panes.original, Rect::new(0, 2, 24, 13));
+        assert_eq!(panes.result, Rect::new(24, 2, 36, 13));
+        let stacked = normalization_result(Rect::new(0, 2, 60, 13), 29);
+        assert_eq!(stacked.original, Rect::new(0, 2, 60, 5));
+        assert_eq!(stacked.result, Rect::new(0, 7, 60, 8));
+    }
 
     #[rstest]
     #[case(

@@ -3,6 +3,7 @@ use tui_input::InputRequest;
 use crate::browser::{BrowseLevel, BrowseMove, BrowseState, BrowseTarget};
 use crate::help::{HelpMove, HelpState};
 use crate::inspector::{InspectorField, InspectorFieldId, InspectorMove, InspectorState};
+use crate::normalization::{NormalizationMove, NormalizationState};
 use crate::preview::{GlyphPreviewState, GlyphPreviewUpdate};
 use crate::search::{SearchMove, SearchState};
 use crate::sequence::{SequenceMove, SequenceState};
@@ -40,8 +41,15 @@ pub enum Action {
     ResizeSearchViewport(usize),
     MoveSequence(SequenceMove),
     ResizeSequenceViewport(usize),
+    ResizeNormalizationOriginalViewport(usize),
     InspectSequenceCodePoint,
     ReturnToSequence,
+    OpenNormalization,
+    MoveNormalization(NormalizationMove),
+    CloseNormalization,
+    InspectNormalizationResult,
+    ReturnToNormalization,
+    CopyNormalizationResult,
     UpdateGlyphPreview(GlyphPreviewUpdate),
     ShowFooterStatus(FooterStatus),
 }
@@ -55,6 +63,7 @@ impl Action {
                 | Self::ResizeBrowserViewport(_)
                 | Self::ResizeSearchViewport(_)
                 | Self::ResizeSequenceViewport(_)
+                | Self::ResizeNormalizationOriginalViewport(_)
                 | Self::UpdateGlyphPreview(_)
                 | Self::ShowFooterStatus(_)
         )
@@ -73,6 +82,7 @@ pub enum View {
     Browser,
     Search,
     Sequence,
+    Normalization,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -113,23 +123,18 @@ impl FooterStatus {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ClipboardRequest {
-    field_id: InspectorFieldId,
     label: &'static str,
-    code_point: CodePoint,
+    success_message: String,
     value: Option<String>,
 }
 
 impl ClipboardRequest {
-    pub const fn field_id(&self) -> InspectorFieldId {
-        self.field_id
+    pub fn success_message(&self) -> &str {
+        &self.success_message
     }
 
     pub const fn label(&self) -> &'static str {
         self.label
-    }
-
-    pub const fn code_point(&self) -> CodePoint {
-        self.code_point
     }
 
     pub fn value(&self) -> Option<&str> {
@@ -146,6 +151,8 @@ pub struct AppState {
     browse: Option<BrowseState>,
     search: Option<SearchState>,
     sequence: Option<SequenceState>,
+    normalization: Option<NormalizationState>,
+    showing_normalization_result: bool,
     help: HelpState,
     glyph_preview: GlyphPreviewState,
     clipboard_request: Option<ClipboardRequest>,
@@ -163,6 +170,8 @@ impl AppState {
             browse: None,
             search: None,
             sequence: None,
+            normalization: None,
+            showing_normalization_result: false,
             help: HelpState::new(),
             glyph_preview: GlyphPreviewState::new(),
             clipboard_request: None,
@@ -210,7 +219,35 @@ impl AppState {
     }
 
     pub fn sequence(&self) -> Option<&SequenceState> {
+        if self.showing_normalization_result {
+            self.normalization
+                .as_ref()
+                .map(|state| &state.comparison().result)
+        } else {
+            self.sequence.as_ref()
+        }
+    }
+
+    pub fn original_sequence(&self) -> Option<&SequenceState> {
         self.sequence.as_ref()
+    }
+
+    fn sequence_mut(&mut self) -> Option<&mut SequenceState> {
+        if self.showing_normalization_result {
+            self.normalization
+                .as_mut()
+                .map(|state| &mut state.comparison_mut().result)
+        } else {
+            self.sequence.as_mut()
+        }
+    }
+
+    pub const fn showing_normalization_result(&self) -> bool {
+        self.showing_normalization_result
+    }
+
+    pub fn normalization(&self) -> Option<&NormalizationState> {
+        self.normalization.as_ref()
     }
 
     pub const fn help(&self) -> HelpState {
@@ -244,7 +281,8 @@ impl AppState {
                 .as_ref()
                 .and_then(SearchState::selected_result)
                 .map(|result| result.code_point()),
-            View::Sequence => self.sequence.as_ref().map(SequenceState::selected),
+            View::Sequence => self.sequence().map(SequenceState::selected),
+            View::Normalization => None,
         }
     }
 }
@@ -291,9 +329,12 @@ pub fn update(state: &mut AppState, action: Action) {
                 .into_iter()
                 .nth(state.inspector.selected_index())
                 .map(|field| ClipboardRequest {
-                    field_id: field.id(),
                     label: field.label(),
-                    code_point: state.selected,
+                    success_message: if field.id() == InspectorFieldId::Character {
+                        format!("Copied Character: {}", state.selected)
+                    } else {
+                        format!("Copied {}", field.label())
+                    },
                     value: field.copy_value().map(str::to_owned),
                 });
         }
@@ -405,22 +446,32 @@ pub fn update(state: &mut AppState, action: Action) {
         Action::MoveSequence(movement) if state.view == View::Sequence => {
             let previous_preview = state.preview_code_point();
             state
-                .sequence
-                .as_mut()
+                .sequence_mut()
                 .expect("the sequence view always has sequence state")
                 .move_selection(movement);
+            follow_normalization_selection(state);
             refresh_preview_for_change(state, previous_preview);
         }
         Action::MoveSequence(_) => {}
         Action::ResizeSequenceViewport(height) => {
-            if let Some(sequence) = state.sequence.as_mut() {
+            if let Some(sequence) = state.sequence_mut() {
                 sequence.resize_viewport(height);
             }
         }
+        Action::ResizeNormalizationOriginalViewport(height)
+            if state.view == View::Sequence && state.showing_normalization_result =>
+        {
+            state
+                .normalization
+                .as_mut()
+                .unwrap()
+                .comparison_mut()
+                .resize_original_viewport(state.sequence.as_ref().unwrap().analysis(), height);
+        }
+        Action::ResizeNormalizationOriginalViewport(_) => {}
         Action::InspectSequenceCodePoint if state.view == View::Sequence => {
             let selected = state
-                .sequence
-                .as_ref()
+                .sequence()
                 .expect("the sequence view always has sequence state")
                 .selected();
             select_code_point(state, selected);
@@ -433,6 +484,64 @@ pub fn update(state: &mut AppState, action: Action) {
             refresh_preview_for_change(state, previous_preview);
         }
         Action::ReturnToSequence => {}
+        Action::OpenNormalization
+            if state.view == View::Sequence && !state.showing_normalization_result =>
+        {
+            let previous_preview = state.preview_code_point();
+            state.normalization.get_or_insert_with(|| {
+                NormalizationState::new(state.sequence.as_ref().unwrap().analysis())
+            });
+            state.view = View::Normalization;
+            refresh_preview_for_change(state, previous_preview);
+        }
+        Action::OpenNormalization => {}
+        Action::MoveNormalization(movement) if state.view == View::Normalization => {
+            state
+                .normalization
+                .as_mut()
+                .unwrap()
+                .move_selection(movement, state.sequence.as_ref().unwrap().analysis());
+        }
+        Action::MoveNormalization(_) => {}
+        Action::CloseNormalization if state.view == View::Normalization => {
+            let previous_preview = state.preview_code_point();
+            state.view = View::Sequence;
+            refresh_preview_for_change(state, previous_preview);
+        }
+        Action::CloseNormalization => {}
+        Action::InspectNormalizationResult if state.view == View::Normalization => {
+            let previous_preview = state.preview_code_point();
+            state.showing_normalization_result = true;
+            state.view = View::Sequence;
+            follow_normalization_selection(state);
+            refresh_preview_for_change(state, previous_preview);
+        }
+        Action::InspectNormalizationResult => {}
+        Action::ReturnToNormalization
+            if state.view == View::Sequence && state.showing_normalization_result =>
+        {
+            let previous_preview = state.preview_code_point();
+            state.showing_normalization_result = false;
+            state.view = View::Normalization;
+            refresh_preview_for_change(state, previous_preview);
+        }
+        Action::ReturnToNormalization => {}
+        Action::CopyNormalizationResult if state.view == View::Normalization => {
+            let normalization = state.normalization.as_ref().unwrap();
+            state.clipboard_request = Some(ClipboardRequest {
+                label: normalization.form().label(),
+                success_message: format!("Copied {} Result", normalization.form().label()),
+                value: Some(
+                    normalization
+                        .comparison()
+                        .result
+                        .analysis()
+                        .source()
+                        .to_owned(),
+                ),
+            });
+        }
+        Action::CopyNormalizationResult => {}
         Action::UpdateGlyphPreview(update) => state.glyph_preview.apply(update),
         Action::ShowFooterStatus(status) => state.footer_status = Some(status),
     }
@@ -445,6 +554,17 @@ fn select_code_point(state: &mut AppState, code_point: CodePoint) {
     }
 }
 
+fn follow_normalization_selection(state: &mut AppState) {
+    if state.showing_normalization_result {
+        state
+            .normalization
+            .as_mut()
+            .unwrap()
+            .comparison_mut()
+            .follow_selection(state.sequence.as_ref().unwrap().analysis());
+    }
+}
+
 fn refresh_preview_for_change(state: &mut AppState, previous: Option<CodePoint>) {
     if state.preview_code_point() != previous {
         state.glyph_preview.selection_changed();
@@ -454,6 +574,208 @@ fn refresh_preview_for_change(state: &mut AppState, previous: Option<CodePoint>)
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn normalization_reference_follows_result_without_moving_the_input_cursor_or_viewport() {
+        let mut state = AppState::with_sequence("ﬃ".repeat(50));
+        update(&mut state, Action::ResizeSequenceViewport(4));
+        for _ in 0..10 {
+            update(&mut state, Action::MoveSequence(SequenceMove::Next));
+        }
+        let original_index = state.sequence().unwrap().selected_index();
+        let original_visible = state.sequence().unwrap().visible_range();
+        update(&mut state, Action::OpenNormalization);
+        for _ in 0..2 {
+            update(
+                &mut state,
+                Action::MoveNormalization(NormalizationMove::Next),
+            );
+        }
+        update(&mut state, Action::InspectNormalizationResult);
+        update(&mut state, Action::ResizeNormalizationOriginalViewport(4));
+        update(&mut state, Action::ResizeSequenceViewport(4));
+        let original = state.original_sequence().unwrap().analysis();
+        let comparison = state.normalization().unwrap().comparison();
+        assert_eq!(comparison.original_selection(original), 0..1);
+        assert_eq!(comparison.original_visible_range(original), 0..4);
+        update(&mut state, Action::MoveSequence(SequenceMove::Last));
+        let original = state.original_sequence().unwrap().analysis();
+        let comparison = state.normalization().unwrap().comparison();
+        assert_eq!(comparison.original_selection(original), 49..50);
+        assert_eq!(comparison.original_visible_range(original), 46..50);
+        assert_eq!(
+            state.original_sequence().unwrap().selected_index(),
+            original_index
+        );
+        assert_eq!(
+            state.original_sequence().unwrap().visible_range(),
+            original_visible
+        );
+        update(&mut state, Action::ReturnToNormalization);
+        update(&mut state, Action::CloseNormalization);
+        assert_eq!(state.sequence().unwrap().selected_index(), original_index);
+        assert_eq!(state.sequence().unwrap().visible_range(), original_visible);
+    }
+
+    #[test]
+    fn reference_highlights_all_source_members_of_a_composed_grapheme() {
+        let mut state = AppState::with_sequence("A\u{0301}B".to_owned());
+        update(&mut state, Action::OpenNormalization);
+        update(&mut state, Action::InspectNormalizationResult);
+        update(&mut state, Action::ResizeNormalizationOriginalViewport(2));
+        let original = state.original_sequence().unwrap().analysis();
+        let comparison = state.normalization().unwrap().comparison();
+        assert_eq!(comparison.original_selection(original), 0..2);
+        assert_eq!(comparison.original_visible_range(original), 0..2);
+        update(&mut state, Action::MoveSequence(SequenceMove::Next));
+        let original = state.original_sequence().unwrap().analysis();
+        let comparison = state.normalization().unwrap().comparison();
+        assert_eq!(comparison.original_selection(original), 2..3);
+        assert_eq!(comparison.original_visible_range(original), 1..3);
+    }
+
+    #[test]
+    fn normalization_preserves_the_source_selection_and_has_no_glyph_target() {
+        let mut state = AppState::with_sequence("A\u{0301} ①👩‍💻".to_owned());
+        update(&mut state, Action::MoveSequence(SequenceMove::Last));
+        let original = state.sequence().unwrap().analysis().clone();
+        update(&mut state, Action::OpenNormalization);
+        assert_eq!(state.view(), View::Normalization);
+        assert_eq!(state.preview_code_point(), None);
+        update(
+            &mut state,
+            Action::MoveNormalization(NormalizationMove::Last),
+        );
+        update(&mut state, Action::MoveSequence(SequenceMove::First));
+        assert_eq!(state.sequence().unwrap().selected_index(), 6);
+        update(&mut state, Action::CloseNormalization);
+        assert_eq!(state.view(), View::Sequence);
+        assert_eq!(state.sequence().unwrap().analysis(), &original);
+        assert_eq!(state.sequence().unwrap().selected_index(), 6);
+        update(&mut state, Action::OpenNormalization);
+        assert_eq!(
+            state.normalization().unwrap().form(),
+            crate::unicode::text::NormalizationForm::Nfkd
+        );
+    }
+
+    #[test]
+    fn normalization_actions_are_scoped_to_their_views() {
+        let mut state = AppState::new();
+        update(&mut state, Action::OpenNormalization);
+        update(
+            &mut state,
+            Action::MoveNormalization(NormalizationMove::Next),
+        );
+        update(&mut state, Action::CloseNormalization);
+        update(&mut state, Action::InspectNormalizationResult);
+        update(&mut state, Action::ReturnToNormalization);
+        update(&mut state, Action::CopyNormalizationResult);
+        assert_eq!(state.view(), View::Inspector);
+        assert!(state.normalization().is_none());
+        assert!(state.take_clipboard_request().is_none());
+    }
+
+    #[test]
+    fn normalization_result_navigation_restores_both_cursors_and_the_form() {
+        let mut state = AppState::with_sequence("A\u{0301} ①👩‍💻".to_owned());
+        update(&mut state, Action::MoveSequence(SequenceMove::Last));
+        update(&mut state, Action::OpenNormalization);
+        for _ in 0..2 {
+            update(
+                &mut state,
+                Action::MoveNormalization(NormalizationMove::Next),
+            );
+        }
+        update(&mut state, Action::InspectNormalizationResult);
+        assert!(state.showing_normalization_result());
+        assert_eq!(state.sequence().unwrap().analysis().source(), "Á 1👩‍💻");
+        update(&mut state, Action::ResizeSequenceViewport(2));
+        update(&mut state, Action::MoveSequence(SequenceMove::Last));
+        update(&mut state, Action::InspectSequenceCodePoint);
+        assert_eq!(state.selected().value(), 0x1f4bb);
+        update(&mut state, Action::MoveCodePoint(CodePointMove::Previous));
+        update(&mut state, Action::ReturnToSequence);
+        assert_eq!(state.preview_code_point().unwrap().value(), 0x1f4bb);
+        assert_eq!(state.sequence().unwrap().selected_index(), 5);
+        assert_eq!(state.sequence().unwrap().visible_range(), 4..6);
+        update(&mut state, Action::OpenNormalization);
+        assert_eq!(state.view(), View::Sequence); // Do not normalize a derived result again.
+        update(&mut state, Action::ReturnToNormalization);
+        assert_eq!(state.view(), View::Normalization);
+        assert!(!state.showing_normalization_result());
+        assert_eq!(state.sequence().unwrap().selected_index(), 6);
+        update(&mut state, Action::InspectNormalizationResult);
+        assert_eq!(state.sequence().unwrap().selected_index(), 5);
+        update(&mut state, Action::ReturnToNormalization);
+        update(&mut state, Action::CloseNormalization);
+        assert_eq!(
+            state.sequence().unwrap().analysis().source(),
+            "A\u{0301} ①👩‍💻"
+        );
+        assert_eq!(state.sequence().unwrap().selected_index(), 6);
+    }
+
+    #[test]
+    fn each_normalization_form_keeps_its_own_result_selection() {
+        let mut state = AppState::with_sequence("A\u{0301} ①".to_owned());
+        update(&mut state, Action::OpenNormalization);
+        update(&mut state, Action::InspectNormalizationResult);
+        update(&mut state, Action::MoveSequence(SequenceMove::Last));
+        update(&mut state, Action::ReturnToNormalization);
+        update(
+            &mut state,
+            Action::MoveNormalization(NormalizationMove::Next),
+        );
+        update(&mut state, Action::InspectNormalizationResult);
+        assert_eq!(state.sequence().unwrap().selected_index(), 0);
+        update(&mut state, Action::MoveSequence(SequenceMove::Last));
+        assert_eq!(state.sequence().unwrap().selected_index(), 3);
+        update(&mut state, Action::ReturnToNormalization);
+        update(
+            &mut state,
+            Action::MoveNormalization(NormalizationMove::Previous),
+        );
+        update(&mut state, Action::InspectNormalizationResult);
+        assert_eq!(state.sequence().unwrap().selected_index(), 2);
+    }
+
+    #[test]
+    fn inspecting_a_single_code_point_result_stays_in_sequence_navigation() {
+        let mut state = AppState::with_sequence("A\u{0301}".to_owned());
+        update(&mut state, Action::OpenNormalization);
+        update(&mut state, Action::InspectNormalizationResult);
+        assert_eq!(state.sequence().unwrap().code_points().len(), 1);
+        assert_eq!(state.preview_code_point().unwrap().value(), 0x00c1);
+        update(&mut state, Action::InspectSequenceCodePoint);
+        update(&mut state, Action::ReturnToSequence);
+        update(&mut state, Action::ReturnToNormalization);
+        assert_eq!(state.view(), View::Normalization);
+    }
+
+    #[test]
+    fn copy_requests_preserve_exact_normalized_and_unchanged_text() {
+        let source = "e\u{0301}\t\r\n\u{1b}\u{202e}①👩‍💻";
+        let mut state = AppState::with_sequence(source.to_owned());
+        update(&mut state, Action::OpenNormalization);
+        for form in crate::unicode::text::NormalizationForm::ALL {
+            update(&mut state, Action::CopyNormalizationResult);
+            let request = state.take_clipboard_request().unwrap();
+            assert_eq!(
+                request.value(),
+                Some(state.sequence().unwrap().analysis().normalized_text(form))
+            );
+            assert_eq!(
+                request.success_message(),
+                format!("Copied {} Result", form.label())
+            );
+            assert!(state.take_clipboard_request().is_none());
+            update(
+                &mut state,
+                Action::MoveNormalization(NormalizationMove::Next),
+            );
+        }
+    }
 
     #[test]
     fn starts_running() {

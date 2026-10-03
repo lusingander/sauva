@@ -32,7 +32,7 @@ size: 100x30  cursor: hidden
                                                             │
                                                             │
                                                             │
- k/j Move  g/G Ends  Enter Inspect  q Quit                                                  F1 Help
+ k/j Move  g/G Ends  Enter Inspect  n Normalize  q Quit                                     F1 Help
 
 styles:
 0: 0-5 fg=6 bold; 86-99 fg=8
@@ -63,4 +63,4 @@ styles:
 26: 60 fg=8
 27: 60 fg=8
 28: 60 fg=8
-29: 1-3 fg=3; 4-8 fg=8; 11-13 fg=3; 14-18 fg=8; 21-25 fg=3; 26-33 fg=8; 36 fg=3; 37-41 fg=8; 92-93 fg=3; 94-98 fg=8
+29: 1-3 fg=3; 4-8 fg=8; 11-13 fg=3; 14-18 fg=8; 21-25 fg=3; 26-33 fg=8; 36 fg=3; 37-46 fg=8; 49 fg=3; 50-54 fg=8; 92-93 fg=3; 94-98 fg=8

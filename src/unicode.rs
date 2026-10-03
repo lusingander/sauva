@@ -1,19 +1,13 @@
 mod code_point;
 mod database;
 mod decomposition;
+pub mod diff;
 mod display;
 mod encoding;
 mod generated;
 mod notation;
 pub mod plane;
 mod properties;
-#[cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "Grapheme and normalization metadata will be used by the Sequence Analyzer UI."
-    )
-)]
 pub mod text;
 
 pub use code_point::{CodePoint, CodePointStructure, InvalidCodePoint};

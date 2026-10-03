@@ -1,0 +1,20 @@
+---
+source: src/ui/render.rs
+expression: "render_to_text(&state, MINIMUM_SIZE.0, MINIMUM_SIZE.1)"
+---
+ sauva / Sequence / Normalization                       NFC
+
+ Original                           7 CP · 12 Bytes · 6 GC
+  é<TAB><CR><LF><U+001B><U+202E><U+FE0F>
+  U+00E9 U+0009 U+000D U+000A U+001B U+202E U+FE0F
+
+   Form  vs Original                         CP  Bytes  GC
+   NFC   Unchanged                            7     12   6
+   NFD   Changed                              8     13   6
+   NFKC  Unchanged                            7     12   6
+   NFKD  Changed                              8     13   6
+
+ NFC Result                               Same as Original
+  Same text and code points as Original
+
+ k/j Form  Enter Inspect  y Copy  BS/Esc Sequence   F1 Help

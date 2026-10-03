@@ -61,9 +61,7 @@ Options:
 
 #### Specifying `INPUT`
 
-One character opens its code point directly in the Inspector. A sequence of characters opens the Sequence view, where each constituent code point can be selected and inspected.
-
-The Sequence view groups rows by extended grapheme cluster and shows cluster numbers and boundaries.
+A single character can be inspected directly. Text sequences can be analyzed by code point and grapheme cluster, and compared with their NFC, NFD, NFKC, and NFKD normalized forms.
 
 ```
 sauva あ
@@ -87,7 +85,7 @@ sauva -t 41
 sauva --text U+2192
 ```
 
-`--text` still opens the Inspector directly when its value contains only one code point. Empty text is rejected.
+Empty text is rejected.
 
 #### `-g, --graphics <MODE>`
 
@@ -136,6 +134,10 @@ link = "blue"
 fg = "black"
 bg = "cyan"
 
+[color.difference]
+fg = "black"
+bg = "yellow"
+
 [color.status]
 info = "green"
 warning = "yellow"
@@ -166,12 +168,12 @@ These are the main built-in controls. The available controls depend on the curre
 | <kbd>F1</kbd> | Open or close contextual help |
 | <kbd>Ctrl+c</kbd> | Quit from any view |
 | <kbd>q</kbd> | Quit from the Inspector, Sequence, or Browse view |
-| <kbd>Esc</kbd> | Cancel Search or Browse; quit from the Inspector or Sequence view |
+| <kbd>Esc</kbd> | Cancel or go back; quit from the Inspector or input Sequence |
 | <kbd>h</kbd> <kbd>j</kbd> <kbd>k</kbd> <kbd>l</kbd> or arrow keys | Move the selection |
 | <kbd>/</kbd> | Search by character, code point, Unicode name, or formal name alias |
 | <kbd>p</kbd> <kbd>r</kbd> <kbd>b</kbd> <kbd>c</kbd> | Browse planes, ranges, blocks, or code points |
 | <kbd>Enter</kbd> | Open the selected item; inspect a code point from Sequence or Browse |
-| <kbd>Backspace</kbd> | Return to the previous Browse screen, or return from Inspector to the input Sequence |
+| <kbd>Backspace</kbd> | Go back in Browse; return from Inspector to its Sequence |
 | <kbd>y</kbd> | Copy the selected Inspector value |
 
 Press <kbd>F1</kbd> to view all controls for the current screen.
@@ -242,7 +244,7 @@ For each code point, sauva tries configured normal fonts, the system default tex
 
 ### Sequence
 
-<img src="./img/sequence.png" width="400" alt="Sequence"> <img src="./img/inspector-sequence.png" width="400" alt="Sequence inspector view">
+<img src="./img/sequence.png" width="400" alt="Sequence"> <img src="./img/sequence-inspector.png" width="400" alt="Sequence inspector view">  <img src="./img/sequence-normalization.png" width="400" alt="Sequence normalization">  <img src="./img/sequence-normalization-result.png" width="400" alt="Sequence normalization result">
 
 ## License
 

@@ -11,6 +11,7 @@ mod image;
 mod input;
 mod inspector;
 mod keybindings;
+mod normalization;
 mod preview;
 mod search;
 mod sequence;

@@ -311,6 +311,7 @@ mod tests {
         for table in [
             "[color]",
             "[color.selection]",
+            "[color.difference]",
             "[color.status]",
             "[glyph_preview]",
             "[ui]",
@@ -318,6 +319,8 @@ mod tests {
             "[keybindings.inspector]",
             "[keybindings.search]",
             "[keybindings.sequence]",
+            "[keybindings.normalization]",
+            "[keybindings.normalization_result]",
             "[keybindings.browse_plane]",
             "[keybindings.browse_range]",
             "[keybindings.browse_block]",

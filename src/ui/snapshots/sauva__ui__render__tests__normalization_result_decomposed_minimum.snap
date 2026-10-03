@@ -1,0 +1,20 @@
+---
+source: src/ui/render.rs
+expression: "render_to_text(&state, 60, 16)"
+---
+ sauva / Sequence / NFD Result                 2/4 · U+0301
+
+ Original         2 CP   NFD Result            4 CP · 2 GC
+  1 • 1  U+00E9           1 ┌   1  U+0065    e — LATIN SMA
+  2 • 2  U+00E9             └   2  U+0301    ◌́ — COMBINING
+                          2 ┌   3  U+0065    e — LATIN SMA
+                            └   4  U+0301    ◌́ — COMBINING
+
+
+
+
+
+
+
+
+ k/j Move  Enter Inspect  BS/Esc Back  q Quit       F1 Help

@@ -23,6 +23,23 @@ impl SelectionColors {
     }
 }
 
+#[optional(derives = [Debug, Deserialize], attrs = [serde(deny_unknown_fields)])]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, SmartDefault)]
+pub struct DifferenceColors {
+    #[default(Color::Black)]
+    #[serde(serialize_with = "serialize_color")]
+    pub fg: Color,
+    #[default(Color::Yellow)]
+    #[serde(serialize_with = "serialize_color")]
+    pub bg: Color,
+}
+
+impl DifferenceColors {
+    pub fn style(self) -> Style {
+        Style::new().fg(self.fg).bg(self.bg)
+    }
+}
+
 #[optional(
     derives = [Debug, Deserialize],
     attrs = [serde(deny_unknown_fields)]
@@ -73,6 +90,9 @@ pub struct ColorTheme {
     pub link: Color,
     #[nested]
     pub selection: SelectionColors,
+    /// Background emphasis for changed normalization spans, independent of the cursor.
+    #[nested]
+    pub difference: DifferenceColors,
     #[nested]
     pub status: StatusColors,
 }
@@ -128,6 +148,10 @@ impl ColorTheme {
         } else {
             Style::new().fg(self.r#match).add_modifier(Modifier::BOLD)
         }
+    }
+
+    pub fn difference_style(self) -> Style {
+        self.difference.style().add_modifier(Modifier::UNDERLINED)
     }
 }
 
@@ -188,6 +212,15 @@ mod tests {
             theme.match_style(true),
             theme.selection.style().add_modifier(Modifier::BOLD)
         );
+    }
+
+    #[test]
+    fn difference_colors_keep_their_own_defaults_when_partially_configured() {
+        let config: OptionalColorTheme = toml::from_str("[difference]\nfg = \"white\"").unwrap();
+        let theme: ColorTheme = config.into();
+        assert_eq!(theme.difference.fg, Color::White);
+        assert_eq!(theme.difference.bg, Color::Yellow);
+        assert_eq!(theme.selection.bg, Color::Cyan);
     }
 
     #[test]

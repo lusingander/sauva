@@ -9,6 +9,7 @@ use crate::{
     help::HelpMove,
     inspector::InspectorMove,
     keybindings::{Command, Context, KeyChord, ResolvedKeymap},
+    normalization::NormalizationMove,
     search::SearchMove,
     sequence::SequenceMove,
 };
@@ -59,7 +60,14 @@ pub fn context_for_state(state: &AppState) -> Context {
     match state.view() {
         View::Inspector => Context::Inspector,
         View::Search => Context::Search,
-        View::Sequence => Context::Sequence,
+        View::Sequence => {
+            if state.showing_normalization_result() {
+                Context::NormalizationResult
+            } else {
+                Context::Sequence
+            }
+        }
+        View::Normalization => Context::Normalization,
         View::Browser => match state
             .browse()
             .expect("the browser view always has browse state")
@@ -112,6 +120,20 @@ fn action_for_command(context: Context, command: Command) -> Option<Action> {
         (X::Sequence, C::First) => Some(Action::MoveSequence(SequenceMove::First)),
         (X::Sequence, C::Last) => Some(Action::MoveSequence(SequenceMove::Last)),
         (X::Sequence, C::Activate) => Some(Action::InspectSequenceCodePoint),
+        (X::Sequence, C::Normalize) => Some(Action::OpenNormalization),
+        (X::Normalization, C::MoveUp) => Some(Action::MoveNormalization(NormalizationMove::Previous)),
+        (X::Normalization, C::MoveDown) => Some(Action::MoveNormalization(NormalizationMove::Next)),
+        (X::Normalization, C::First) => Some(Action::MoveNormalization(NormalizationMove::First)),
+        (X::Normalization, C::Last) => Some(Action::MoveNormalization(NormalizationMove::Last)),
+        (X::Normalization, C::Back | C::Close) => Some(Action::CloseNormalization),
+        (X::Normalization, C::Activate) => Some(Action::InspectNormalizationResult),
+        (X::Normalization, C::CopyValue) => Some(Action::CopyNormalizationResult),
+        (X::NormalizationResult, C::MoveUp) => Some(Action::MoveSequence(SequenceMove::Previous)),
+        (X::NormalizationResult, C::MoveDown) => Some(Action::MoveSequence(SequenceMove::Next)),
+        (X::NormalizationResult, C::First) => Some(Action::MoveSequence(SequenceMove::First)),
+        (X::NormalizationResult, C::Last) => Some(Action::MoveSequence(SequenceMove::Last)),
+        (X::NormalizationResult, C::Activate) => Some(Action::InspectSequenceCodePoint),
+        (X::NormalizationResult, C::Back | C::Close) => Some(Action::ReturnToNormalization),
         (X::BrowsePlane | X::BrowseRange | X::BrowseBlock | X::BrowseCodePoints, C::MoveUp) => Some(Action::MoveBrowser(BrowseMove::Up)),
         (X::BrowsePlane | X::BrowseRange | X::BrowseBlock | X::BrowseCodePoints, C::MoveDown) => Some(Action::MoveBrowser(BrowseMove::Down)),
         (X::BrowsePlane | X::BrowseRange | X::BrowseBlock | X::BrowseCodePoints, C::First) => Some(Action::MoveBrowser(BrowseMove::First)),
@@ -136,6 +158,55 @@ mod tests {
 
     fn action_for_key(state: &AppState, key: KeyEvent) -> Option<Action> {
         super::action_for_key(state, key, &ResolvedKeymap::default())
+    }
+
+    #[test]
+    fn normalization_keys_follow_the_current_navigation_context() {
+        let mut state = AppState::with_sequence("A\u{0301}".to_owned());
+        let key = |code| KeyEvent::new(code, KeyModifiers::NONE);
+        assert_eq!(
+            action_for_key(&state, key(KeyCode::Char('n'))),
+            Some(Action::OpenNormalization)
+        );
+        crate::app::update(&mut state, Action::OpenNormalization);
+        assert_eq!(
+            action_for_key(&state, key(KeyCode::Char('j'))),
+            Some(Action::MoveNormalization(NormalizationMove::Next))
+        );
+        assert_eq!(
+            action_for_key(&state, key(KeyCode::Enter)),
+            Some(Action::InspectNormalizationResult)
+        );
+        assert_eq!(
+            action_for_key(&state, key(KeyCode::Char('y'))),
+            Some(Action::CopyNormalizationResult)
+        );
+        assert_eq!(
+            action_for_key(
+                &state,
+                KeyEvent::new_with_kind(
+                    KeyCode::Char('y'),
+                    KeyModifiers::NONE,
+                    KeyEventKind::Repeat
+                )
+            ),
+            None
+        );
+        crate::app::update(&mut state, Action::InspectNormalizationResult);
+        assert_eq!(context_for_state(&state), Context::NormalizationResult);
+        assert_eq!(
+            action_for_key(&state, key(KeyCode::Esc)),
+            Some(Action::ReturnToNormalization)
+        );
+        assert_eq!(
+            action_for_key(&state, key(KeyCode::Backspace)),
+            Some(Action::ReturnToNormalization)
+        );
+        assert_eq!(action_for_key(&state, key(KeyCode::Char('n'))), None);
+        assert_eq!(
+            action_for_key(&state, key(KeyCode::Enter)),
+            Some(Action::InspectSequenceCodePoint)
+        );
     }
 
     #[test]

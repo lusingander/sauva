@@ -13,7 +13,7 @@ use crate::{
     ui::{
         browser, glyph_preview, help, inspector,
         layout::{MINIMUM_SIZE, calculate},
-        search, sequence,
+        normalization, search, sequence,
         settings::UiSettings,
         theme::ColorTheme,
     },
@@ -48,6 +48,9 @@ pub fn render(
             View::Browser => browser::render(frame, layout.main, state, color_theme, ui),
             View::Search => search::render(frame, layout.main, state, color_theme, ui),
             View::Sequence => sequence::render(frame, layout.main, state, color_theme, ui),
+            View::Normalization => {
+                normalization::render(frame, layout.main, state, color_theme, ui)
+            }
         }
     }
     render_footer(frame, layout.footer, state, keymap, color_theme);
@@ -65,13 +68,21 @@ fn render_header(frame: &mut Frame, area: Rect, state: &AppState, color_theme: &
     } else {
         header_status(state)
     };
+    let status_width = (Line::from(status.as_str()).width() + 1) as u16;
+    let left = Rect::new(
+        area.x,
+        area.y,
+        area.width.saturating_sub(status_width + 1),
+        area.height,
+    );
+    let location = compact_location(&location, usize::from(left.width.saturating_sub(9)));
 
     frame.render_widget(
         Paragraph::new(Line::from(vec![
             Span::styled(" sauva", color_theme.accent_style()),
             Span::styled(format!(" / {location}"), color_theme.base_style()),
         ])),
-        area,
+        left,
     );
     frame.render_widget(
         Paragraph::new(Line::styled(
@@ -89,7 +100,15 @@ fn header_location(state: &AppState, context: Context) -> String {
             || "Inspector".to_owned(),
             |sequence| {
                 format!(
-                    "Sequence {}/{} / Inspector",
+                    "{} {}/{} / Inspector",
+                    if state.showing_normalization_result() {
+                        format!(
+                            "Sequence / {} Result",
+                            state.normalization().unwrap().form().label()
+                        )
+                    } else {
+                        "Sequence".to_owned()
+                    },
                     sequence.selected_index() + 1,
                     sequence.code_points().len()
                 )
@@ -99,13 +118,48 @@ fn header_location(state: &AppState, context: Context) -> String {
         Context::BrowseRange => "Browse / Ranges".to_owned(),
         Context::BrowseBlock => "Browse / Blocks".to_owned(),
         Context::BrowseCodePoints => "Browse / Code Points".to_owned(),
+        Context::NormalizationResult => format!(
+            "Sequence / {} Result",
+            state.normalization().unwrap().form().label()
+        ),
+        Context::Normalization => "Sequence / Normalization".to_owned(),
         _ => help::context_label(context).to_owned(),
+    }
+}
+
+/// Keep the current screen visible without letting a long breadcrumb overlap
+/// the right-aligned status. Drop parent segments before shortening the leaf.
+fn compact_location(location: &str, width: usize) -> String {
+    if Line::from(location).width() <= width {
+        return location.to_owned();
+    }
+    let mut leaf = location;
+    while let Some((_, rest)) = leaf.split_once(" / ") {
+        leaf = rest;
+        let shortened = format!("… / {leaf}");
+        if Line::from(shortened.as_str()).width() <= width {
+            return shortened;
+        }
+    }
+    let mut suffix = String::new();
+    for character in leaf.chars().rev() {
+        let candidate = format!("{character}{suffix}");
+        if Line::from(candidate.as_str()).width() + 1 > width {
+            break;
+        }
+        suffix = candidate;
+    }
+    if width == 0 {
+        String::new()
+    } else {
+        format!("…{suffix}")
     }
 }
 
 fn header_status(state: &AppState) -> String {
     match state.view() {
         View::Inspector => state.selected().to_string(),
+        View::Normalization => state.normalization().unwrap().form().label().to_owned(),
         View::Browser => state
             .browse()
             .map_or_else(String::new, |browse| browse.cursor().to_string()),
@@ -236,8 +290,45 @@ mod tests {
             MINIMUM_SIZE, STANDARD_SIZE, WIDE_SIZE, browser_list_height, search_result_height,
             sequence_list_height,
         },
-        ui::theme::{SelectionColors, StatusColors},
+        ui::theme::{DifferenceColors, SelectionColors, StatusColors},
     };
+
+    #[test]
+    fn result_inspector_breadcrumb_preserves_sequence_parent() {
+        let mut state = AppState::with_sequence("A\u{0301}".to_owned());
+        update(&mut state, Action::OpenNormalization);
+        update(&mut state, Action::InspectNormalizationResult);
+        update(&mut state, Action::InspectSequenceCodePoint);
+        let header = render_to_text(&state, 60, 16)
+            .lines()
+            .next()
+            .unwrap()
+            .to_owned();
+        assert!(
+            header.contains("sauva / Sequence / NFC Result 1/1 / Inspector"),
+            "{header}"
+        );
+        assert!(header.ends_with("U+00C1"), "{header}");
+    }
+
+    #[test]
+    fn long_breadcrumbs_keep_the_leaf_and_fit_the_available_width() {
+        let location = "Sequence / NFC Result 100000/100000 / Inspector";
+        assert_eq!(compact_location(location, 30), "… / Inspector");
+        assert_eq!(compact_location("NFC Result", 7), "…Result");
+        assert_eq!(compact_location(location, 0), "");
+    }
+
+    #[test]
+    fn normalization_help_uses_the_screen_name_not_the_breadcrumb() {
+        let mut state = AppState::with_sequence("A\u{0301}".to_owned());
+        update(&mut state, Action::OpenNormalization);
+        update(&mut state, Action::ToggleHelp);
+        let text = render_to_text(&state, 100, 30);
+        assert!(text.lines().next().unwrap().ends_with("Normalization"));
+        assert!(text.contains("Keybindings · Normalization"));
+        assert!(!text.contains("Sequence / Normalization"));
+    }
 
     fn render_to_text(state: &AppState, width: u16, height: u16) -> String {
         let buffer = render_to_buffer(state, width, height, &ColorTheme::default());
@@ -276,6 +367,17 @@ mod tests {
             &mut state,
             Action::ResizeSequenceViewport(sequence_list_height(Rect::new(0, 0, width, height))),
         );
+        if state.showing_normalization_result() && state.view() == View::Sequence {
+            let (original, result) = crate::ui::normalization_result::viewport_heights(
+                Rect::new(0, 0, width, height),
+                &state,
+            );
+            update(
+                &mut state,
+                Action::ResizeNormalizationOriginalViewport(original),
+            );
+            update(&mut state, Action::ResizeSequenceViewport(result));
+        }
         let backend = TestBackend::new(width, height);
         let mut terminal = Terminal::new(backend).unwrap();
         terminal
@@ -351,6 +453,10 @@ mod tests {
             selection: SelectionColors {
                 fg: Color::White,
                 bg: Color::DarkGray,
+            },
+            difference: DifferenceColors {
+                fg: Color::Black,
+                bg: Color::Yellow,
             },
             status: StatusColors {
                 info: Color::LightGreen,
@@ -722,6 +828,139 @@ mod tests {
         let (width, height) = MINIMUM_SIZE;
 
         insta::assert_snapshot!(render_to_text(&state, width, height));
+    }
+
+    #[test]
+    fn normalization_standard() {
+        let mut state = AppState::with_sequence("A\u{0301} ①👩‍💻".to_owned());
+        update(&mut state, Action::OpenNormalization);
+        update(
+            &mut state,
+            Action::MoveNormalization(crate::normalization::NormalizationMove::Next),
+        );
+        update(
+            &mut state,
+            Action::MoveNormalization(crate::normalization::NormalizationMove::Next),
+        );
+        insta::assert_snapshot!(render_to_text(&state, STANDARD_SIZE.0, STANDARD_SIZE.1));
+    }
+
+    #[test]
+    fn normalization_minimum() {
+        let mut state = AppState::with_sequence("A\u{0301} ①👩‍💻".to_owned());
+        update(&mut state, Action::OpenNormalization);
+        insta::assert_snapshot!(render_to_text(&state, MINIMUM_SIZE.0, MINIMUM_SIZE.1));
+    }
+
+    #[test]
+    fn normalization_long_minimum() {
+        let mut state = AppState::with_sequence(format!(
+            "{}A\u{0301} ①{}",
+            "ASCII ".repeat(100),
+            " tail".repeat(100)
+        ));
+        update(&mut state, Action::OpenNormalization);
+        insta::assert_snapshot!(render_to_text(&state, MINIMUM_SIZE.0, MINIMUM_SIZE.1));
+    }
+
+    #[test]
+    fn normalization_unchanged_controls_minimum() {
+        let mut state = AppState::with_sequence("é\t\r\n\u{1b}\u{202e}\u{fe0f}".to_owned());
+        update(&mut state, Action::OpenNormalization);
+        insta::assert_snapshot!(render_to_text(&state, MINIMUM_SIZE.0, MINIMUM_SIZE.1));
+    }
+
+    #[test]
+    fn normalization_keeps_the_cursor_and_difference_colors_separate() {
+        let mut state = AppState::with_sequence("A\u{0301} ①👩‍💻".to_owned());
+        update(&mut state, Action::OpenNormalization);
+        let theme = test_color_theme();
+        let buffer = render_to_buffer(&state, 60, 16, &theme);
+        for (x, y) in [(2, 3), (2, 4), (2, 13), (2, 14)] {
+            let cell = buffer.cell((x, y)).unwrap();
+            assert_eq!(cell.bg, theme.difference.bg);
+            assert_eq!(cell.fg, theme.difference.fg);
+            assert!(cell.modifier.contains(Modifier::UNDERLINED));
+        }
+        for x in 1..58 {
+            assert_eq!(buffer.cell((x, 7)).unwrap().bg, theme.selection.bg);
+        }
+        assert_eq!(buffer.cell((16, 4)).unwrap().bg, theme.bg);
+    }
+
+    fn nfkc_result(source: &str) -> AppState {
+        let mut state = AppState::with_sequence(source.to_owned());
+        update(&mut state, Action::OpenNormalization);
+        for _ in 0..2 {
+            update(
+                &mut state,
+                Action::MoveNormalization(crate::normalization::NormalizationMove::Next),
+            );
+        }
+        update(&mut state, Action::InspectNormalizationResult);
+        state
+    }
+
+    #[test]
+    fn normalization_result_standard() {
+        let mut state = nfkc_result("A\u{0301} ﬃ①👩‍💻");
+        update(
+            &mut state,
+            Action::MoveSequence(crate::sequence::SequenceMove::Next),
+        );
+        update(
+            &mut state,
+            Action::MoveSequence(crate::sequence::SequenceMove::Next),
+        );
+        insta::assert_snapshot!(render_to_text(&state, 100, 30));
+    }
+
+    #[test]
+    fn normalization_result_minimum() {
+        let state = nfkc_result("ﬃ①");
+        insta::assert_snapshot!(render_to_text(&state, 60, 16));
+    }
+
+    #[test]
+    fn normalization_result_decomposed_minimum() {
+        let mut state = AppState::with_sequence("éé".to_owned());
+        update(&mut state, Action::OpenNormalization);
+        update(
+            &mut state,
+            Action::MoveNormalization(crate::normalization::NormalizationMove::Next),
+        );
+        update(&mut state, Action::InspectNormalizationResult);
+        update(
+            &mut state,
+            Action::MoveSequence(crate::sequence::SequenceMove::Next),
+        );
+        insta::assert_snapshot!(render_to_text(&state, 60, 16));
+    }
+
+    #[test]
+    fn original_reference_marks_only_the_range_corresponding_to_the_result_selection() {
+        let mut state = nfkc_result("ﬃ①");
+        let theme = test_color_theme();
+        for index in 0..4 {
+            let buffer = render_to_buffer(&state, 60, 16, &theme);
+            let original_y = if index < 3 { 3 } else { 4 };
+            assert_eq!(buffer.cell((6, original_y)).unwrap().bg, theme.selection.bg);
+            assert_eq!(
+                buffer
+                    .cell((6, if original_y == 3 { 4 } else { 3 }))
+                    .unwrap()
+                    .bg,
+                theme.bg
+            );
+            let text = (2..22)
+                .map(|x| buffer.cell((x, original_y)).unwrap().symbol())
+                .collect::<String>();
+            assert!(text.contains(if index < 3 { "U+FB03" } else { "U+2460" }));
+            update(
+                &mut state,
+                Action::MoveSequence(crate::sequence::SequenceMove::Next),
+            );
+        }
     }
 
     #[test]

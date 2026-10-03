@@ -1,0 +1,34 @@
+---
+source: src/ui/render.rs
+expression: "render_to_text(&state, 100, 30)"
+---
+ sauva / Sequence / NFKC Result                                                        3/9 · U+0066
+
+ Original         8 CP   NFKC Result                                   9 code points · 7 graphemes
+  1 ┌ 1  U+0041           1 •   1  U+00C1    Á — LATIN CAPITAL LETTER A WITH ACUTE
+    └ 2  U+0301           2 •   2  U+0020    <SPACE> — SPACE
+  2 • 3  U+0020           3 •   3  U+0066    f — LATIN SMALL LETTER F
+  3 • 4  U+FB03           4 •   4  U+0066    f — LATIN SMALL LETTER F
+  4 • 5  U+2460           5 •   5  U+0069    i — LATIN SMALL LETTER I
+  5 ┌ 6  U+1F469          6 •   6  U+0031    1 — DIGIT ONE
+    │ 7  U+200D           7 ┌   7  U+1F469   👩  — WOMAN
+    └ 8  U+1F4BB            │   8  U+200D    <DEFAULT IGNORABLE> — ZERO WIDTH JOINER
+                            └   9  U+1F4BB   💻  — PERSONAL COMPUTER
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ k/j Move  Enter Inspect  BS/Esc Back  q Quit                                               F1 Help
