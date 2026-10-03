@@ -6,7 +6,7 @@ size: 100x30  cursor: hidden
  sauva / Sequence / Normalization                                                              NFKC
 
  Original                                                                   7 CP · 18 Bytes · 4 GC
-  Á␠①👩‍
+  Á␠①👩‍💻
   U+0041 U+0301 U+0020 U+2460 U+1F469 U+200D U+1F4BB
 
    Form  vs Original                                                                 CP  Bytes  GC
