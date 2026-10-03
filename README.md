@@ -244,7 +244,7 @@ For each code point, sauva tries configured normal fonts, the system default tex
 
 ### Sequence
 
-<img src="./img/sequence.png" width="400" alt="Sequence"> <img src="./img/inspector-sequence.png" width="400" alt="Sequence inspector view">
+<img src="./img/sequence.png" width="400" alt="Sequence"> <img src="./img/sequence-inspector.png" width="400" alt="Sequence inspector view">  <img src="./img/sequence-normalization.png" width="400" alt="Sequence normalization">  <img src="./img/sequence-normalization-result.png" width="400" alt="Sequence normalization result">
 
 ## License
 

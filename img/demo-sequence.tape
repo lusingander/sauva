@@ -12,7 +12,7 @@ Set Theme "nord"
 Hide
 
 Env SAUVA_CONFIG_FILE "./img/config.toml"
-Type "cargo run --release -- --graphics iterm2 --text 'sauva❤️‍🔥'"
+Type "cargo run --release -- --graphics iterm2 --text 'Šaúvá❤️‍🔥'"
 Enter
 Sleep 2s
 
@@ -20,21 +20,43 @@ Show
 
 Sleep 2s
 
-Type@300ms "jjjjjjjj"
+Type@300ms "jjjjjj"
+Sleep 500ms
+
+Type "n"
+Sleep 1s
+
+Type@500ms "jjj"
+Sleep 500ms
+
+Screenshot "./img/sequence-normalization.png"
+Sleep 100ms
+
+Enter
+Sleep 1s
+
+Type@300ms "jjj"
+
+Screenshot "./img/sequence-normalization-result.png"
+Sleep 100ms
+
+Type@300ms "jjjjj"
+Sleep 1s
+
+Backspace
+Sleep 500ms
+Backspace
+Sleep 1s
+
+Type@300ms "jjj"
 Sleep 500ms
 
 Screenshot "./img/sequence.png"
 Sleep 100ms
 
 Enter
-Sleep 1s
 
-Screenshot "./img/inspector-sequence.png"
+Screenshot "./img/sequence-inspector.png"
 Sleep 100ms
-
-Backspace
-Sleep 500ms
-
-Type "k"
 
 Sleep 2s
