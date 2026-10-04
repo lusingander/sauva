@@ -9,3 +9,4 @@
   - [Compatibility](./getting-started/compatibility.md)
 - [Configurations](./configurations/index.md)
   - [Config File Format](./configurations/config-file-format.md)
+  - [Glyph Preview](./configurations/glyph-preview.md)
