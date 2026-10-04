@@ -1,3 +1,5 @@
+use std::io::{self, Read};
+
 use clap::{Parser, ValueEnum};
 
 use crate::{graphics::GraphicsMode, unicode::CodePoint};
@@ -11,6 +13,12 @@ const INPUT_ARGUMENT_HELP: &str =
 pub enum LaunchTarget {
     CodePoint(CodePoint),
     Sequence(String),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum InputSource {
+    Target(LaunchTarget),
+    Stdin { literal: bool },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -47,17 +55,17 @@ impl LaunchOptions {
 #[derive(Debug, Parser)]
 #[command(version)]
 struct Cli {
-    /// Text or code point to inspect
+    /// Text or code point to inspect, or - to read stdin
     #[arg(
         value_name = "INPUT",
-        value_parser = parse_input,
+        value_parser = parse_input_source,
         conflicts_with_all = ["text", "demo"]
     )]
-    input: Option<LaunchTarget>,
+    input: Option<InputSource>,
 
-    /// Treat the input as literal text, without code point notation parsing
-    #[arg(short, long, value_name = "TEXT", value_parser = parse_text, conflicts_with = "demo")]
-    text: Option<LaunchTarget>,
+    /// Treat the input as literal text, without code point notation parsing; - reads stdin
+    #[arg(short, long, value_name = "TEXT", value_parser = parse_text_source, conflicts_with = "demo")]
+    text: Option<InputSource>,
 
     /// Control glyph preview graphics
     #[arg(short, long, value_enum, default_value_t, value_name = "MODE")]
@@ -106,18 +114,56 @@ pub enum Demo {
     GlyphDisabled,
 }
 
-pub fn parse() -> LaunchOptions {
-    Cli::parse().into()
+pub fn parse() -> io::Result<LaunchOptions> {
+    Cli::parse().resolve(io::stdin().lock())
 }
 
-impl From<Cli> for LaunchOptions {
-    fn from(cli: Cli) -> Self {
-        Self {
-            target: cli.input.or(cli.text),
-            demo: cli.demo,
-            graphics: cli.graphics,
-            print_default_config: cli.print_default_config,
-        }
+impl Cli {
+    fn resolve(self, stdin: impl Read) -> io::Result<LaunchOptions> {
+        let target = match self.input.or(self.text) {
+            None => None,
+            Some(InputSource::Target(target)) => Some(target),
+            Some(InputSource::Stdin { literal }) => {
+                let input = io::read_to_string(stdin).map_err(|error| {
+                    io::Error::new(error.kind(), format!("failed to read stdin: {error}"))
+                })?;
+                let target = if literal {
+                    parse_text(&input)
+                } else {
+                    parse_input(&input)
+                }
+                .map_err(|error| {
+                    io::Error::new(
+                        io::ErrorKind::InvalidInput,
+                        format!("invalid input from stdin: {error}"),
+                    )
+                })?;
+                Some(target)
+            }
+        };
+
+        Ok(LaunchOptions {
+            target,
+            demo: self.demo,
+            graphics: self.graphics,
+            print_default_config: self.print_default_config,
+        })
+    }
+}
+
+fn parse_input_source(input: &str) -> Result<InputSource, String> {
+    if input == "-" {
+        Ok(InputSource::Stdin { literal: false })
+    } else {
+        parse_input(input).map(InputSource::Target)
+    }
+}
+
+fn parse_text_source(input: &str) -> Result<InputSource, String> {
+    if input == "-" {
+        Ok(InputSource::Stdin { literal: true })
+    } else {
+        parse_text(input).map(InputSource::Target)
     }
 }
 
@@ -175,8 +221,17 @@ mod tests {
 
     use super::*;
 
+    struct UnusedStdin;
+
+    impl Read for UnusedStdin {
+        fn read(&mut self, _: &mut [u8]) -> io::Result<usize> {
+            panic!("stdin must not be read unless requested");
+        }
+    }
+
     fn try_parse(arguments: &[&str]) -> Result<LaunchOptions, clap::Error> {
-        Cli::try_parse_from(arguments).map(Into::into)
+        Cli::try_parse_from(arguments)
+            .map(|cli| cli.resolve(UnusedStdin).expect("stdin is not requested"))
     }
 
     #[test]
@@ -284,6 +339,146 @@ mod tests {
     }
 
     #[rstest]
+    #[case("A", 0x0041)]
+    #[case("1", 0x0031)]
+    #[case("→", 0x2192)]
+    #[case("あ", 0x3042)]
+    #[case("U+2192", 0x2192)]
+    #[case("0x1F600", 0x1f600)]
+    #[case("41", 0x0041)]
+    #[case("U+D800", 0xd800)]
+    #[case("-", 0x002d)]
+    #[case(" ", 0x0020)]
+    #[case("\n", 0x000a)]
+    #[case("\r", 0x000d)]
+    fn reads_code_points_from_stdin(#[case] input: &str, #[case] expected: u32) {
+        let options = Cli::try_parse_from(["sauva", "-"])
+            .unwrap()
+            .resolve(input.as_bytes())
+            .unwrap();
+
+        assert_eq!(
+            options.target(),
+            Some(&LaunchTarget::CodePoint(CodePoint::new(expected).unwrap()))
+        );
+    }
+
+    #[rstest]
+    #[case("41")]
+    #[case("U+2192")]
+    #[case("U+GG")]
+    #[case("0000041")]
+    fn literal_stdin_bypasses_code_point_notation_parsing(#[case] input: &str) {
+        for text_option in ["--text", "-t"] {
+            let options = Cli::try_parse_from(["sauva", text_option, "-"])
+                .unwrap()
+                .resolve(input.as_bytes())
+                .unwrap();
+
+            assert_eq!(
+                options.target(),
+                Some(&LaunchTarget::Sequence(input.to_owned()))
+            );
+        }
+    }
+
+    #[rstest]
+    #[case(" \tA\r\n ")]
+    #[case("A\nB\n")]
+    #[case("A\n\n")]
+    #[case("q\u{0301}\u{0323}")]
+    #[case("❤️\n")]
+    fn preserves_stdin_text_verbatim(#[case] source: &str) {
+        for arguments in [
+            &["sauva", "-"][..],
+            &["sauva", "--text", "-"],
+            &["sauva", "-t", "-"],
+        ] {
+            let options = Cli::try_parse_from(arguments)
+                .unwrap()
+                .resolve(source.as_bytes())
+                .unwrap();
+
+            assert_eq!(
+                options.target(),
+                Some(&LaunchTarget::Sequence(source.to_owned()))
+            );
+        }
+    }
+
+    #[test]
+    fn reads_stdin_text_longer_than_a_code_point_notation() {
+        let source = "hello".repeat(100);
+        let options = Cli::try_parse_from(["sauva", "-"])
+            .unwrap()
+            .resolve(source.as_bytes())
+            .unwrap();
+
+        assert_eq!(options.target(), Some(&LaunchTarget::Sequence(source)));
+    }
+
+    #[rstest]
+    #[case("")]
+    #[case("U+GG")]
+    #[case("U+2192\n")]
+    #[case("U+110000")]
+    fn rejects_invalid_stdin_input(#[case] input: &str) {
+        let error = Cli::try_parse_from(["sauva", "-"])
+            .unwrap()
+            .resolve(input.as_bytes())
+            .unwrap_err();
+
+        assert_eq!(error.kind(), io::ErrorKind::InvalidInput);
+        assert!(error.to_string().contains("invalid input from stdin"));
+    }
+
+    #[test]
+    fn rejects_empty_literal_stdin() {
+        let error = Cli::try_parse_from(["sauva", "--text", "-"])
+            .unwrap()
+            .resolve(io::empty())
+            .unwrap_err();
+
+        assert_eq!(error.kind(), io::ErrorKind::InvalidInput);
+        assert!(error.to_string().contains("text must not be empty"));
+    }
+
+    #[rstest]
+    #[case(&["sauva", "-"])]
+    #[case(&["sauva", "--text", "-"])]
+    fn rejects_non_utf8_stdin(#[case] arguments: &[&str]) {
+        let error = Cli::try_parse_from(arguments)
+            .unwrap()
+            .resolve([0xff].as_slice())
+            .unwrap_err();
+
+        assert_eq!(error.kind(), io::ErrorKind::InvalidData);
+        assert!(error.to_string().contains("failed to read stdin"));
+    }
+
+    #[rstest]
+    #[case(&["sauva", "-", "--demo", "glyph-basic"])]
+    #[case(&["sauva", "--text", "-", "--demo", "glyph-basic"])]
+    #[case(&["sauva", "-", "--text", "-"])]
+    #[case(&["sauva", "-", "--print-default-config"])]
+    #[case(&["sauva", "--text", "-", "--print-default-config"])]
+    fn stdin_requests_respect_argument_conflicts(#[case] arguments: &[&str]) {
+        let error = Cli::try_parse_from(arguments).unwrap_err();
+
+        assert_eq!(error.kind(), clap::error::ErrorKind::ArgumentConflict);
+    }
+
+    #[test]
+    fn hyphen_can_be_inspected_with_code_point_notation() {
+        let options = try_parse(&["sauva", "U+002D"]).unwrap();
+
+        assert_eq!(
+            options.target(),
+            Some(&LaunchTarget::CodePoint(CodePoint::from('-')))
+        );
+    }
+
+    #[rstest]
     #[case("U+")]
     #[case("0x")]
     #[case("0xGG")]
@@ -347,7 +542,9 @@ mod tests {
 
         assert!(help.contains("Usage: sauva [OPTIONS] [INPUT]"));
         assert!(help.contains("Text or code point to inspect"));
+        assert!(help.contains("or - to read stdin"));
         assert!(help.contains("-t, --text <TEXT>"));
+        assert!(help.contains("- reads stdin"));
         assert!(help.contains("--graphics <MODE>"));
         assert!(help.contains("possible values: auto, force, iterm2, off"));
         assert!(help.contains("--print-default-config"));
