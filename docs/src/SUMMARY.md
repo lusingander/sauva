@@ -2,3 +2,4 @@
 
 - [Introduction](./introduction/index.md)
 - [Getting Started](./getting-started/index.md)
+  - [Requirements](./getting-started/requirements.md)
