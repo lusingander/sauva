@@ -49,10 +49,10 @@ Sauva - Terminal Unicode Explorer 🪄
 Usage: sauva [OPTIONS] [INPUT]
 
 Arguments:
-  [INPUT]  Text or code point to inspect
+  [INPUT]  Text or code point to inspect, or - to read stdin
 
 Options:
-  -t, --text <TEXT>           Treat the input as literal text, without code point notation parsing
+  -t, --text <TEXT>           Treat the input as literal text, without code point notation parsing; - reads stdin
   -g, --graphics <MODE>       Control glyph preview graphics [default: auto] [possible values: auto, force, iterm2, off]
       --print-default-config  Print the complete default configuration to standard output
   -h, --help                  Print help
@@ -86,6 +86,22 @@ sauva --text U+2192
 ```
 
 Empty text is rejected.
+
+#### Reading from stdin
+
+Pass `-` to read the input from stdin. It accepts the same text and code point formats as `INPUT`. Use `--text -` (or `-t -`) to treat stdin as literal text without code point notation parsing.
+
+```
+printf 'U+2192' | sauva -
+printf 'Á👩‍💻' | sauva -
+printf '41' | sauva --text -
+printf 'A\nB\n' | sauva -
+sauva --text - < input.txt
+```
+
+Sauva reads UTF-8 input until EOF before opening the TUI. All whitespace, including trailing LF and CRLF, is preserved. For code point notation, use `printf` without a trailing newline: `echo U+2192 | sauva -` is rejected because the newline is part of the notation. Use `--text -` to inspect that input as literal text, including its newline. Empty input and invalid UTF-8 are rejected.
+
+Stdin is read only when `-` is explicitly specified. Keyboard input continues to come from the terminal, so an interactive terminal is still required. Since `-` selects stdin, use `sauva U+002D` to inspect the hyphen character itself.
 
 #### `-g, --graphics <MODE>`
 

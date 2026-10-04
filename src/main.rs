@@ -33,7 +33,7 @@ fn main() -> ExitCode {
 }
 
 fn run() -> Result<(), Box<dyn Error>> {
-    let options = cli::parse();
+    let options = cli::parse()?;
     if options.print_default_config() {
         print!("{}", config::default_toml()?);
         return Ok(());
