@@ -13,3 +13,4 @@
 - [Keybindings](./keybindings/index.md)
   - [Custom Keybindings](./keybindings/custom-keybindings.md)
 - [Features](./features/index.md)
+  - [Inspector](./features/inspector.md)
