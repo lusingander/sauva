@@ -18,3 +18,4 @@
   - [Browse](./features/browse.md)
   - [Sequence](./features/sequence.md)
   - [Normalization](./features/normalization.md)
+- [FAQ](./faq/index.md)
