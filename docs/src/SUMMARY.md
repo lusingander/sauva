@@ -17,3 +17,4 @@
   - [Search](./features/search.md)
   - [Browse](./features/browse.md)
   - [Sequence](./features/sequence.md)
+  - [Normalization](./features/normalization.md)
