@@ -6,3 +6,4 @@
   - [Installation](./getting-started/installation.md)
   - [Basic Usage](./getting-started/basic-usage.md)
   - [Command Line Options](./getting-started/command-line-options.md)
+  - [Compatibility](./getting-started/compatibility.md)
