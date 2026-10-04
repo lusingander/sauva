@@ -11,3 +11,4 @@
   - [Config File Format](./configurations/config-file-format.md)
   - [Glyph Preview](./configurations/glyph-preview.md)
 - [Keybindings](./keybindings/index.md)
+  - [Custom Keybindings](./keybindings/custom-keybindings.md)
