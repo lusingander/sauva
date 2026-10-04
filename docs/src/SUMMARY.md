@@ -8,3 +8,4 @@
   - [Command Line Options](./getting-started/command-line-options.md)
   - [Compatibility](./getting-started/compatibility.md)
 - [Configurations](./configurations/index.md)
+  - [Config File Format](./configurations/config-file-format.md)
