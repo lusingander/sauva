@@ -1,5 +1,6 @@
 use std::fs;
 
+use rstest::rstest;
 use tempfile::tempdir;
 use termlens::{Color, Key, Terminal};
 
@@ -94,6 +95,41 @@ fn starts_at_the_code_point_from_the_command_line() -> termlens::Result<()> {
     terminal.send(Key::Char('q'))?;
     let status = terminal.wait_exit()?;
     assert!(status.success(), "exit status: {status}");
+    Ok(())
+}
+
+#[rstest]
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+#[case(
+    r#"printf 'U+2192' | "$SAUVA_BIN" - --graphics off"#,
+    &["Identity", "U+2192", "RIGHTWARDS ARROW"]
+)]
+#[case(
+    r#"printf '41' | "$SAUVA_BIN" --text - --graphics off"#,
+    &["2 code points", "U+0034", "U+0031"]
+)]
+#[case(
+    r#"printf 'A\nB\n' | "$SAUVA_BIN" - --graphics off"#,
+    &["4 code points", "U+0041", "U+000A", "U+0042"]
+)]
+fn starts_from_piped_stdin_and_still_accepts_keys(
+    #[case] command: &str,
+    #[case] expected: &[&str],
+) -> termlens::Result<()> {
+    let mut terminal = Terminal::builder()
+        .size(100, 30)
+        .env_clear()
+        .env("SAUVA_BIN", env!("CARGO_BIN_EXE_sauva"))
+        .args(["-c", command])
+        .spawn("/bin/sh")?;
+    terminal.snapshot_after(|screen| expected.iter().all(|text| screen.contains(text)))?;
+
+    terminal.send(Key::Char('q'))?;
+    let status = terminal.wait_exit()?;
+
+    assert!(status.success(), "exit status: {status}");
+    assert!(!terminal.screen().alternate_screen());
+    assert!(terminal.screen().cursor_visible());
     Ok(())
 }
 
