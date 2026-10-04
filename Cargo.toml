@@ -3,7 +3,7 @@ name = "sauva"
 version = "0.3.0"
 description = "Terminal Unicode Explorer"
 authors = ["Kyosuke Fujimoto <kyoro.f@gmail.com>"]
-homepage = "https://github.com/lusingander/sauva"
+homepage = "https://lusingander.github.io/sauva/"
 repository = "https://github.com/lusingander/sauva"
 readme = "README.md"
 license = "MIT"
@@ -12,7 +12,7 @@ categories = ["command-line-utilities"]
 edition = "2024"
 rust-version = "1.88.0"
 
-exclude = ["/.github", "/img", "/data", "/tools"]
+exclude = ["/.github", "/docs", "/img", "/data", "/tools"]
 
 [dependencies]
 arboard = { version = "3.6.1", default-features = false, features = ["wayland-data-control"] }
