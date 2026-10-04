@@ -16,3 +16,4 @@
   - [Inspector](./features/inspector.md)
   - [Search](./features/search.md)
   - [Browse](./features/browse.md)
+  - [Sequence](./features/sequence.md)
