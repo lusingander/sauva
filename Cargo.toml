@@ -1,6 +1,6 @@
 [package]
 name = "sauva"
-version = "0.3.0"
+version = "0.4.0"
 description = "Terminal Unicode Explorer"
 authors = ["Kyosuke Fujimoto <kyoro.f@gmail.com>"]
 homepage = "https://lusingander.github.io/sauva/"
