@@ -4,6 +4,8 @@ Sauva is a terminal application for searching and browsing Unicode code points. 
 
 ![Sauva demo](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/demo.gif)
 
+![Sequence and normalization demo](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/demo-sequence.gif)
+
 ## Key Features
 
 - Inspect Unicode names, properties, encodings, and decomposition mappings.
@@ -15,18 +17,6 @@ Sauva is a terminal application for searching and browsing Unicode code points. 
 - Customize colors, fonts, and keybindings.
 
 For example, use Sauva to identify an invisible character, find a symbol by name, or examine how an emoji or accented letter is represented in a string.
-
-## Text Analysis
-
-Pass a string to open Sequence mode:
-
-```sh
-sauva 'Á👩‍💻'
-```
-
-The sequence can be inspected one code point at a time or compared with its NFC, NFD, NFKC, and NFKD normalized forms.
-
-![Sequence and normalization demo](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/demo-sequence.gif)
 
 ## Unicode Data
 
