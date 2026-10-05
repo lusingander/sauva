@@ -1,6 +1,6 @@
 # Normalization
 
-From [Sequence](./sequence.md), press `n` to compare the input with its NFC, NFD, NFKC, and NFKD normalized forms.
+From [Sequence](./sequence.md), press <kbd>n</kbd> to compare the input with its NFC, NFD, NFKC, and NFKD normalized forms.
 
 ```sh
 sauva 'Á①ﬃ'
@@ -41,13 +41,13 @@ Changed regions use the configured difference colors and underlining. Spaces and
 
 ## Inspect a Result
 
-Select a form and press Enter to open its code point list.
+Select a form and press <kbd>Enter</kbd> to open its code point list.
 
 ![Normalization result](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/sequence-normalization-result.png)
 
 The result is shown alongside the original code point list. As you select a result code point, the corresponding region in the original is highlighted and brought into view. This makes compositions and expansions easier to follow.
 
-Press Enter again to inspect a result code point. Backspace in the Inspector returns to the result list; Backspace or Esc in the result list returns to the form comparison.
+Press <kbd>Enter</kbd> again to inspect a result code point. <kbd>Backspace</kbd> in the Inspector returns to the result list; <kbd>Backspace</kbd> or <kbd>Esc</kbd> in the result list returns to the form comparison.
 
 The original input is preserved throughout these operations.
 
@@ -55,11 +55,11 @@ The original input is preserved throughout these operations.
 
 | Keys | In form comparison | In a result list |
 | --- | --- | --- |
-| `j` / `k`, Down / Up | Select a form | Select a code point |
-| `g` / `G` | Select NFC / NFKD | Select the first / last code point |
-| Enter | Open the selected result | Inspect the selected code point |
-| `y` | Copy the exact normalized text | — |
-| Backspace, Esc | Return to the original sequence | Return to form comparison |
-| `q` | Quit | Quit |
+| <kbd>j</kbd> / <kbd>k</kbd>, <kbd>Down</kbd> / <kbd>Up</kbd> | Select a form | Select a code point |
+| <kbd>g</kbd> / <kbd>G</kbd> | Select NFC / NFKD | Select the first / last code point |
+| <kbd>Enter</kbd> | Open the selected result | Inspect the selected code point |
+| <kbd>y</kbd> | Copy the exact normalized text | — |
+| <kbd>Backspace</kbd>, <kbd>Esc</kbd> | Return to the original sequence | Return to form comparison |
+| <kbd>q</kbd> | Quit | Quit |
 
-Copying includes whitespace and newlines in the normalized result. Select a form and press `y` in the comparison screen to copy the whole result.
+Copying includes whitespace and newlines in the normalized result. Select a form and press <kbd>y</kbd> in the comparison screen to copy the whole result.

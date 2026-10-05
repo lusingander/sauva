@@ -32,21 +32,21 @@ The glyph panel renders the selected code point and shows the font used, when sp
 
 | Keys | Action |
 | --- | --- |
-| `h` / `l`, Left / Right | Inspect the previous / next code point |
-| `j` / `k`, Down / Up | Select a property |
-| `Ctrl-U` / `Ctrl-D` | Move through properties by page |
-| `g` / `G` | Select the first / last property |
-| `y` | Copy the selected value |
-| `/` | Open Search |
-| `p`, `r`, `b`, `c` | Open Browse at the corresponding level |
-| Backspace | Return to the original or normalized sequence, when one is open |
-| `q`, Esc | Quit |
+| <kbd>h</kbd> / <kbd>l</kbd>, <kbd>Left</kbd> / <kbd>Right</kbd> | Inspect the previous / next code point |
+| <kbd>j</kbd> / <kbd>k</kbd>, <kbd>Down</kbd> / <kbd>Up</kbd> | Select a property |
+| <kbd>Ctrl-U</kbd> / <kbd>Ctrl-D</kbd> | Move through properties by page |
+| <kbd>g</kbd> / <kbd>G</kbd> | Select the first / last property |
+| <kbd>y</kbd> | Copy the selected value |
+| <kbd>/</kbd> | Open Search |
+| <kbd>p</kbd>, <kbd>r</kbd>, <kbd>b</kbd>, <kbd>c</kbd> | Open Browse at the corresponding level |
+| <kbd>Backspace</kbd> | Return to the original or normalized sequence, when one is open |
+| <kbd>q</kbd>, <kbd>Esc</kbd> | Quit |
 
-Adjacent navigation follows code point values, even when the Inspector was opened from a sequence. Backspace returns to the sequence's existing selection.
+Adjacent navigation follows code point values, even when the Inspector was opened from a sequence. <kbd>Backspace</kbd> returns to the sequence's existing selection.
 
 ## Copying Values
 
-Select a property and press `y` to copy it to the system clipboard. Selecting **Character** copies the actual character, including invisible characters and combining marks. Display aids such as a dotted circle or a `<SPACE>` label are not included in that value.
+Select a property and press <kbd>y</kbd> to copy it to the system clipboard. Selecting **Character** copies the actual character, including invisible characters and combining marks. Display aids such as a dotted circle or a `<SPACE>` label are not included in that value.
 
 Unavailable values, such as an encoding for a surrogate, cannot be copied. A status message reports whether copying succeeded or why it failed.
 

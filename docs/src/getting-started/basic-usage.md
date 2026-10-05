@@ -18,11 +18,11 @@ sauva 0x1F600
 
 The [Inspector](../features/inspector.md) shows the selected code point's properties and glyph preview.
 
-- Use `h` / `l` or Left / Right to inspect adjacent code points.
-- Use `j` / `k` or Down / Up to select a property, then `y` to copy its value.
-- Press `/` to [search](../features/search.md), or `p`, `r`, `b`, or `c` to [browse](../features/browse.md).
-- Press `F1` for help with the current screen.
-- Press `q` or `Esc` to quit from the Inspector. `Ctrl-C` quits from any screen.
+- Use <kbd>h</kbd> / <kbd>l</kbd> or <kbd>Left</kbd> / <kbd>Right</kbd> to inspect adjacent code points.
+- Use <kbd>j</kbd> / <kbd>k</kbd> or <kbd>Down</kbd> / <kbd>Up</kbd> to select a property, then <kbd>y</kbd> to copy its value.
+- Press <kbd>/</kbd> to [search](../features/search.md), or <kbd>p</kbd>, <kbd>r</kbd>, <kbd>b</kbd>, or <kbd>c</kbd> to [browse](../features/browse.md).
+- Press <kbd>F1</kbd> for help with the current screen.
+- Press <kbd>q</kbd> or <kbd>Esc</kbd> to quit from the Inspector. <kbd>Ctrl-C</kbd> quits from any screen.
 
 ## Analyze a String
 
@@ -34,9 +34,9 @@ sauva 'Á👩‍💻'
 
 The list preserves the input order and groups code points into grapheme clusters.
 
-1. Use `j` / `k` or Down / Up to select a code point.
-2. Press `Enter` to open it in the Inspector, then `Backspace` to return.
-3. Press `n` in Sequence to compare [normalization forms](../features/normalization.md).
+1. Use <kbd>j</kbd> / <kbd>k</kbd> or <kbd>Down</kbd> / <kbd>Up</kbd> to select a code point.
+2. Press <kbd>Enter</kbd> to open it in the Inspector, then <kbd>Backspace</kbd> to return.
+3. Press <kbd>n</kbd> in Sequence to compare [normalization forms](../features/normalization.md).
 
 ![Sequence and normalization demo](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/demo-sequence.gif)
 

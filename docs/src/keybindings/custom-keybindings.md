@@ -38,30 +38,30 @@ Use `sauva --print-default-config` to see every context, command, and default bi
 
 Global bindings remain active in all contexts. When help is open, only its own bindings and the global bindings are active.
 
-Disabling a local command does not disable the global binding for the same action. For example, disabling `keybindings.inspector.quit` leaves the default global `Ctrl-C` binding available.
+Disabling a local command does not disable the global binding for the same action. For example, disabling `keybindings.inspector.quit` leaves the default global <kbd>Ctrl-C</kbd> binding available.
 
 ## Key Formats
 
 ### Characters
 
-Use a single non-whitespace character, such as `a`, `1`, `/`, or `-`.
+Use a single non-whitespace character, such as <kbd>a</kbd>, <kbd>1</kbd>, <kbd>/</kbd>, or <kbd>-</kbd>.
 
-Uppercase ASCII letters represent Shift plus that letter. For example, `G` and `shift-g` describe the same key.
+Uppercase ASCII letters represent <kbd>Shift</kbd> plus that letter. For example, `G` and `shift-g` both describe <kbd>Shift-G</kbd>.
 
 ### Named Keys
 
 | Name | Key |
 | --- | --- |
-| `space` | Space |
-| `enter` | Enter |
-| `esc` | Escape |
-| `tab` | Tab |
-| `backspace` | Backspace |
-| `delete` | Delete |
-| `left`, `right`, `up`, `down` | Arrow keys |
-| `home`, `end` | Home and End |
-| `pageup`, `pagedown` | Page Up and Page Down |
-| `f1` through `f12` | Function keys |
+| `space` | <kbd>Space</kbd> |
+| `enter` | <kbd>Enter</kbd> |
+| `esc` | <kbd>Escape</kbd> |
+| `tab` | <kbd>Tab</kbd> |
+| `backspace` | <kbd>Backspace</kbd> |
+| `delete` | <kbd>Delete</kbd> |
+| `left`, `right`, `up`, `down` | <kbd>Left</kbd>, <kbd>Right</kbd>, <kbd>Up</kbd>, <kbd>Down</kbd> |
+| `home`, `end` | <kbd>Home</kbd> and <kbd>End</kbd> |
+| `pageup`, `pagedown` | <kbd>Page Up</kbd> and <kbd>Page Down</kbd> |
+| `f1` through `f12` | <kbd>F1</kbd> through <kbd>F12</kbd> |
 
 Names and modifier prefixes are lowercase.
 
@@ -89,7 +89,7 @@ Sauva rejects invalid bindings at startup, including:
 - A local binding that uses a global key for a different command.
 - Global or search bindings that would intercept search input editing.
 
-For example, binding `j` to `search.next_result` is rejected because `j` is needed for typing the query. Use an arrow key or another combination that is not an input editing key.
+For example, binding <kbd>j</kbd> to `search.next_result` is rejected because <kbd>j</kbd> is needed for typing the query. Use an arrow key or another combination that is not an input editing key.
 
 When moving a key from one command to another, also remove it from the original command's binding. For example:
 

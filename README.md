@@ -54,7 +54,7 @@ Pass a string to inspect its code points and grapheme clusters:
 sauva 'Á👩‍💻'
 ```
 
-Press `Enter` to inspect a selected code point, or `n` to compare normalization forms.
+Press <kbd>Enter</kbd> to inspect a selected code point, or <kbd>n</kbd> to compare normalization forms.
 
 <img src="./img/demo-sequence.gif" alt="Sauva Sequence and normalization demo">
 
@@ -91,15 +91,15 @@ For input interpretation, stdin handling, and graphics modes, see [Command Line 
 
 | Key | Description |
 | --- | --- |
-| `F1` | Open or close contextual help |
-| `Ctrl-C` | Quit from any view |
-| `j` / `k` or arrow keys | Move the selection; use Up / Down in Search |
-| `/` | Open Search from the Inspector |
-| `p`, `r`, `b`, `c` | Open Browse from the Inspector |
-| `Enter` | Open the selected item or inspect a code point |
-| `Backspace` | Go back in Browse or return from the Inspector to its Sequence |
-| `y` | Copy the selected Inspector value or normalization result |
-| `n` | Compare normalization forms from Sequence |
+| <kbd>F1</kbd> | Open or close contextual help |
+| <kbd>Ctrl-C</kbd> | Quit from any view |
+| <kbd>j</kbd> / <kbd>k</kbd> or arrow keys | Move the selection; use <kbd>Up</kbd> / <kbd>Down</kbd> in Search |
+| <kbd>/</kbd> | Open Search from the Inspector |
+| <kbd>p</kbd>, <kbd>r</kbd>, <kbd>b</kbd>, <kbd>c</kbd> | Open Browse from the Inspector |
+| <kbd>Enter</kbd> | Open the selected item or inspect a code point |
+| <kbd>Backspace</kbd> | Go back in Browse or return from the Inspector to its Sequence |
+| <kbd>y</kbd> | Copy the selected Inspector value or normalization result |
+| <kbd>n</kbd> | Compare normalization forms from Sequence |
 
 See [Keybindings](https://lusingander.github.io/sauva/keybindings/) for all controls and [Custom Keybindings](https://lusingander.github.io/sauva/keybindings/custom-keybindings.html) to customize them.
 

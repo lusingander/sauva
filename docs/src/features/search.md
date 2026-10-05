@@ -1,6 +1,6 @@
 # Search
 
-Press `/` in the Inspector to search by character, code point, Unicode name, or formal name alias.
+Press <kbd>/</kbd> in the Inspector to search by character, code point, Unicode name, or formal name alias.
 
 ![Search results](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/filter.png)
 
@@ -34,10 +34,10 @@ A code point appears only once even if both its name and an alias match. Matchin
 
 | Keys | Action |
 | --- | --- |
-| Up / Down, `Ctrl-P` / `Ctrl-N` | Select the previous / next result |
-| Enter | Open the selected result in the Inspector |
-| Esc | Close Search |
-| `F1` | Open contextual help |
-| `Ctrl-C` | Quit |
+| <kbd>Up</kbd> / <kbd>Down</kbd>, <kbd>Ctrl-P</kbd> / <kbd>Ctrl-N</kbd> | Select the previous / next result |
+| <kbd>Enter</kbd> | Open the selected result in the Inspector |
+| <kbd>Esc</kbd> | Close Search |
+| <kbd>F1</kbd> | Open contextual help |
+| <kbd>Ctrl-C</kbd> | Quit |
 
-Character keys edit the query, so `j`, `k`, and `q` are entered as text. Search results update as the query changes. Reopening Search keeps the previous query and selection.
+Character keys edit the query, so <kbd>j</kbd>, <kbd>k</kbd>, and <kbd>q</kbd> are entered as text. Search results update as the query changes. Reopening Search keeps the previous query and selection.

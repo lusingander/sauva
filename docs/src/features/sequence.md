@@ -59,12 +59,12 @@ Input order, repeated characters, spaces, and newlines are preserved. Labels and
 
 | Keys | Action |
 | --- | --- |
-| `j` / `k`, Down / Up | Select a code point |
-| `g` / `G` | Select the first / last code point |
-| Enter | Open the selected code point in the Inspector |
-| `n` | Compare normalization forms |
-| `q`, Esc | Quit |
+| <kbd>j</kbd> / <kbd>k</kbd>, <kbd>Down</kbd> / <kbd>Up</kbd> | Select a code point |
+| <kbd>g</kbd> / <kbd>G</kbd> | Select the first / last code point |
+| <kbd>Enter</kbd> | Open the selected code point in the Inspector |
+| <kbd>n</kbd> | Compare normalization forms |
+| <kbd>q</kbd>, <kbd>Esc</kbd> | Quit |
 
 ![Sequence Inspector](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/sequence-inspector.png)
 
-Backspace in the Inspector returns to the sequence. From Sequence, press `n` to open [Normalization](./normalization.md).
+<kbd>Backspace</kbd> in the Inspector returns to the sequence. From Sequence, press <kbd>n</kbd> to open [Normalization](./normalization.md).

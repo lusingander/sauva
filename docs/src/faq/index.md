@@ -57,7 +57,7 @@ The glyph image previews the selected code point. See [Sequence](../features/seq
 
 Sauva uses the system clipboard. The footer reports when it is unavailable, busy, or unable to accept the text. Check that a system clipboard is available in the current desktop session; an SSH or headless session may not provide one.
 
-A field marked unavailable, such as the encoding of a surrogate, has no copyable value. In Normalization, press `y` in the form comparison screen to copy the whole normalized result.
+A field marked unavailable, such as the encoding of a surrogate, has no copyable value. In Normalization, press <kbd>y</kbd> in the form comparison screen to copy the whole normalized result.
 
 ## Why does my configuration prevent startup?
 

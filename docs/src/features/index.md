@@ -6,4 +6,4 @@
 - [Sequence](./sequence.md): examine a string's code points and grapheme clusters.
 - [Normalization](./normalization.md): compare and inspect normalized text.
 
-Press `F1` in any screen for contextual help. See [Keybindings](../keybindings/index.md) for the complete controls.
+Press <kbd>F1</kbd> in any screen for contextual help. See [Keybindings](../keybindings/index.md) for the complete controls.
