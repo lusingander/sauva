@@ -1,0 +1,11 @@
+[book]
+authors = ["Kyosuke Fujimoto"]
+language = "en"
+src = "src"
+title = "Sauva"
+description = "Sauva Documentation"
+
+[output.html]
+git-repository-url = "https://github.com/lusingander/sauva"
+site-url = "/sauva/"
+default-theme = "rust"
