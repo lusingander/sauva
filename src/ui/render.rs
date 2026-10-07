@@ -622,27 +622,32 @@ mod tests {
     }
 
     #[test]
-    fn list_selection_fills_the_content_width_without_coloring_the_padding() {
+    fn list_selection_keeps_inner_padding_and_leaves_outer_padding_uncolored() {
         let color_theme = test_color_theme();
-        let (width, height) = STANDARD_SIZE;
-
-        for (state, selected_y) in [
-            (fixtures::search_name_results(), 5),
-            (fixtures::browse_planes(), 3),
-            (fixtures::browse_ranges(), 3),
-        ] {
-            let buffer = render_to_buffer(&state, width, height, &color_theme);
-
-            for x in 2..58 {
-                let cell = buffer.cell((x, selected_y)).unwrap();
-                assert_eq!(cell.bg, color_theme.selection.bg);
+        for (width, height) in [MINIMUM_SIZE, STANDARD_SIZE, WIDE_SIZE] {
+            let right = if width >= 100 { width - 42 } else { width - 2 };
+            for (state, selected_y) in [
+                (fixtures::search_name_results(), 5),
+                (fixtures::browse_planes(), 3),
+                (fixtures::browse_ranges(), 3),
+                (fixtures::browse_blocks(), 3),
+            ] {
+                let buffer = render_to_buffer(&state, width, height, &color_theme);
+                for x in 2..right {
+                    let cell = buffer.cell((x, selected_y)).unwrap();
+                    assert_eq!(cell.bg, color_theme.selection.bg);
+                }
+                assert_eq!(buffer.cell((2, selected_y)).unwrap().symbol(), " ");
+                assert_eq!(buffer.cell((right - 1, selected_y)).unwrap().symbol(), " ");
+                assert_ne!(buffer.cell((3, selected_y)).unwrap().symbol(), " ");
+                assert_eq!(buffer.cell((2, selected_y + 1)).unwrap().symbol(), " ");
+                assert_eq!(
+                    buffer.cell((2, selected_y)).unwrap().fg,
+                    color_theme.selection.fg
+                );
+                assert_eq!(buffer.cell((1, selected_y)).unwrap().bg, color_theme.bg);
+                assert_eq!(buffer.cell((right, selected_y)).unwrap().bg, color_theme.bg);
             }
-            assert_eq!(
-                buffer.cell((2, selected_y)).unwrap().fg,
-                color_theme.selection.fg
-            );
-            assert_eq!(buffer.cell((1, selected_y)).unwrap().bg, color_theme.bg);
-            assert_eq!(buffer.cell((58, selected_y)).unwrap().bg, color_theme.bg);
         }
     }
 
@@ -897,6 +902,8 @@ mod tests {
         for x in 1..58 {
             assert_eq!(buffer.cell((x, 7)).unwrap().bg, theme.selection.bg);
         }
+        assert_eq!(buffer.cell((1, 7)).unwrap().symbol(), " ");
+        assert_eq!(buffer.cell((57, 7)).unwrap().symbol(), " ");
         assert_eq!(buffer.cell((16, 4)).unwrap().bg, theme.bg);
     }
 

@@ -14,7 +14,7 @@ use crate::{
 
 fn original_width(original: &TextAnalysis) -> u16 {
     // Padding, boundary gutter, CP position, spacing and the longest U+XXXXXX.
-    (17 + original.code_points().len().to_string().len()
+    (19 + original.code_points().len().to_string().len()
         + original.graphemes().len().to_string().len())
     .max(24) as u16
 }
@@ -113,16 +113,27 @@ mod tests {
 
     #[test]
     fn original_columns_fit_all_positions_and_scalar_notations() {
-        for source in ["A\u{0301}".to_owned(), "①".repeat(10_000)] {
+        for (source, expected_width, result_height) in [
+            ("A\u{0301}".to_owned(), 24, 13),
+            ("\u{10ffff}".repeat(10_000), 29, 8),
+        ] {
             let original = TextAnalysis::new(source);
             let width = original_width(&original);
-            let required = 17
-                + original.code_points().len().to_string().len()
-                + original.graphemes().len().to_string().len();
-            assert!(usize::from(width) >= required);
+            assert_eq!(width, expected_width);
             let panes = layout::normalization_result(Rect::new(0, 2, 60, 13), width);
-            assert_eq!(panes.result.height, 13);
+            assert_eq!(panes.result.height, result_height);
             assert!(panes.result.width >= 32);
+            let content = workspace::primary_section(panes.original).content;
+            let gutter_width = original.graphemes().len().to_string().len() as u16 + 3;
+            let row = selectable_list_line(
+                Line::from(format!("{}  U+10FFFF", original.code_points().len())),
+                true,
+                content.width.saturating_sub(gutter_width),
+                ColorTheme::default().selection,
+            );
+            assert!(row.to_string().contains("U+10FFFF"));
+            assert!(row.to_string().starts_with(' '));
+            assert!(row.to_string().ends_with(' '));
         }
     }
 }

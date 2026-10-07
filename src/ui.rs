@@ -17,6 +17,7 @@ mod workspace;
 
 use ratatui::layout::Rect;
 use ratatui::text::{Line, Span};
+use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     app::{AppState, View},
@@ -68,24 +69,100 @@ pub fn glyph_preview_request(area: Rect, state: &AppState) -> Option<GlyphPrevie
 }
 
 fn selectable_list_line(
-    mut line: Line<'static>,
+    line: Line<'static>,
     selected: bool,
     content_width: u16,
     colors: SelectionColors,
 ) -> Line<'static> {
-    if !selected {
-        return line;
+    let line = padded_line(line, usize::from(content_width));
+    if selected {
+        line.style(colors.style())
+    } else {
+        line
     }
+}
 
-    let padding = usize::from(content_width).saturating_sub(line.width());
-    line.push_span(Span::raw(" ".repeat(padding)));
-    line.style(colors.style())
+fn padded_line_content_width(width: usize) -> usize {
+    width.saturating_sub(2)
+}
+
+fn padded_line(mut line: Line<'static>, width: usize) -> Line<'static> {
+    let mut remaining = padded_line_content_width(width);
+    let mut spans = vec![Span::raw(" ".repeat(width.min(1)))];
+    for mut span in line.spans {
+        let mut end = 0;
+        let mut clipped = false;
+        for (index, grapheme) in span.content.grapheme_indices(true) {
+            let grapheme_width = Span::raw(grapheme).width();
+            if grapheme_width > remaining {
+                clipped = true;
+                break;
+            }
+            remaining -= grapheme_width;
+            end = index + grapheme.len();
+        }
+        if end < span.content.len() {
+            span.content = span.content[..end].to_owned().into();
+        }
+        spans.push(span);
+        if clipped {
+            break;
+        }
+    }
+    spans.push(Span::raw(" ".repeat(remaining + usize::from(width >= 2))));
+    line.spans = spans;
+    line
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::fixtures;
+
+    #[test]
+    fn list_padding_survives_clipping_wide_and_combining_graphemes() {
+        use ratatui::{buffer::Buffer, style::Modifier, widgets::Widget};
+
+        let theme = crate::ui::theme::ColorTheme::default();
+        for selected in [false, true] {
+            let line = Line::from(vec![
+                Span::styled(
+                    "AB",
+                    ratatui::style::Style::new().add_modifier(Modifier::BOLD),
+                ),
+                Span::raw("あe\u{0301}👩‍💻TAIL"),
+            ]);
+            let line = selectable_list_line(line, selected, 8, theme.selection);
+            assert_eq!(line.to_string(), " ABあe\u{0301}  ");
+            assert_eq!(line.width(), 8);
+
+            let area = Rect::new(0, 0, 8, 1);
+            let mut buffer = Buffer::empty(area);
+            line.render(area, &mut buffer);
+            assert_eq!(buffer[(0, 0)].symbol(), " ");
+            assert_eq!(buffer[(7, 0)].symbol(), " ");
+            assert!(buffer[(1, 0)].modifier.contains(Modifier::BOLD));
+            assert_eq!(buffer[(5, 0)].symbol(), "e\u{0301}");
+            if selected {
+                for x in [0, 1, 2, 3, 5, 6, 7] {
+                    assert_eq!(buffer[(x, 0)].bg, theme.selection.bg);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn list_padding_fits_areas_narrower_than_the_padding() {
+        for width in 0..=2 {
+            let line = selectable_list_line(
+                Line::from("あABC"),
+                true,
+                width,
+                crate::ui::theme::ColorTheme::default().selection,
+            );
+            assert_eq!(line.to_string(), " ".repeat(usize::from(width)));
+        }
+    }
 
     #[test]
     fn normalization_result_uses_the_reference_pane_instead_of_a_glyph_preview() {

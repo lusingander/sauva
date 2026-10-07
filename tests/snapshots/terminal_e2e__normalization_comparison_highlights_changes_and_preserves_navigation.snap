@@ -9,11 +9,11 @@ size: 100x30  cursor: hidden
   Á␠①👩‍💻
   U+0041 U+0301 U+0020 U+2460 U+1F469 U+200D U+1F4BB
 
- Form  vs Original                                                                   CP  Bytes  GC
- NFC   Changed                                                                        6     17   4
- NFD   Unchanged                                                                      7     18   4
- NFKC  Changed                                                                        6     15   4
- NFKD  Changed                                                                        7     16   4
+  Form  vs Original                                                                 CP  Bytes  GC
+  NFC   Changed                                                                      6     17   4
+  NFD   Unchanged                                                                    7     18   4
+  NFKC  Changed                                                                      6     15   4
+  NFKD  Changed                                                                      7     16   4
 
  NFKC Result                                                                     2 changed regions
   Á␠1👩‍
@@ -39,7 +39,7 @@ styles:
 2: 1-8 fg=4 bold; 9-97 fg=8
 3: 2 fg=0 bg=3 underline; 4 fg=0 bg=3 underline
 4: 2-14 fg=0 bg=3 underline; 15-22 fg=8; 23-28 fg=0 bg=3 underline; 29-51 fg=8
-6: 1-97 fg=8
+6: 2-96 fg=8
 9: 1-97 fg=0 bg=6
 12: 1-11 fg=4 bold; 12-97 fg=8
 13: 2 fg=0 bg=3 underline; 4 fg=0 bg=3 underline
