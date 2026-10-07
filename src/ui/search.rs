@@ -122,7 +122,12 @@ fn render_input(
     );
     workspace::render_divider(
         frame,
-        Rect::new(area.x, area.bottom().saturating_sub(1), area.width, 1),
+        Rect::new(
+            area.x,
+            area.bottom().saturating_sub(1),
+            area.width.saturating_sub(1),
+            1,
+        ),
         color_theme,
     );
 

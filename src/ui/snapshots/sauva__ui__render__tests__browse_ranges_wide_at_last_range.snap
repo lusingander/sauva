@@ -40,5 +40,5 @@ expression: "render_to_text(&state, width, height)"
   U+FD00–U+FDFF                                                                                     ┃
   U+FE00–U+FEFF                                                                                     ┃
   U+FF00–U+FFFF                                                                                     ┃
-                                                                                                    │
+
  k/j Move  C-u/C-d Jump  g/G Ends  Enter Points  BS Back  Esc Close  q Quit                                                         F1 Help

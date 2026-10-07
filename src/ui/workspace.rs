@@ -64,7 +64,12 @@ pub fn render_rail_heading(
         Block::default()
             .borders(Borders::LEFT)
             .border_style(color_theme.border_style()),
-        area,
+        Rect::new(
+            area.x,
+            area.y,
+            area.width,
+            area.height.saturating_sub(BOTTOM_INSET),
+        ),
     );
     let section = rail_section(area);
     render_heading(frame, section.heading, title, secondary, color_theme);

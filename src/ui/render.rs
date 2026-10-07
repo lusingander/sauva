@@ -500,6 +500,53 @@ mod tests {
     }
 
     #[test]
+    fn pane_dividers_leave_the_bottom_padding_empty() {
+        let color_theme = test_color_theme();
+        for (width, height) in [STANDARD_SIZE, WIDE_SIZE] {
+            for state in [
+                fixtures::startup(),
+                fixtures::browse_planes(),
+                fixtures::browse_ranges(),
+                fixtures::browse_blocks(),
+                fixtures::browse_code_points(),
+                fixtures::search_name_results(),
+                fixtures::search_empty(),
+                fixtures::sequence(),
+            ] {
+                let buffer = render_to_buffer(&state, width, height, &color_theme);
+                let divider_x = if state.browse().is_some_and(|browse| {
+                    browse.level() == crate::browser::BrowseLevel::CodePointTable
+                }) {
+                    60
+                } else {
+                    width - 40
+                };
+                assert!(matches!(
+                    buffer.cell((divider_x, height - 3)).unwrap().symbol(),
+                    "│" | "┃"
+                ));
+                assert_eq!(buffer.cell((divider_x, height - 2)).unwrap().symbol(), " ");
+            }
+        }
+    }
+
+    #[test]
+    fn search_divider_leaves_one_cell_at_the_right_edge() {
+        let color_theme = test_color_theme();
+        for (width, height) in [MINIMUM_SIZE, STANDARD_SIZE, WIDE_SIZE] {
+            let buffer = render_to_buffer(&fixtures::search_empty(), width, height, &color_theme);
+            let primary_width = if width >= 100 { width - 40 } else { width };
+            for x in 0..primary_width - 1 {
+                assert_eq!(buffer.cell((x, 3)).unwrap().symbol(), "─");
+            }
+            assert_eq!(buffer.cell((primary_width - 1, 3)).unwrap().symbol(), " ");
+            if primary_width < width {
+                assert_eq!(buffer.cell((primary_width, 3)).unwrap().symbol(), "│");
+            }
+        }
+    }
+
+    #[test]
     fn inspector_selection_fills_the_content_width_without_coloring_the_padding() {
         let color_theme = test_color_theme();
         let (width, height) = STANDARD_SIZE;

@@ -30,5 +30,5 @@ expression: "render_after_inspector_move(&state, width, height, InspectorMove::L
  ─────────────────────────────────────────────────────────  ┃
  Data                                                       ┃
  Unicode Version            17.0.0                          ┃
-                                                            │
+
  h/l Point  k/j Field  C-u/C-d Page  g/G Ends  y Copy  / Search  p/r/b/c Browse  q Quit     F1 Help
