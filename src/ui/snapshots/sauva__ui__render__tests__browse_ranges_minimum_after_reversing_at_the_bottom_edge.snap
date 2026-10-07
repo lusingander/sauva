@@ -5,16 +5,16 @@ expression: "render_to_text(&state, width, height)"
  sauva / Browse / Ranges                             U+0941
 
  Ranges                                            Plane 0
-  U+0100–U+01FF                                           ┃
-  U+0200–U+02FF
-  U+0300–U+03FF
-  U+0400–U+04FF
-  U+0500–U+05FF
-  U+0600–U+06FF
-  U+0700–U+07FF
-  U+0800–U+08FF
-  U+0900–U+09FF
-  U+0A00–U+0AFF
-  U+0B00–U+0BFF
+   U+0100–U+01FF                                          ┃
+   U+0200–U+02FF
+   U+0300–U+03FF
+   U+0400–U+04FF
+   U+0500–U+05FF
+   U+0600–U+06FF
+   U+0700–U+07FF
+   U+0800–U+08FF
+   U+0900–U+09FF
+   U+0A00–U+0AFF
+   U+0B00–U+0BFF
 
  k/j Move  Enter Points  BS Back  Esc Close         F1 Help

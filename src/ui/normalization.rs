@@ -11,7 +11,7 @@ use ratatui::{
 use crate::{
     app::AppState,
     normalization::TextMetrics,
-    ui::{selectable_list_line, theme::ColorTheme},
+    ui::{padded_line, padded_line_content_width, selectable_list_line, theme::ColorTheme},
     unicode::{
         CodePoint, GeneralCategory, UnicodeDatabase,
         text::{NormalizationForm, TextAnalysis},
@@ -79,14 +79,18 @@ pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorThem
         .max()
         .unwrap()
         .max(2);
-    lines.push(table_row(
-        "Form  vs Original",
-        &format!(
-            "{:>cp_width$}  {:>byte_width$}  {:>gc_width$}",
-            "CP", "Bytes", "GC"
+    let table_width = padded_line_content_width(width);
+    lines.push(padded_line(
+        table_row(
+            "Form  vs Original",
+            &format!(
+                "{:>cp_width$}  {:>byte_width$}  {:>gc_width$}",
+                "CP", "Bytes", "GC"
+            ),
+            table_width,
+            Style::new().fg(theme.muted),
         ),
         width,
-        Style::new().fg(theme.muted),
     ));
     for (index, form) in NormalizationForm::ALL.into_iter().enumerate() {
         let selected = normalization.form() == form;
@@ -102,7 +106,7 @@ pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorThem
             metrics.code_points, metrics.bytes, metrics.graphemes
         );
         lines.push(selectable_list_line(
-            table_row(&left, &right, width, Style::default()),
+            table_row(&left, &right, table_width, Style::default()),
             selected,
             canvas.width,
             theme.selection,

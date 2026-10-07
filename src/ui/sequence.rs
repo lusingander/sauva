@@ -239,12 +239,12 @@ mod tests {
         let heading = row_text(&buffer, 0, 0, 60);
         assert!(heading.contains("6 code points · 3 graphemes"));
         for (row, prefix) in [
-            "1 ┌ 1  U+0041",
-            "  └ 2  U+0301",
-            "2 • 3  U+0020",
-            "3 ┌ 4  U+1F469",
-            "  │ 5  U+200D",
-            "  └ 6  U+1F4BB",
+            "1 ┌  1  U+0041",
+            "  └  2  U+0301",
+            "2 •  3  U+0020",
+            "3 ┌  4  U+1F469",
+            "  │  5  U+200D",
+            "  └  6  U+1F4BB",
         ]
         .into_iter()
         .enumerate()
@@ -292,7 +292,9 @@ mod tests {
                 assert_eq!(cell.modifier.contains(Modifier::BOLD), grapheme_selected);
                 assert_eq!(cell.bg, theme.bg);
             }
-            assert_eq!(buffer.cell((6, y)).unwrap().symbol(), (row + 1).to_string());
+            assert_eq!(buffer.cell((6, y)).unwrap().symbol(), " ");
+            assert_eq!(buffer.cell((7, y)).unwrap().symbol(), (row + 1).to_string());
+            assert_eq!(buffer.cell((57, y)).unwrap().symbol(), " ");
             let mut x = 6;
             while x < 58 {
                 let cell = buffer.cell((x, y)).unwrap();
@@ -330,7 +332,7 @@ mod tests {
         assert_eq!(row_text(&buffer, 2, 11, 5), "11 • ");
         for (row, position) in (1..=11).enumerate() {
             assert_eq!(
-                row_text(&buffer, 7, row as u16 + 1, 2),
+                row_text(&buffer, 8, row as u16 + 1, 2),
                 format!("{position:>2}")
             );
         }

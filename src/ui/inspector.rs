@@ -9,7 +9,7 @@ use ratatui::{
 use crate::app::AppState;
 use crate::inspector::InspectorField;
 use crate::ui::{
-    key_value, layout,
+    key_value, layout, padded_line, padded_line_content_width,
     scrollbar::{self, ViewportScrollbar},
     theme::ColorTheme,
     workspace,
@@ -113,7 +113,7 @@ struct DocumentBuilder {
 
 impl DocumentBuilder {
     fn new(width: usize, color_theme: &ColorTheme) -> Self {
-        let label_width = LABEL_WIDTH.min(width.saturating_sub(1));
+        let label_width = LABEL_WIDTH.min(padded_line_content_width(width).saturating_sub(1));
         Self {
             lines: Vec::new(),
             width,
@@ -136,15 +136,24 @@ impl DocumentBuilder {
     }
 
     fn fields(&mut self, label: &str, values: impl IntoIterator<Item = String>, selected: bool) {
-        self.lines.extend(key_value::property_lines(
+        let selected_style = selected.then(|| self.color_theme.selection.style());
+        let lines = key_value::property_lines(
             label,
             values,
-            self.width,
+            padded_line_content_width(self.width),
             self.label_width,
             Style::new().fg(self.color_theme.muted),
             Style::new(),
-            selected.then(|| self.color_theme.selection.style()),
-        ));
+            selected_style,
+        );
+        self.lines.extend(lines.into_iter().map(|line| {
+            let line = padded_line(line, self.width);
+            if let Some(style) = selected_style {
+                line.style(style)
+            } else {
+                line
+            }
+        }));
     }
 }
 
@@ -187,7 +196,7 @@ mod tests {
         assert!(text.iter().any(|line| line.contains("Na — Narrow")));
         assert!(text.iter().any(|line| line.contains("L — Left To Right")));
         assert!(text.iter().any(|line| line.contains("\\u0041")));
-        assert!(text.iter().any(|line| line.ends_with("None")));
+        assert!(text.iter().any(|line| line.trim_end().ends_with("None")));
     }
 
     #[test]
@@ -207,7 +216,7 @@ mod tests {
         assert!(
             aliases
                 .iter()
-                .any(|line| line.trim_start() == "NUL — abbreviation")
+                .any(|line| line.trim() == "NUL — abbreviation")
         );
         assert!(
             decomposition
@@ -218,6 +227,35 @@ mod tests {
             line.trim_start()
                 .starts_with("U+0301 COMBINING ACUTE ACCENT")
         }));
+    }
+
+    #[test]
+    fn wrapped_properties_keep_padding_and_the_complete_value() {
+        use ratatui::{buffer::Buffer, widgets::Widget};
+
+        let theme = ColorTheme::default();
+        let value = "ABCDEFGHIあe\u{0301}JKLMNOPQRST";
+        for selected in [false, true] {
+            let mut builder = DocumentBuilder::new(12, &theme);
+            builder.fields("Value", [value.to_owned()], selected);
+            let text = builder.lines[1..]
+                .iter()
+                .map(|line| line.to_string().trim().to_owned())
+                .collect::<String>();
+            assert_eq!(text, value);
+
+            for line in builder.lines {
+                let area = Rect::new(0, 0, 12, 1);
+                let mut buffer = Buffer::empty(area);
+                line.render(area, &mut buffer);
+                for x in [0, 11] {
+                    assert_eq!(buffer[(x, 0)].symbol(), " ");
+                    if selected {
+                        assert_eq!(buffer[(x, 0)].bg, theme.selection.bg);
+                    }
+                }
+            }
+        }
     }
 
     #[test]

@@ -6,11 +6,11 @@ size: 100x30  cursor: hidden
  sauva / Sequence / NFKC Result                                                        4/5 · U+0031
 
  Original         3 CP   NFKC Result                                   5 code points · 5 graphemes
-  1 • 1  U+FB03           1 • 1  U+0066    f — LATIN SMALL LETTER F
-  2 • 2  U+2460           2 • 2  U+0066    f — LATIN SMALL LETTER F
-  3 • 3  U+2461           3 • 3  U+0069    i — LATIN SMALL LETTER I
-                          4 • 4  U+0031    1 — DIGIT ONE
-                          5 • 5  U+0032    2 — DIGIT TWO
+  1 •  1  U+FB03          1 •  1  U+0066    f — LATIN SMALL LETTER F
+  2 •  2  U+2460          2 •  2  U+0066    f — LATIN SMALL LETTER F
+  3 •  3  U+2461          3 •  3  U+0069    i — LATIN SMALL LETTER I
+                          4 •  4  U+0031    1 — DIGIT ONE
+                          5 •  5  U+0032    2 — DIGIT TWO
 
 
 

@@ -10,7 +10,7 @@ use crate::{
     app::AppState,
     search::{SearchDirectMatchKind, SearchOutcome, SearchResult},
     ui::{
-        layout,
+        layout, padded_line_content_width,
         scrollbar::{self, ViewportScrollbar},
         selectable_list_line, selection_preview,
         settings::{InputCursor, UiSettings},
@@ -122,7 +122,12 @@ fn render_input(
     );
     workspace::render_divider(
         frame,
-        Rect::new(area.x, area.bottom().saturating_sub(1), area.width, 1),
+        Rect::new(
+            area.x,
+            area.bottom().saturating_sub(1),
+            area.width.saturating_sub(1),
+            1,
+        ),
         color_theme,
     );
 
@@ -159,7 +164,7 @@ fn render_results(
                 let line = result_line(
                     results[index],
                     outcome.name_query(),
-                    content.width,
+                    padded_line_content_width(usize::from(content.width)) as u16,
                     selected,
                     color_theme,
                 );
@@ -470,6 +475,38 @@ mod tests {
             .collect::<Vec<_>>();
 
         assert_eq!(highlighted, ["FACE", "FACE"]);
+    }
+
+    #[test]
+    fn alias_annotations_fit_inside_the_result_padding() {
+        let color_theme = ColorTheme::default();
+        let outcome = crate::search::search("latin capital letter gha");
+        let full_width = result_line(
+            outcome.results()[0],
+            outcome.name_query(),
+            u16::MAX,
+            true,
+            &color_theme,
+        )
+        .width() as u16;
+
+        for (width, annotation_visible) in [(full_width + 5, false), (full_width + 6, true)] {
+            let mut terminal = Terminal::new(TestBackend::new(width, 3)).unwrap();
+            terminal
+                .draw(|frame| {
+                    render_results(frame, frame.area(), &outcome, Some(0), 0..1, &color_theme);
+                })
+                .unwrap();
+            let buffer = terminal.backend().buffer();
+            let text = (0..width)
+                .map(|x| buffer[(x, 1)].symbol())
+                .collect::<String>();
+            assert!(text.contains("LATIN CAPITAL LETTER GHA"));
+            assert_eq!(text.contains("correction alias"), annotation_visible);
+            assert_eq!(text.contains(" · "), annotation_visible);
+            assert_eq!(buffer[(2, 1)].symbol(), " ");
+            assert_eq!(buffer[(width - 3, 1)].symbol(), " ");
+        }
     }
 
     #[test]

@@ -31,7 +31,7 @@ size: 100x30  cursor: hidden
                                                             │
                                                             │
                                                             │
-                                                            │
+
  h/l/k/j Move  C-u/C-d Jump  g/G Ends  Enter Inspect  BS Back  Esc Close  q Quit            F1 Help
 
 styles:
@@ -62,5 +62,4 @@ styles:
 25: 60 fg=8
 26: 60 fg=8
 27: 60 fg=8
-28: 60 fg=8
 29: 1-7 fg=3; 8-12 fg=8; 15-21 fg=3; 22-26 fg=8; 29-31 fg=3; 32-36 fg=8; 39-43 fg=3; 44-51 fg=8; 54-55 fg=3; 56-60 fg=8; 63-65 fg=3; 66-71 fg=8; 74 fg=3; 75-79 fg=8; 92-93 fg=3; 94-98 fg=8

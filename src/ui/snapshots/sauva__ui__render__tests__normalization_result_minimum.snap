@@ -5,10 +5,10 @@ expression: "render_to_text(&state, 60, 16)"
  sauva / Sequence / NFKC Result                1/4 · U+0066
 
  Original         2 CP   NFKC Result           4 CP · 4 GC
-  1 • 1  U+FB03           1 • 1  U+0066    f — LATIN SMALL
-  2 • 2  U+2460           2 • 2  U+0066    f — LATIN SMALL
-                          3 • 3  U+0069    i — LATIN SMALL
-                          4 • 4  U+0031    1 — DIGIT ONE
+  1 •  1  U+FB03          1 •  1  U+0066    f — LATIN SMA
+  2 •  2  U+2460          2 •  2  U+0066    f — LATIN SMA
+                          3 •  3  U+0069    i — LATIN SMA
+                          4 •  4  U+0031    1 — DIGIT ONE
 
 
 
