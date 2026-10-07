@@ -547,7 +547,7 @@ mod tests {
     }
 
     #[test]
-    fn inspector_selection_fills_the_content_width_without_coloring_the_padding() {
+    fn inspector_selection_keeps_inner_padding_and_leaves_outer_padding_uncolored() {
         let color_theme = test_color_theme();
         let (width, height) = STANDARD_SIZE;
         let buffer = render_to_buffer(&fixtures::startup(), width, height, &color_theme);
@@ -557,6 +557,11 @@ mod tests {
             assert_eq!(cell.bg, color_theme.selection.bg);
         }
         assert_eq!(buffer.cell((1, 3)).unwrap().fg, color_theme.selection.fg);
+        assert_eq!(buffer.cell((1, 3)).unwrap().symbol(), " ");
+        assert_eq!(buffer.cell((2, 3)).unwrap().symbol(), "C");
+        assert_eq!(buffer.cell((57, 3)).unwrap().symbol(), " ");
+        assert_eq!(buffer.cell((1, 4)).unwrap().symbol(), " ");
+        assert_eq!(buffer.cell((2, 4)).unwrap().symbol(), "C");
         assert_eq!(buffer.cell((0, 3)).unwrap().bg, color_theme.bg);
         assert_eq!(buffer.cell((58, 3)).unwrap().bg, color_theme.bg);
 
