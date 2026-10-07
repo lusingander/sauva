@@ -14,20 +14,13 @@ use crate::{
         layout::browser,
         scrollbar::{self, ViewportScrollbar},
         selectable_list_line, selection_preview,
-        settings::UiSettings,
         theme::ColorTheme,
         workspace,
     },
     unicode::{CodePoint, Plane, UnicodeDatabase, plane::PlaneRange},
 };
 
-pub fn render(
-    frame: &mut Frame,
-    area: Rect,
-    state: &AppState,
-    color_theme: &ColorTheme,
-    ui: &UiSettings,
-) {
+pub fn render(frame: &mut Frame, area: Rect, state: &AppState, color_theme: &ColorTheme) {
     let browse = state
         .browse()
         .expect("the browser view always has browse state");
@@ -46,7 +39,6 @@ pub fn render(
                     .visible_list_items()
                     .expect("the plane level has a list viewport"),
                 color_theme,
-                ui,
             );
         }
         BrowseLevel::Range => {
@@ -61,7 +53,6 @@ pub fn render(
                     .visible_list_items()
                     .expect("the range level has a list viewport"),
                 color_theme,
-                ui,
             );
         }
         BrowseLevel::Block => {
@@ -76,7 +67,6 @@ pub fn render(
                     .visible_list_items()
                     .expect("the block level has a list viewport"),
                 color_theme,
-                ui,
             );
         }
         BrowseLevel::CodePointTable => {
@@ -98,7 +88,6 @@ pub fn render(
                     .visible_table_rows()
                     .expect("the code point table level has a row viewport"),
                 color_theme,
-                ui,
             );
         }
     }
@@ -110,7 +99,6 @@ fn render_block_navigator(
     browse: &BrowseState,
     visible_items: std::ops::Range<usize>,
     color_theme: &ColorTheme,
-    ui: &UiSettings,
 ) {
     let selected = browse
         .selected_block()
@@ -121,10 +109,9 @@ fn render_block_navigator(
         .map(|index| {
             let item = UnicodeDatabase::block(index).expect("the viewport contains valid blocks");
             let is_selected = item == selected;
-            let marker = ui.selection_marker(is_selected);
             selectable_list_line(
                 Line::from(format!(
-                    "{marker} {:06X}–{:06X}  {}",
+                    "{:06X}–{:06X}  {}",
                     item.start().value(),
                     item.end().value(),
                     item.name()
@@ -174,7 +161,6 @@ fn render_plane_navigator(
     cursor: CodePoint,
     visible_items: std::ops::Range<usize>,
     color_theme: &ColorTheme,
-    ui: &UiSettings,
 ) {
     let selected = Plane::for_code_point(cursor);
     let content = workspace::render_primary_heading(frame, area, "Planes", None, color_theme);
@@ -183,10 +169,9 @@ fn render_plane_navigator(
         .map(|number| {
             let plane = Plane::new(number as u8).expect("the viewport contains valid planes");
             let is_selected = plane == selected;
-            let marker = ui.selection_marker(is_selected);
             selectable_list_line(
                 Line::from(format!(
-                    "{marker} Plane {:>2}  {}",
+                    "Plane {:>2}  {}",
                     plane.number(),
                     plane.name().unwrap_or("Reserved")
                 )),
@@ -230,7 +215,6 @@ fn render_range_navigator(
     cursor: CodePoint,
     visible_items: std::ops::Range<usize>,
     color_theme: &ColorTheme,
-    ui: &UiSettings,
 ) {
     let selected = PlaneRange::for_code_point(cursor);
     let plane = format!("Plane {}", selected.plane().number());
@@ -241,9 +225,8 @@ fn render_range_navigator(
         .map(|index| {
             let range = selected.plane().range(index as u8);
             let is_selected = range == selected;
-            let marker = ui.selection_marker(is_selected);
             selectable_list_line(
-                Line::from(format!("{marker} {}–{}", range.start(), range.end())),
+                Line::from(format!("{}–{}", range.start(), range.end())),
                 is_selected,
                 content.width,
                 color_theme.selection,
@@ -298,7 +281,6 @@ fn render_code_point_table(
     browse: &BrowseState,
     visible_rows: std::ops::Range<usize>,
     color_theme: &ColorTheme,
-    ui: &UiSettings,
 ) {
     let cursor = browse.cursor();
     let (page_start, page_end) = browse
@@ -322,7 +304,7 @@ fn render_code_point_table(
             let code_point = CodePoint::new(row_start + column as u32)
                 .expect("table pages contain valid code points");
             let selected = code_point == cursor;
-            let cell = table_cell(code_point, selected, ui);
+            let cell = table_cell(code_point);
             spans.push(if selected {
                 Span::styled(cell, color_theme.selection.style())
             } else {
@@ -355,7 +337,7 @@ fn table_column_header(selected_column: usize, color_theme: &ColorTheme) -> Line
     Line::from(spans)
 }
 
-fn table_cell(code_point: CodePoint, selected: bool, ui: &UiSettings) -> String {
+fn table_cell(code_point: CodePoint) -> String {
     let representation = UnicodeDatabase::display_representation(code_point);
     let width = Line::from(representation.as_str()).width();
     let display = if matches!(width, 1 | 2) {
@@ -364,9 +346,7 @@ fn table_cell(code_point: CodePoint, selected: bool, ui: &UiSettings) -> String 
         "·"
     };
     let display_width = Line::from(display).width();
-    let marker = ui.selection_marker(selected);
-
-    format!("{marker}{display}{}", " ".repeat(2 - display_width))
+    format!(" {display}{}", " ".repeat(2 - display_width))
 }
 
 #[cfg(test)]
@@ -376,25 +356,20 @@ mod tests {
     use super::*;
 
     #[rstest]
-    #[case(0x0041, false, " A ")]
-    #[case(0x4e00, false, " 一")]
-    #[case(0x0301, true, ">◌́ ")]
-    #[case(0x000a, false, " · ")]
-    #[case(0x0378, false, " · ")]
-    #[case(0xd800, true, ">· ")]
-    #[case(0xe000, false, " · ")]
-    #[case(0xfdd0, false, " · ")]
+    #[case(0x0041, " A ")]
+    #[case(0x4e00, " 一")]
+    #[case(0x0301, " ◌́ ")]
+    #[case(0x000a, " · ")]
+    #[case(0x0378, " · ")]
+    #[case(0xd800, " · ")]
+    #[case(0xe000, " · ")]
+    #[case(0xfdd0, " · ")]
     fn table_cells_use_only_safe_one_or_two_column_representations(
         #[case] value: u32,
-        #[case] selected: bool,
         #[case] expected: &str,
     ) {
         let code_point = CodePoint::new(value).unwrap();
-        let ui = UiSettings {
-            selection_cursor: ">".to_owned(),
-            ..Default::default()
-        };
-        let cell = table_cell(code_point, selected, &ui);
+        let cell = table_cell(code_point);
 
         assert_eq!(cell, expected, "{code_point}");
         assert_eq!(Line::from(cell).width(), 3, "{code_point}");
@@ -406,24 +381,12 @@ mod tests {
 
         let cursor = CodePoint::new(0x0041).unwrap();
         let range = PlaneRange::for_code_point(cursor);
-        let ui = UiSettings::default();
         let mut row = format!("{:06X} ", range.start().value());
         for offset in 0..16 {
             let code_point = range.code_point(offset);
-            row.push_str(&table_cell(code_point, code_point == cursor, &ui));
+            row.push_str(&table_cell(code_point));
         }
 
         assert_eq!(Line::from(row).width(), 55);
-    }
-
-    #[test]
-    fn empty_selection_cursor_preserves_the_code_point_cell_width() {
-        let cursor = CodePoint::new(0x0041).unwrap();
-
-        assert_eq!(table_cell(cursor, true, &UiSettings::default()), " A ");
-        assert_eq!(
-            Line::from(table_cell(cursor, true, &UiSettings::default())).width(),
-            3
-        );
     }
 }

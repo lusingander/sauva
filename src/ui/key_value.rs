@@ -43,7 +43,6 @@ impl Document {
                 [entry.value.to_owned()],
                 width,
                 label_width,
-                "",
                 Style::new().fg(color_theme.muted),
                 Style::new(),
                 None,
@@ -84,13 +83,11 @@ pub fn required_height(content_width: u16, label_width: u16, entries: &[KeyValue
     Document::for_entries(content_width, label_width, entries, &ColorTheme::default()).height()
 }
 
-#[allow(clippy::too_many_arguments)]
 pub fn property_lines(
     label: &str,
     values: impl IntoIterator<Item = String>,
     width: usize,
     label_width: usize,
-    label_prefix: &str,
     label_style: Style,
     value_style: Style,
     selected_style: Option<Style>,
@@ -115,7 +112,6 @@ pub fn property_lines(
             label,
             &values,
             width,
-            label_prefix,
             label_style,
             value_style,
             selected_style,
@@ -126,7 +122,6 @@ pub fn property_lines(
             &values,
             width,
             label_width,
-            label_prefix,
             label_style,
             value_style,
             selected_style,
@@ -134,13 +129,11 @@ pub fn property_lines(
     }
 }
 
-#[allow(clippy::too_many_arguments)]
 fn inline_property_lines(
     label: &str,
     values: &[String],
     width: usize,
     label_width: usize,
-    label_prefix: &str,
     label_style: Style,
     value_style: Style,
     selected_style: Option<Style>,
@@ -150,7 +143,7 @@ fn inline_property_lines(
         .enumerate()
         .map(|(index, value)| {
             let prefix = if index == 0 {
-                padded_label(label, label_prefix, label_width)
+                padded_label(label, label_width)
             } else {
                 " ".repeat(label_width)
             };
@@ -166,12 +159,10 @@ fn inline_property_lines(
         .collect()
 }
 
-#[allow(clippy::too_many_arguments)]
 fn stacked_property_lines(
     label: &str,
     values: &[String],
     width: usize,
-    label_prefix: &str,
     label_style: Style,
     value_style: Style,
     selected_style: Option<Style>,
@@ -179,7 +170,7 @@ fn stacked_property_lines(
     let indent_width = STACKED_VALUE_INDENT.min(width.saturating_sub(1));
     let value_width = width.saturating_sub(indent_width).max(1);
     let mut lines = vec![property_line(
-        format!("{label_prefix}{label}"),
+        label.to_owned(),
         String::new(),
         width,
         label_style,
@@ -222,8 +213,8 @@ fn property_line(
     line
 }
 
-fn padded_label(label: &str, prefix: &str, width: usize) -> String {
-    let mut output = format!("{prefix}{label}");
+fn padded_label(label: &str, width: usize) -> String {
+    let mut output = label.to_owned();
     let padding = width.saturating_sub(text_width(&output));
     output.push_str(&" ".repeat(padding));
     output
@@ -348,7 +339,6 @@ mod tests {
             ["Basic Latin".to_owned()],
             26,
             13,
-            "",
             Style::new(),
             Style::new(),
             None,

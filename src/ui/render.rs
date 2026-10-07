@@ -43,14 +43,12 @@ pub fn render(
                 if let Some(preview) = inspector_layout.preview {
                     glyph_preview::render(frame, preview, state.glyph_preview(), color_theme);
                 }
-                inspector::render(frame, inspector_layout.details, state, color_theme, ui);
+                inspector::render(frame, inspector_layout.details, state, color_theme);
             }
-            View::Browser => browser::render(frame, layout.main, state, color_theme, ui),
+            View::Browser => browser::render(frame, layout.main, state, color_theme),
             View::Search => search::render(frame, layout.main, state, color_theme, ui),
-            View::Sequence => sequence::render(frame, layout.main, state, color_theme, ui),
-            View::Normalization => {
-                normalization::render(frame, layout.main, state, color_theme, ui)
-            }
+            View::Sequence => sequence::render(frame, layout.main, state, color_theme),
+            View::Normalization => normalization::render(frame, layout.main, state, color_theme),
         }
     }
     render_footer(frame, layout.footer, state, keymap, color_theme);
@@ -341,16 +339,6 @@ mod tests {
         height: u16,
         color_theme: &ColorTheme,
     ) -> Buffer {
-        render_to_buffer_with_ui(state, width, height, color_theme, &UiSettings::default())
-    }
-
-    fn render_to_buffer_with_ui(
-        state: &AppState,
-        width: u16,
-        height: u16,
-        color_theme: &ColorTheme,
-        ui: &UiSettings,
-    ) -> Buffer {
         let mut state = state.clone();
         let keymap = ResolvedKeymap::default();
         synchronize_inspector(&mut state, width, height);
@@ -381,7 +369,7 @@ mod tests {
         let backend = TestBackend::new(width, height);
         let mut terminal = Terminal::new(backend).unwrap();
         terminal
-            .draw(|frame| render(frame, &state, color_theme, ui, &keymap))
+            .draw(|frame| render(frame, &state, color_theme, &UiSettings::default(), &keymap))
             .unwrap();
 
         terminal.backend().buffer().clone()
@@ -745,29 +733,6 @@ mod tests {
     }
 
     #[test]
-    fn configured_selection_cursor_is_rendered_in_every_selection_view() {
-        let color_theme = test_color_theme();
-        let ui = UiSettings {
-            selection_cursor: ">".to_owned(),
-            ..Default::default()
-        };
-        let (width, height) = STANDARD_SIZE;
-
-        for (state, marker) in [
-            (fixtures::startup(), (1, 3)),
-            (fixtures::search_name_results(), (2, 5)),
-            (fixtures::browse_planes(), (2, 3)),
-            (fixtures::browse_ranges(), (2, 3)),
-            (fixtures::browse_code_points(), (12, 8)),
-            (fixtures::sequence(), (6, 3)),
-        ] {
-            let buffer = render_to_buffer_with_ui(&state, width, height, &color_theme, &ui);
-
-            assert_eq!(buffer.cell(marker).unwrap().symbol(), ">");
-        }
-    }
-
-    #[test]
     fn search_and_browse_detail_keys_use_the_key_value_label_color() {
         let color_theme = test_color_theme();
         let (width, height) = STANDARD_SIZE;
@@ -871,7 +836,7 @@ mod tests {
     }
 
     #[test]
-    fn normalization_keeps_the_cursor_and_difference_colors_separate() {
+    fn normalization_keeps_the_selection_and_difference_colors_separate() {
         let mut state = AppState::with_sequence("A\u{0301} ①👩‍💻".to_owned());
         update(&mut state, Action::OpenNormalization);
         let theme = test_color_theme();
@@ -982,14 +947,8 @@ mod tests {
             &mut state,
             Action::MoveSequence(crate::sequence::SequenceMove::Previous),
         );
-        let ui = UiSettings {
-            selection_cursor: "▸".to_owned(),
-            ..Default::default()
-        };
         let (width, height) = MINIMUM_SIZE;
-        let buffer = render_to_buffer_with_ui(&state, width, height, &ColorTheme::default(), &ui);
-
-        insta::assert_snapshot!(buffer_to_text(&buffer));
+        insta::assert_snapshot!(render_to_text(&state, width, height));
     }
 
     #[test]
@@ -999,14 +958,8 @@ mod tests {
             &mut state,
             Action::MoveSequence(crate::sequence::SequenceMove::Next),
         );
-        let ui = UiSettings {
-            selection_cursor: "▸".to_owned(),
-            ..Default::default()
-        };
         let (width, height) = STANDARD_SIZE;
-        let buffer = render_to_buffer_with_ui(&state, width, height, &ColorTheme::default(), &ui);
-
-        insta::assert_snapshot!(buffer_to_text(&buffer));
+        insta::assert_snapshot!(render_to_text(&state, width, height));
     }
 
     #[test]
@@ -1364,7 +1317,6 @@ mod tests {
         let mut terminal = Terminal::new(backend).unwrap();
         let ui = UiSettings {
             input_cursor: crate::ui::settings::InputCursor::Text("|".to_owned()),
-            ..Default::default()
         };
 
         terminal

@@ -8,11 +8,11 @@ expression: "render_to_text(&state, MINIMUM_SIZE.0, MINIMUM_SIZE.1)"
   … I␠Á␠①␠tail␠tail␠tail␠tail␠tail␠tail␠tail␠tail␠tail␠t …
   … U+0049 U+0020 U+0041 U+0301 U+0020 U+2460 U+0020 …
 
-   Form  vs Original                       CP  Bytes    GC
-   NFC   Changed                         1103   1106  1103
-   NFD   Unchanged                       1104   1107  1103
-   NFKC  Changed                         1103   1104  1103
-   NFKD  Changed                         1104   1105  1103
+ Form  vs Original                         CP  Bytes    GC
+ NFC   Changed                           1103   1106  1103
+ NFD   Unchanged                         1104   1107  1103
+ NFKC  Changed                           1103   1104  1103
+ NFKD  Changed                           1104   1105  1103
 
  NFC Result                               1 changed region
   … I␠Á␠①␠tail␠tail␠tail␠tail␠tail␠tail␠tail␠tail␠tail␠t …

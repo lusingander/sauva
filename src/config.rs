@@ -475,14 +475,13 @@ mod tests {
     }
 
     #[test]
-    fn ui_config_is_loaded_and_unspecified_values_use_defaults() {
+    fn empty_ui_config_uses_defaults() {
         let directory = tempdir().unwrap();
         let path = directory.path().join("config.toml");
         fs::write(
             &path,
             r#"
                 [ui]
-                selection_cursor = ">"
             "#,
         )
         .unwrap();
@@ -490,8 +489,6 @@ mod tests {
         let configured = load_config(Some(&ConfigFile::Explicit(path))).unwrap();
         let defaults = default_runtime_config();
 
-        assert_eq!(configured.ui().selection_cursor, ">");
-        assert_eq!(defaults.ui().selection_cursor, "");
         assert_eq!(
             configured.ui().input_cursor,
             crate::ui::settings::InputCursor::Native
@@ -554,27 +551,6 @@ mod tests {
         assert!(matches!(error, ConfigError::Validate { .. }));
         assert!(message.contains(&path.display().to_string()));
         assert!(message.contains("ui.input_cursor"));
-    }
-
-    #[test]
-    fn invalid_ui_config_includes_the_config_path_and_setting() {
-        let directory = tempdir().unwrap();
-        let path = directory.path().join("config.toml");
-        fs::write(
-            &path,
-            r#"
-                [ui]
-                selection_cursor = "界"
-            "#,
-        )
-        .unwrap();
-
-        let error = load_config(Some(&ConfigFile::Explicit(path.clone()))).unwrap_err();
-        let message = error.to_string();
-
-        assert!(matches!(error, ConfigError::Validate { .. }));
-        assert!(message.contains(&path.display().to_string()));
-        assert!(message.contains("ui.selection_cursor"));
     }
 
     #[test]

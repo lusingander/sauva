@@ -9,11 +9,11 @@ size: 60x16  cursor: hidden
   Á
   U+0041 U+0301
 
-   Form  vs Original                         CP  Bytes  GC
-   NFC   Changed                              1      2   1
-   NFD   Unchanged                            2      3   1
-   NFKC  Changed                              1      2   1
-   NFKD  Unchanged                            2      3   1
+ Form  vs Original                           CP  Bytes  GC
+ NFC   Changed                                1      2   1
+ NFD   Unchanged                              2      3   1
+ NFKC  Changed                                1      2   1
+ NFKD  Unchanged                              2      3   1
 
  NFC Result                               1 changed region
   Á

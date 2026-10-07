@@ -5,30 +5,30 @@ expression: "render_to_text(&state, width, height)"
  sauva / Inspector                                                                           U+0000
 
  Identity                                                   ┃ Glyph
-   Character                  <CONTROL>                     ┃  Font     —
-   Code Point                 U+0000                        ┃  Version  —
-   Primary Name               No Primary Name               ┃
-   Aliases                    NULL — control                ┃
-                              NUL — abbreviation            ┃
-   Plane                      0 — Basic Multilingual Plane  ┃
-   Block                      Basic Latin                   ┃
+ Character                  <CONTROL>                       ┃  Font     —
+ Code Point                 U+0000                          ┃  Version  —
+ Primary Name               No Primary Name                 ┃
+ Aliases                    NULL — control                  ┃
+                            NUL — abbreviation              ┃
+ Plane                      0 — Basic Multilingual Plane    ┃
+ Block                      Basic Latin                     ┃
  ─────────────────────────────────────────────────────────  ┃
  Classification                                             ┃
-   General Category           Cc — Control                  ┃
-   Script                     Common                        ┃
-   Age                        1.1                           ┃
-   East Asian Width           N — Neutral                   ┃         Graphics unavailable
-   Canonical Combining Class  0 — Not Reordered             ┃  Use --graphics force to try anyway.
-   Bidi Class                 BN — Boundary Neutral         ┃
-   Default Ignorable          No                            ┃
+ General Category           Cc — Control                    ┃
+ Script                     Common                          ┃
+ Age                        1.1                             ┃
+ East Asian Width           N — Neutral                     ┃         Graphics unavailable
+ Canonical Combining Class  0 — Not Reordered               ┃  Use --graphics force to try anyway.
+ Bidi Class                 BN — Boundary Neutral           ┃
+ Default Ignorable          No                              ┃
  ─────────────────────────────────────────────────────────  ┃
  Encoding                                                   ┃
-   UTF-8                      00                            ┃
-   UTF-16                     0000                          ┃
-   HTML Decimal               &#0;                          │
-   HTML Hex                   &#x0;                         │
-   Rust char                  '\u{0}'                       │
-   Unicode Escape             \u0000                        │
+ UTF-8                      00                              ┃
+ UTF-16                     0000                            ┃
+ HTML Decimal               &#0;                            │
+ HTML Hex                   &#x0;                           │
+ Rust char                  '\u{0}'                         │
+ Unicode Escape             \u0000                          │
  ─────────────────────────────────────────────────────────  │
                                                             │
  h/l Point  k/j Field  C-u/C-d Page  g/G Ends  y Copy  / Search  p/r/b/c Browse  q Quit     F1 Help

@@ -6,29 +6,29 @@ size: 100x30  cursor: hidden
  sauva / Inspector                                                                           U+0042
 
  Identity                                                   ┃ Glyph
-   Character                  B                             ┃  Font     —
-   Code Point                 U+0042                        ┃  Version  —
-   Primary Name               LATIN CAPITAL LETTER B        ┃
-   Aliases                    None                          ┃
-   Plane                      0 — Basic Multilingual Plane  ┃
-   Block                      Basic Latin                   ┃
+ Character                  B                               ┃  Font     —
+ Code Point                 U+0042                          ┃  Version  —
+ Primary Name               LATIN CAPITAL LETTER B          ┃
+ Aliases                    None                            ┃
+ Plane                      0 — Basic Multilingual Plane    ┃
+ Block                      Basic Latin                     ┃
  ─────────────────────────────────────────────────────────  ┃
  Classification                                             ┃
-   General Category           Lu — Uppercase Letter         ┃
-   Script                     Latin                         ┃
-   Age                        1.1                           ┃
-   East Asian Width           Na — Narrow                   ┃
-   Canonical Combining Class  0 — Not Reordered             ┃           Graphics disabled
-   Bidi Class                 L — Left To Right             ┃  Enable with --graphics auto/force.
-   Default Ignorable          No                            ┃
+ General Category           Lu — Uppercase Letter           ┃
+ Script                     Latin                           ┃
+ Age                        1.1                             ┃
+ East Asian Width           Na — Narrow                     ┃
+ Canonical Combining Class  0 — Not Reordered               ┃           Graphics disabled
+ Bidi Class                 L — Left To Right               ┃  Enable with --graphics auto/force.
+ Default Ignorable          No                              ┃
  ─────────────────────────────────────────────────────────  ┃
  Encoding                                                   ┃
-   UTF-8                      42                            ┃
-   UTF-16                     0042                          ┃
-   HTML Decimal               &#66;                         ┃
-   HTML Hex                   &#x42;                        │
-   Rust char                  '\u{42}'                      │
-   Unicode Escape             \u0042                        │
+ UTF-8                      42                              ┃
+ UTF-16                     0042                            ┃
+ HTML Decimal               &#66;                           ┃
+ HTML Hex                   &#x42;                          │
+ Rust char                  '\u{42}'                        │
+ Unicode Escape             \u0042                          │
  ─────────────────────────────────────────────────────────  │
  Normalization                                              │
                                                             │
@@ -38,28 +38,28 @@ styles:
 0: 0-5 fg=6 bold; 93-99 fg=8
 2: 1-8 fg=4 bold; 60 fg=8; 62-66 fg=4 bold
 3: 1-57 fg=0 bg=6; 60 fg=8; 63-71 fg=8
-4: 1-29 fg=8; 60 fg=8; 63-71 fg=8
-5: 1-29 fg=8; 60 fg=8
-6: 1-29 fg=8; 60 fg=8
-7: 1-29 fg=8; 60 fg=8
-8: 1-29 fg=8; 60 fg=8
+4: 1-27 fg=8; 60 fg=8; 63-71 fg=8
+5: 1-27 fg=8; 60 fg=8
+6: 1-27 fg=8; 60 fg=8
+7: 1-27 fg=8; 60 fg=8
+8: 1-27 fg=8; 60 fg=8
 9: 1-57 fg=8; 60 fg=8
 10: 1-14 fg=4 bold; 60 fg=8
-11: 1-29 fg=8; 60 fg=8
-12: 1-29 fg=8; 60 fg=8
-13: 1-29 fg=8; 60 fg=8
-14: 1-29 fg=8; 60 fg=8
-15: 1-29 fg=8; 60 fg=8; 72-88 fg=3 bold
-16: 1-29 fg=8; 60 fg=8; 63-96 fg=8
-17: 1-29 fg=8; 60 fg=8
+11: 1-27 fg=8; 60 fg=8
+12: 1-27 fg=8; 60 fg=8
+13: 1-27 fg=8; 60 fg=8
+14: 1-27 fg=8; 60 fg=8
+15: 1-27 fg=8; 60 fg=8; 72-88 fg=3 bold
+16: 1-27 fg=8; 60 fg=8; 63-96 fg=8
+17: 1-27 fg=8; 60 fg=8
 18: 1-57 fg=8; 60 fg=8
 19: 1-8 fg=4 bold; 60 fg=8
-20: 1-29 fg=8; 60 fg=8
-21: 1-29 fg=8; 60 fg=8
-22: 1-29 fg=8; 60 fg=8
-23: 1-29 fg=8; 60 fg=8
-24: 1-29 fg=8; 60 fg=8
-25: 1-29 fg=8; 60 fg=8
+20: 1-27 fg=8; 60 fg=8
+21: 1-27 fg=8; 60 fg=8
+22: 1-27 fg=8; 60 fg=8
+23: 1-27 fg=8; 60 fg=8
+24: 1-27 fg=8; 60 fg=8
+25: 1-27 fg=8; 60 fg=8
 26: 1-57 fg=8; 60 fg=8
 27: 1-13 fg=4 bold; 60 fg=8
 28: 60 fg=8

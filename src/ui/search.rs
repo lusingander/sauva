@@ -68,7 +68,6 @@ pub fn render(
         search.selected_index(),
         search.visible_result_range(),
         color_theme,
-        ui,
     );
 }
 
@@ -140,7 +139,6 @@ fn render_results(
     selected_index: Option<usize>,
     visible_results: std::ops::Range<usize>,
     color_theme: &ColorTheme,
-    ui: &UiSettings,
 ) {
     let results = outcome.results();
     let count = if matches!(outcome, SearchOutcome::Results { .. }) {
@@ -164,7 +162,6 @@ fn render_results(
                     content.width,
                     selected,
                     color_theme,
-                    ui,
                 );
                 selectable_list_line(line, selected, content.width, color_theme.selection)
             })
@@ -218,7 +215,6 @@ fn result_line(
     content_width: u16,
     selected: bool,
     color_theme: &ColorTheme,
-    ui: &UiSettings,
 ) -> Line<'static> {
     let code_point = result.code_point();
     let representation = UnicodeDatabase::display_representation(code_point);
@@ -227,7 +223,7 @@ fn result_line(
     let literal_match = result.direct_match() == Some(SearchDirectMatchKind::LiteralCharacter);
     let code_point_match = result.direct_match() == Some(SearchDirectMatchKind::CodePointNotation);
     let match_style = color_theme.match_style(selected);
-    let mut spans = vec![Span::raw(format!("{} ", ui.selection_marker(selected)))];
+    let mut spans = Vec::new();
     if matches!(representation_width, 1 | 2) {
         spans.push(match_span(
             representation.to_owned(),
@@ -401,11 +397,11 @@ mod tests {
     }
 
     #[rstest]
-    #[case(0x2192, "> →   U+2192    RIGHTWARDS ARROW")]
-    #[case(0x3042, "> あ  U+3042    HIRAGANA LETTER A")]
-    #[case(0x1f600, "> 😀  U+1F600   GRINNING FACE")]
-    #[case(0xd800, "> ·   U+D800    <SURROGATE> — No Primary Name")]
-    #[case(0x115f, "> ·   U+115F    <DEFAULT IGNORABLE> — HANGUL CHOSEONG FILLER")]
+    #[case(0x2192, "→   U+2192    RIGHTWARDS ARROW")]
+    #[case(0x3042, "あ  U+3042    HIRAGANA LETTER A")]
+    #[case(0x1f600, "😀  U+1F600   GRINNING FACE")]
+    #[case(0xd800, "·   U+D800    <SURROGATE> — No Primary Name")]
+    #[case(0x115f, "·   U+115F    <DEFAULT IGNORABLE> — HANGUL CHOSEONG FILLER")]
     fn result_lines_align_columns_and_preserve_safe_representations(
         #[case] value: u32,
         #[case] expected: &str,
@@ -418,18 +414,7 @@ mod tests {
         );
 
         assert_eq!(
-            result_line(
-                result,
-                None,
-                u16::MAX,
-                true,
-                &ColorTheme::default(),
-                &UiSettings {
-                    selection_cursor: ">".to_owned(),
-                    ..Default::default()
-                },
-            )
-            .to_string(),
+            result_line(result, None, u16::MAX, true, &ColorTheme::default()).to_string(),
             expected
         );
     }
@@ -443,14 +428,7 @@ mod tests {
             Some(SearchNameMatchKind::Substring),
             None,
         );
-        let line = result_line(
-            result,
-            Some("FACE"),
-            u16::MAX,
-            false,
-            &color_theme,
-            &UiSettings::default(),
-        );
+        let line = result_line(result, Some("FACE"), u16::MAX, false, &color_theme);
         let highlighted = line
             .spans
             .iter()
@@ -470,14 +448,7 @@ mod tests {
             None,
             None,
         );
-        let line = result_line(
-            result,
-            None,
-            u16::MAX,
-            true,
-            &color_theme,
-            &UiSettings::default(),
-        );
+        let line = result_line(result, None, u16::MAX, true, &color_theme);
         let highlighted = line
             .spans
             .iter()
@@ -486,29 +457,6 @@ mod tests {
             .collect::<Vec<_>>();
 
         assert_eq!(highlighted, ["·", "<DEFAULT IGNORABLE>"]);
-    }
-
-    #[test]
-    fn empty_selection_cursor_preserves_result_alignment() {
-        let result = SearchResult::new_for_test(
-            CodePoint::new(0x2192).unwrap(),
-            Some(SearchDirectMatchKind::CodePointNotation),
-            None,
-            None,
-        );
-
-        assert_eq!(
-            result_line(
-                result,
-                None,
-                u16::MAX,
-                true,
-                &ColorTheme::default(),
-                &UiSettings::default(),
-            )
-            .to_string(),
-            "  →   U+2192    RIGHTWARDS ARROW"
-        );
     }
 
     #[test]
@@ -540,15 +488,11 @@ mod tests {
             u16::MAX,
             true,
             &ColorTheme::default(),
-            &UiSettings {
-                selection_cursor: ">".to_owned(),
-                ..Default::default()
-            },
         );
 
         assert_eq!(
             line.to_string(),
-            "> Ƣ   U+01A2    LATIN CAPITAL LETTER GHA · correction alias"
+            "Ƣ   U+01A2    LATIN CAPITAL LETTER GHA · correction alias"
         );
     }
 
@@ -568,7 +512,6 @@ mod tests {
             u16::MAX,
             false,
             &color_theme,
-            &UiSettings::default(),
         );
         let highlighted = line
             .spans
