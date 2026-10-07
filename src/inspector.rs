@@ -21,6 +21,12 @@ pub enum InspectorMove {
     Last,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct InspectorGroup {
+    pub first_field: usize,
+    pub heading_line: usize,
+}
+
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct InspectorState {
     selected_index: usize,
@@ -28,6 +34,7 @@ pub struct InspectorState {
     viewport_height: usize,
     document_height: usize,
     field_ranges: Vec<Range<usize>>,
+    groups: Vec<InspectorGroup>,
 }
 
 impl InspectorState {
@@ -38,6 +45,7 @@ impl InspectorState {
             viewport_height: 0,
             document_height: 0,
             field_ranges: Vec::new(),
+            groups: Vec::new(),
         }
     }
 
@@ -63,10 +71,12 @@ impl InspectorState {
         viewport_height: usize,
         document_height: usize,
         field_ranges: Vec<Range<usize>>,
+        groups: Vec<InspectorGroup>,
     ) {
         self.viewport_height = viewport_height;
         self.document_height = document_height;
         self.field_ranges = field_ranges;
+        self.groups = groups;
         self.selected_index = self
             .selected_index
             .min(self.field_ranges.len().saturating_sub(1));
@@ -590,7 +600,7 @@ mod tests {
     #[test]
     fn moves_between_fields_and_across_pages() {
         let mut state = InspectorState::new();
-        state.resize_viewport(4, 12, vec![1..2, 2..4, 5..6, 8..10, 10..11]);
+        state.resize_viewport(4, 12, vec![1..2, 2..4, 5..6, 8..10, 10..11], Vec::new());
 
         state.move_selection(InspectorMove::NextField);
         assert_eq!(state.selected_index(), 1);
@@ -616,7 +626,7 @@ mod tests {
     fn returning_to_the_first_field_restores_the_document_heading() {
         for movement in [InspectorMove::PreviousField, InspectorMove::PageBackward] {
             let mut state = InspectorState::new();
-            state.resize_viewport(4, 12, vec![1..2, 2..4, 5..6, 8..10, 10..11]);
+            state.resize_viewport(4, 12, vec![1..2, 2..4, 5..6, 8..10, 10..11], Vec::new());
             state.move_selection(InspectorMove::Last);
 
             while state.selected_index() > 0 {
@@ -631,15 +641,15 @@ mod tests {
     fn resizing_keeps_the_complete_selection_visible() {
         let mut state = InspectorState::new();
         let ranges = vec![1..2, 10..11, 32..35];
-        state.resize_viewport(10, 35, ranges.clone());
+        state.resize_viewport(10, 35, ranges.clone(), Vec::new());
         state.move_selection(InspectorMove::Last);
         assert_eq!(state.visible_range(), 25..35);
 
-        state.resize_viewport(5, 35, ranges.clone());
+        state.resize_viewport(5, 35, ranges.clone(), Vec::new());
         assert_eq!(state.visible_range(), 30..35);
-        state.resize_viewport(20, 35, ranges.clone());
+        state.resize_viewport(20, 35, ranges.clone(), Vec::new());
         assert_eq!(state.visible_range(), 15..35);
-        state.resize_viewport(40, 35, ranges);
+        state.resize_viewport(40, 35, ranges, Vec::new());
         assert_eq!(state.visible_range(), 0..35);
     }
 
@@ -647,11 +657,11 @@ mod tests {
     fn zero_height_and_empty_documents_have_empty_ranges() {
         let mut state = InspectorState::new();
 
-        state.resize_viewport(0, 20, vec![1..2, 2..3]);
+        state.resize_viewport(0, 20, vec![1..2, 2..3], Vec::new());
         state.move_selection(InspectorMove::Last);
         assert_eq!(state.visible_range(), 0..0);
 
-        state.resize_viewport(10, 0, Vec::new());
+        state.resize_viewport(10, 0, Vec::new(), Vec::new());
         assert_eq!(state.visible_range(), 0..0);
     }
 

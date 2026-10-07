@@ -383,6 +383,7 @@ mod tests {
                 viewport_height: metrics.viewport_height,
                 document_height: metrics.document_height,
                 field_ranges: metrics.field_ranges,
+                groups: metrics.groups,
             },
         );
     }

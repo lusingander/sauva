@@ -143,6 +143,7 @@ pub fn details_scrolled_minimum() -> AppState {
             viewport_height: 12,
             document_height: 35,
             field_ranges: inspector_field_ranges(),
+            groups: Vec::new(),
         },
     );
     update(&mut state, Action::MoveInspector(InspectorMove::Last));

@@ -2,7 +2,9 @@ use tui_input::InputRequest;
 
 use crate::browser::{BrowseLevel, BrowseMove, BrowseState, BrowseTarget};
 use crate::help::{HelpMove, HelpState};
-use crate::inspector::{InspectorField, InspectorFieldId, InspectorMove, InspectorState};
+use crate::inspector::{
+    InspectorField, InspectorFieldId, InspectorGroup, InspectorMove, InspectorState,
+};
 use crate::normalization::{NormalizationMove, NormalizationState};
 use crate::preview::{GlyphPreviewState, GlyphPreviewUpdate};
 use crate::search::{SearchMove, SearchState};
@@ -26,6 +28,7 @@ pub enum Action {
         viewport_height: usize,
         document_height: usize,
         field_ranges: Vec<std::ops::Range<usize>>,
+        groups: Vec<InspectorGroup>,
     },
     OpenBrowser(BrowseLevel),
     AdvanceBrowser,
@@ -343,9 +346,12 @@ pub fn update(state: &mut AppState, action: Action) {
             viewport_height,
             document_height,
             field_ranges,
-        } => state
-            .inspector
-            .resize_viewport(viewport_height, document_height, field_ranges),
+            groups,
+        } => {
+            state
+                .inspector
+                .resize_viewport(viewport_height, document_height, field_ranges, groups)
+        }
         Action::OpenBrowser(level) if state.view == View::Inspector => {
             let previous_preview = state.preview_code_point();
             state.browse = Some(BrowseState::at(level, state.selected));
@@ -1397,6 +1403,7 @@ mod tests {
                 viewport_height,
                 document_height,
                 field_ranges: (0..document_height).map(|index| index..index + 1).collect(),
+                groups: Vec::new(),
             },
         );
     }
