@@ -45,8 +45,6 @@ The glyph panel renders the selected code point and shows the font used, when sp
 
 Adjacent navigation follows code point values, even when the Inspector was opened from a sequence. <kbd>Backspace</kbd> returns to the sequence's existing selection.
 
-Section navigation selects a property and brings its section heading into view. <kbd>[</kbd> always moves to the previous section, even from the middle of the current one. Both keys stop when there is no adjacent section; they do not wrap. Sections containing unavailable values are included.
-
 ## Copying Values
 
 Select a property and press <kbd>y</kbd> to copy it to the system clipboard. Selecting **Character** copies the actual character, including invisible characters and combining marks. Display aids such as a dotted circle or a `<SPACE>` label are not included in that value.

@@ -51,8 +51,6 @@ Press <kbd>Enter</kbd> again to inspect a result code point. <kbd>Backspace</kbd
 
 The original input is preserved throughout these operations.
 
-Use <kbd>[</kbd> / <kbd>]</kbd> to select the first code point of the previous / next grapheme cluster in the normalized result. Boundaries follow the result text: for example, normalizing `ﬃ` to `ffi` creates three clusters that can be visited separately. The corresponding original region follows the selection. Navigation stops at the first and last clusters, and <kbd>[</kbd> always targets the previous cluster even from the middle of the current one.
-
 ## Operations
 
 | Keys | In form comparison | In a result list |

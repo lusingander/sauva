@@ -66,8 +66,6 @@ Input order, repeated characters, spaces, and newlines are preserved. Labels and
 | <kbd>n</kbd> | Compare normalization forms |
 | <kbd>q</kbd>, <kbd>Esc</kbd> | Quit |
 
-Grapheme navigation brings the cluster's first code point into view, near the top of the list when space allows. <kbd>[</kbd> always moves to the previous cluster, even when a later member of the current cluster is selected. Both keys stop when there is no adjacent cluster; they do not wrap. If the text contains only one grapheme cluster, neither key changes the selection.
-
 ![Sequence Inspector](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/sequence-inspector.png)
 
 <kbd>Backspace</kbd> in the Inspector returns to the sequence. From Sequence, press <kbd>n</kbd> to open [Normalization](./normalization.md).
