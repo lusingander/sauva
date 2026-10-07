@@ -12,6 +12,8 @@ use crate::{
 pub enum SequenceMove {
     Previous,
     Next,
+    PreviousGroup,
+    NextGroup,
     First,
     Last,
 }
@@ -59,9 +61,19 @@ impl SequenceState {
 
     pub fn move_selection(&mut self, movement: SequenceMove) -> bool {
         let last = self.code_points().len() - 1;
+        let grapheme_index = self.code_points()[self.selected_index].grapheme_index();
         let next = match movement {
             SequenceMove::Previous => self.selected_index.saturating_sub(1),
             SequenceMove::Next => (self.selected_index + 1).min(last),
+            SequenceMove::PreviousGroup => grapheme_index
+                .checked_sub(1)
+                .and_then(|index| self.analysis.graphemes().get(index))
+                .map_or(self.selected_index, |group| group.code_point_range().start),
+            SequenceMove::NextGroup => self
+                .analysis
+                .graphemes()
+                .get(grapheme_index + 1)
+                .map_or(self.selected_index, |group| group.code_point_range().start),
             SequenceMove::First => 0,
             SequenceMove::Last => last,
         };
@@ -70,7 +82,14 @@ impl SequenceState {
         }
 
         self.selected_index = next;
-        self.viewport.ensure_visible(next, self.code_points().len());
+        if matches!(
+            movement,
+            SequenceMove::PreviousGroup | SequenceMove::NextGroup
+        ) {
+            self.viewport.align_start(next, self.code_points().len());
+        } else {
+            self.viewport.ensure_visible(next, self.code_points().len());
+        }
         true
     }
 
@@ -124,6 +143,8 @@ mod tests {
         for movement in [
             SequenceMove::Previous,
             SequenceMove::Next,
+            SequenceMove::PreviousGroup,
+            SequenceMove::NextGroup,
             SequenceMove::First,
             SequenceMove::Last,
         ] {
@@ -189,5 +210,52 @@ mod tests {
         assert!(state.move_selection(SequenceMove::Next));
         assert!(state.move_selection(SequenceMove::Next));
         assert!(!state.move_selection(SequenceMove::Next));
+    }
+
+    #[test]
+    fn group_jumps_follow_grapheme_boundaries_and_align_their_first_members() {
+        let mut state = SequenceState::new("A\u{0301}\r\n👩🏽‍💻🇯🇵BB".to_owned());
+        state.resize_viewport(2);
+        state.move_selection(SequenceMove::Next);
+        assert!(!state.move_selection(SequenceMove::PreviousGroup));
+        assert_eq!(state.selected_index(), 1);
+        for index in [2, 4, 8, 10, 11] {
+            assert!(state.move_selection(SequenceMove::NextGroup));
+            assert_eq!(state.selected_index(), index);
+            assert_eq!(state.code_points()[index].index_in_grapheme(), 0);
+            assert_eq!(state.visible_range().start, index.min(10));
+        }
+        assert!(!state.move_selection(SequenceMove::NextGroup));
+        assert_eq!(state.selected_index(), 11);
+        for index in [10, 8] {
+            assert!(state.move_selection(SequenceMove::PreviousGroup));
+            assert_eq!(state.selected_index(), index);
+        }
+        state.move_selection(SequenceMove::Next);
+        assert_eq!(state.selected_index(), 9);
+        assert!(state.move_selection(SequenceMove::PreviousGroup));
+        assert_eq!(state.selected_index(), 4);
+        assert_eq!(state.visible_range(), 4..6);
+        state.resize_viewport(3);
+        assert_eq!(state.visible_range(), 4..7);
+    }
+
+    #[rstest]
+    #[case("A\u{0301}")]
+    #[case("👩🏽‍💻")]
+    #[case("\r\n")]
+    #[case("🇯🇵")]
+    fn single_grapheme_group_moves_preserve_the_selected_member(#[case] source: &str) {
+        let mut state = SequenceState::new(source.to_owned());
+        state.resize_viewport(1);
+        state.move_selection(SequenceMove::Last);
+        let selected = state.selected_index();
+        let visible = state.visible_range();
+        for movement in [SequenceMove::PreviousGroup, SequenceMove::NextGroup] {
+            assert!(!state.move_selection(movement));
+            assert_eq!(state.selected_index(), selected);
+            assert_eq!(state.visible_range(), visible);
+        }
+        assert_eq!(state.analysis().source(), source);
     }
 }

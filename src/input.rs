@@ -119,6 +119,8 @@ fn action_for_command(context: Context, command: Command) -> Option<Action> {
         (X::Search, C::Close) => Some(Action::CloseSearch),
         (X::Sequence, C::MoveUp) => Some(Action::MoveSequence(SequenceMove::Previous)),
         (X::Sequence, C::MoveDown) => Some(Action::MoveSequence(SequenceMove::Next)),
+        (X::Sequence | X::NormalizationResult, C::PreviousGroup) => Some(Action::MoveSequence(SequenceMove::PreviousGroup)),
+        (X::Sequence | X::NormalizationResult, C::NextGroup) => Some(Action::MoveSequence(SequenceMove::NextGroup)),
         (X::Sequence, C::First) => Some(Action::MoveSequence(SequenceMove::First)),
         (X::Sequence, C::Last) => Some(Action::MoveSequence(SequenceMove::Last)),
         (X::Sequence, C::Activate) => Some(Action::InspectSequenceCodePoint),
@@ -318,6 +320,64 @@ mod tests {
         );
     }
 
+    #[test]
+    fn group_keys_repeat_in_supported_contexts_and_are_inactive_under_help() {
+        let mut result = AppState::with_sequence("A\u{0301}B".to_owned());
+        crate::app::update(&mut result, Action::OpenNormalization);
+        crate::app::update(&mut result, Action::InspectNormalizationResult);
+
+        for mut state in [
+            AppState::new(),
+            AppState::with_sequence("A\u{0301}B".to_owned()),
+            result,
+        ] {
+            for (key, inspector_move, sequence_move) in [
+                (
+                    '[',
+                    InspectorMove::PreviousGroup,
+                    SequenceMove::PreviousGroup,
+                ),
+                (']', InspectorMove::NextGroup, SequenceMove::NextGroup),
+            ] {
+                let expected = if state.view() == View::Inspector {
+                    Action::MoveInspector(inspector_move)
+                } else {
+                    Action::MoveSequence(sequence_move)
+                };
+                for kind in [KeyEventKind::Press, KeyEventKind::Repeat] {
+                    assert_eq!(
+                        action_for_key(
+                            &state,
+                            KeyEvent::new_with_kind(KeyCode::Char(key), KeyModifiers::NONE, kind,)
+                        ),
+                        Some(expected.clone())
+                    );
+                }
+                assert_eq!(
+                    action_for_key(
+                        &state,
+                        KeyEvent::new_with_kind(
+                            KeyCode::Char(key),
+                            KeyModifiers::NONE,
+                            KeyEventKind::Release,
+                        )
+                    ),
+                    None
+                );
+            }
+            crate::app::update(&mut state, Action::ToggleHelp);
+            for key in ['[', ']'] {
+                assert_eq!(
+                    action_for_key(
+                        &state,
+                        KeyEvent::new(KeyCode::Char(key), KeyModifiers::NONE)
+                    ),
+                    None
+                );
+            }
+        }
+    }
+
     #[rstest]
     #[case(KeyCode::Up, KeyModifiers::NONE, InspectorMove::PreviousField)]
     #[case(KeyCode::Char('k'), KeyModifiers::NONE, InspectorMove::PreviousField)]
@@ -448,6 +508,8 @@ mod tests {
     #[case('j')]
     #[case('k')]
     #[case('/')]
+    #[case('[')]
+    #[case(']')]
     fn search_character_keys_edit_the_query(#[case] character: char) {
         assert_eq!(
             action_for_key(

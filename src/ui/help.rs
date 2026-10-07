@@ -378,6 +378,14 @@ fn help_items(context: Context, has_sequence: bool) -> Vec<HelpItem> {
         Context::Sequence => vec![
             item(C::MoveUp, "Select the previous code point"),
             item(C::MoveDown, "Select the next code point"),
+            item(
+                C::PreviousGroup,
+                "Select the first code point of the previous grapheme",
+            ),
+            item(
+                C::NextGroup,
+                "Select the first code point of the next grapheme",
+            ),
             item(C::First, "Select the first code point"),
             item(C::Last, "Select the last code point"),
             item(C::Activate, "Inspect the selected code point"),
@@ -398,6 +406,14 @@ fn help_items(context: Context, has_sequence: bool) -> Vec<HelpItem> {
         Context::NormalizationResult => vec![
             item(C::MoveUp, "Select the previous code point"),
             item(C::MoveDown, "Select the next code point"),
+            item(
+                C::PreviousGroup,
+                "Select the first code point of the previous grapheme",
+            ),
+            item(
+                C::NextGroup,
+                "Select the first code point of the next grapheme",
+            ),
             item(C::First, "Select the first code point"),
             item(C::Last, "Select the last code point"),
             item(C::Activate, "Inspect the selected code point"),
@@ -507,6 +523,7 @@ fn short_help_items(context: Context, has_sequence: bool) -> Vec<ShortHelpItem> 
         ],
         Context::Sequence => vec![
             short(&[C::MoveUp, C::MoveDown], "Move", 1),
+            short(&[C::PreviousGroup, C::NextGroup], "Grapheme", 2),
             short(&[C::First, C::Last], "Ends", 3),
             short(&[C::Activate], "Inspect", 1),
             short(&[C::Normalize], "Normalize", 1),
@@ -521,6 +538,7 @@ fn short_help_items(context: Context, has_sequence: bool) -> Vec<ShortHelpItem> 
         ],
         Context::NormalizationResult => vec![
             short(&[C::MoveUp, C::MoveDown], "Move", 1),
+            short(&[C::PreviousGroup, C::NextGroup], "Grapheme", 2),
             short(&[C::Activate], "Inspect", 1),
             short(&[C::Back, C::Close], "Back", 0),
             short(&[C::Quit], "Quit", 3),

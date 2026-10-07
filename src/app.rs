@@ -641,6 +641,55 @@ mod tests {
     }
 
     #[test]
+    fn result_group_jumps_follow_normalized_boundaries_and_preserve_the_original_selection() {
+        let mut state = AppState::with_sequence("A\u{0301}ﬃ👩‍💻B".to_owned());
+        update(&mut state, Action::MoveSequence(SequenceMove::Next));
+        update(&mut state, Action::OpenNormalization);
+        update(
+            &mut state,
+            Action::MoveNormalization(NormalizationMove::Next),
+        );
+        update(
+            &mut state,
+            Action::MoveNormalization(NormalizationMove::Next),
+        );
+        update(&mut state, Action::InspectNormalizationResult);
+        update(&mut state, Action::ResizeSequenceViewport(2));
+        update(&mut state, Action::ResizeNormalizationOriginalViewport(2));
+
+        for (index, original_range) in [(1, 2..3), (2, 2..3), (3, 2..3), (4, 3..6)] {
+            update(&mut state, Action::MoveSequence(SequenceMove::NextGroup));
+            assert_eq!(state.sequence().unwrap().selected_index(), index);
+            assert_eq!(state.sequence().unwrap().visible_range(), index..index + 2);
+            let original = state.original_sequence().unwrap().analysis();
+            let comparison = state.normalization().unwrap().comparison();
+            assert_eq!(comparison.original_selection(original), original_range);
+            assert!(
+                comparison
+                    .original_visible_range(original)
+                    .contains(&original_range.start)
+            );
+            assert_eq!(state.original_sequence().unwrap().selected_index(), 1);
+            assert_eq!(
+                state.preview_code_point(),
+                Some(state.sequence().unwrap().selected())
+            );
+        }
+        update(&mut state, Action::MoveSequence(SequenceMove::Next));
+        update(
+            &mut state,
+            Action::MoveSequence(SequenceMove::PreviousGroup),
+        );
+        assert_eq!(state.sequence().unwrap().selected_index(), 3);
+        update(&mut state, Action::InspectSequenceCodePoint);
+        update(&mut state, Action::ReturnToSequence);
+        assert_eq!(state.sequence().unwrap().selected_index(), 3);
+        update(&mut state, Action::ReturnToNormalization);
+        update(&mut state, Action::CloseNormalization);
+        assert_eq!(state.sequence().unwrap().selected_index(), 1);
+    }
+
+    #[test]
     fn normalization_preserves_the_source_selection_and_has_no_glyph_target() {
         let mut state = AppState::with_sequence("A\u{0301} ①👩‍💻".to_owned());
         update(&mut state, Action::MoveSequence(SequenceMove::Last));

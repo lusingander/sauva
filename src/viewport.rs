@@ -35,6 +35,11 @@ impl ListViewport {
         }
     }
 
+    pub fn align_start(&mut self, selected: usize, item_count: usize) {
+        self.offset = selected;
+        self.ensure_visible(selected, item_count);
+    }
+
     pub fn visible_range(self, item_count: usize) -> Range<usize> {
         let visible = self.height.min(item_count);
         let offset = self.offset.min(item_count.saturating_sub(visible));

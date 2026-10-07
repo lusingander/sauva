@@ -413,6 +413,8 @@ keybinding_context!(SequenceKeybindings, Context::Sequence, {
     quit => (Command::Quit, ["q", "esc"]),
     move_up => (Command::MoveUp, ["k", "up"]),
     move_down => (Command::MoveDown, ["j", "down"]),
+    previous_group => (Command::PreviousGroup, ["["]),
+    next_group => (Command::NextGroup, ["]"]),
     first => (Command::First, ["g"]),
     last => (Command::Last, ["G"]),
     activate => (Command::Activate, ["enter"]),
@@ -437,6 +439,8 @@ keybinding_context!(NormalizationResultKeybindings, Context::NormalizationResult
     back => (Command::Back, ["backspace"]),
     move_up => (Command::MoveUp, ["k", "up"]),
     move_down => (Command::MoveDown, ["j", "down"]),
+    previous_group => (Command::PreviousGroup, ["["]),
+    next_group => (Command::NextGroup, ["]"]),
     first => (Command::First, ["g"]),
     last => (Command::Last, ["G"]),
     activate => (Command::Activate, ["enter"]),
@@ -1050,6 +1054,46 @@ mod tests {
             keymap.resolve(Context::Inspector, named(KeyCode::Backspace)),
             None
         );
+    }
+
+    #[rstest]
+    #[case(Context::Inspector)]
+    #[case(Context::Sequence)]
+    #[case(Context::NormalizationResult)]
+    fn group_bindings_can_be_remapped_or_disabled_per_context(#[case] context: Context) {
+        let keymap = configured(&format!(
+            "[{}]\nprevious_group = ['a']\nnext_group = []\nmove_down = [']']",
+            context.config_name(),
+        ))
+        .unwrap();
+        assert_eq!(
+            keymap.resolve(context, plain('a')),
+            Some(Command::PreviousGroup)
+        );
+        assert_eq!(keymap.resolve(context, plain('[')), None);
+        assert_eq!(keymap.resolve(context, plain(']')), Some(Command::MoveDown));
+        assert!(keymap.keys_for(context, Command::NextGroup).is_empty());
+        for other in [
+            Context::Inspector,
+            Context::Sequence,
+            Context::NormalizationResult,
+        ] {
+            if other != context {
+                assert_eq!(
+                    keymap.resolve(other, plain('[')),
+                    Some(Command::PreviousGroup)
+                );
+                assert_eq!(keymap.resolve(other, plain(']')), Some(Command::NextGroup));
+            }
+        }
+    }
+
+    #[test]
+    fn conflicts_with_default_group_keys_identify_both_commands() {
+        let error = configured("[sequence]\nmove_down = [']']").unwrap_err();
+        let message = error.to_string();
+        assert!(message.contains("keybindings.sequence.move_down"));
+        assert!(message.contains("keybindings.sequence.next_group"));
     }
 
     #[test]
