@@ -15,6 +15,8 @@ const NONE: &str = "None";
 pub enum InspectorMove {
     PreviousField,
     NextField,
+    PreviousGroup,
+    NextGroup,
     PageBackward,
     PageForward,
     First,
@@ -35,6 +37,7 @@ pub struct InspectorState {
     document_height: usize,
     field_ranges: Vec<Range<usize>>,
     groups: Vec<InspectorGroup>,
+    align_group: bool,
 }
 
 impl InspectorState {
@@ -46,6 +49,7 @@ impl InspectorState {
             document_height: 0,
             field_ranges: Vec::new(),
             groups: Vec::new(),
+            align_group: false,
         }
     }
 
@@ -89,9 +93,34 @@ impl InspectorState {
         }
 
         let last = self.field_ranges.len() - 1;
+        if !matches!(
+            movement,
+            InspectorMove::PreviousGroup | InspectorMove::NextGroup
+        ) {
+            self.align_group = false;
+        }
         self.selected_index = match movement {
             InspectorMove::PreviousField => self.selected_index.saturating_sub(1),
             InspectorMove::NextField => self.selected_index.saturating_add(1).min(last),
+            InspectorMove::PreviousGroup | InspectorMove::NextGroup => {
+                let Some(current) = self
+                    .groups
+                    .partition_point(|group| group.first_field <= self.selected_index)
+                    .checked_sub(1)
+                else {
+                    return;
+                };
+                let target = if movement == InspectorMove::NextGroup {
+                    Some(current + 1)
+                } else {
+                    current.checked_sub(1)
+                };
+                let Some(group) = target.and_then(|index| self.groups.get(index)) else {
+                    return;
+                };
+                self.align_group = true;
+                group.first_field
+            }
             InspectorMove::PageBackward => self.page_backward(),
             InspectorMove::PageForward => self.page_forward(),
             InspectorMove::First => 0,
@@ -137,6 +166,20 @@ impl InspectorState {
         };
         if self.viewport_height == 0 {
             self.offset = 0;
+            return;
+        }
+        if self.align_group
+            && let Some(group) = self
+                .groups
+                .iter()
+                .find(|group| group.first_field == self.selected_index)
+        {
+            self.offset = if self.viewport_height > 1 {
+                group.heading_line
+            } else {
+                selected.start
+            }
+            .min(self.maximum_offset());
             return;
         }
         if self.selected_index == 0 && selected.end <= self.viewport_height {
@@ -635,6 +678,82 @@ mod tests {
 
             assert_eq!(state.offset(), 0, "{movement:?}");
         }
+    }
+
+    #[test]
+    fn group_movement_targets_adjacent_sections_even_from_the_middle() {
+        let mut state = InspectorState::new();
+        state.resize_viewport(
+            3,
+            13,
+            vec![1..2, 2..4, 6..7, 7..9, 11..13],
+            vec![
+                InspectorGroup {
+                    first_field: 0,
+                    heading_line: 0,
+                },
+                InspectorGroup {
+                    first_field: 2,
+                    heading_line: 5,
+                },
+                InspectorGroup {
+                    first_field: 4,
+                    heading_line: 10,
+                },
+            ],
+        );
+        state.move_selection(InspectorMove::NextField);
+        let before = state.clone();
+        state.move_selection(InspectorMove::PreviousGroup);
+        assert_eq!(state, before);
+
+        state.move_selection(InspectorMove::NextGroup);
+        assert_eq!(state.selected_index(), 2);
+        assert_eq!(state.visible_range(), 5..8);
+        state.move_selection(InspectorMove::NextField);
+        state.move_selection(InspectorMove::PreviousGroup);
+        assert_eq!(state.selected_index(), 0);
+        assert_eq!(state.visible_range(), 0..3);
+
+        state.move_selection(InspectorMove::NextGroup);
+        state.move_selection(InspectorMove::NextGroup);
+        assert_eq!(state.selected_index(), 4);
+        assert_eq!(state.visible_range(), 10..13);
+        let before = state.clone();
+        state.move_selection(InspectorMove::NextGroup);
+        assert_eq!(state, before);
+    }
+
+    #[test]
+    fn group_jump_preserves_the_heading_when_the_first_field_exceeds_the_viewport() {
+        let mut state = InspectorState::new();
+        let fields = vec![1..2, 4..12, 12..13];
+        let groups = vec![
+            InspectorGroup {
+                first_field: 0,
+                heading_line: 0,
+            },
+            InspectorGroup {
+                first_field: 1,
+                heading_line: 3,
+            },
+        ];
+        state.resize_viewport(3, 13, fields.clone(), groups.clone());
+        state.move_selection(InspectorMove::NextGroup);
+        assert_eq!(state.selected_index(), 1);
+        assert_eq!(state.visible_range(), 3..6);
+        state.resize_viewport(2, 13, fields.clone(), groups.clone());
+        assert_eq!(state.visible_range(), 3..5);
+        state.resize_viewport(1, 13, fields.clone(), groups.clone());
+        assert_eq!(state.visible_range(), 4..5);
+        state.resize_viewport(0, 13, fields.clone(), groups.clone());
+        assert_eq!(state.visible_range(), 0..0);
+        state.resize_viewport(3, 13, fields, groups);
+        assert_eq!(state.visible_range(), 3..6);
+
+        state.move_selection(InspectorMove::NextField);
+        assert_eq!(state.selected_index(), 2);
+        assert_eq!(state.visible_range(), 10..13);
     }
 
     #[test]

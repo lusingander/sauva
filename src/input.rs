@@ -100,6 +100,8 @@ fn action_for_command(context: Context, command: Command) -> Option<Action> {
         (X::Inspector, C::NextCodePoint) => Some(Action::MoveCodePoint(CodePointMove::Next)),
         (X::Inspector, C::MoveUp) => Some(Action::MoveInspector(InspectorMove::PreviousField)),
         (X::Inspector, C::MoveDown) => Some(Action::MoveInspector(InspectorMove::NextField)),
+        (X::Inspector, C::PreviousGroup) => Some(Action::MoveInspector(InspectorMove::PreviousGroup)),
+        (X::Inspector, C::NextGroup) => Some(Action::MoveInspector(InspectorMove::NextGroup)),
         (X::Inspector, C::PageUp) => Some(Action::MoveInspector(InspectorMove::PageBackward)),
         (X::Inspector, C::PageDown) => Some(Action::MoveInspector(InspectorMove::PageForward)),
         (X::Inspector, C::First) => Some(Action::MoveInspector(InspectorMove::First)),
@@ -321,6 +323,8 @@ mod tests {
     #[case(KeyCode::Char('k'), KeyModifiers::NONE, InspectorMove::PreviousField)]
     #[case(KeyCode::Down, KeyModifiers::NONE, InspectorMove::NextField)]
     #[case(KeyCode::Char('j'), KeyModifiers::NONE, InspectorMove::NextField)]
+    #[case(KeyCode::Char('['), KeyModifiers::NONE, InspectorMove::PreviousGroup)]
+    #[case(KeyCode::Char(']'), KeyModifiers::NONE, InspectorMove::NextGroup)]
     #[case(KeyCode::Char('u'), KeyModifiers::CONTROL, InspectorMove::PageBackward)]
     #[case(KeyCode::Char('d'), KeyModifiers::CONTROL, InspectorMove::PageForward)]
     #[case(KeyCode::Char('g'), KeyModifiers::NONE, InspectorMove::First)]

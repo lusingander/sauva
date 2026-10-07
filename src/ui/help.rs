@@ -347,6 +347,14 @@ fn help_items(context: Context, has_sequence: bool) -> Vec<HelpItem> {
             item(C::NextCodePoint, "Next code point"),
             item(C::MoveUp, "Select the previous property"),
             item(C::MoveDown, "Select the next property"),
+            item(
+                C::PreviousGroup,
+                "Select the first property of the previous section",
+            ),
+            item(
+                C::NextGroup,
+                "Select the first property of the next section",
+            ),
             item(C::PageUp, "Move properties up one page"),
             item(C::PageDown, "Move properties down one page"),
             item(C::First, "Select the first property"),
@@ -482,6 +490,7 @@ fn short_help_items(context: Context, has_sequence: bool) -> Vec<ShortHelpItem> 
         Context::Inspector => vec![
             short(&[C::PreviousCodePoint, C::NextCodePoint], "Point", 1),
             short(&[C::MoveUp, C::MoveDown], "Field", 1),
+            short(&[C::PreviousGroup, C::NextGroup], "Section", 2),
             short(&[C::PageUp, C::PageDown], "Page", 3),
             short(&[C::First, C::Last], "Ends", 3),
             short(&[C::CopyValue], "Copy", 1),

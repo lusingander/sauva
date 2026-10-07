@@ -6,12 +6,14 @@ use serde::{Deserialize, Serialize};
 use tui_input::backend::crossterm::to_input_request;
 use umbra::optional;
 
-const ALL_COMMANDS: [Command; 25] = [
+const ALL_COMMANDS: [Command; 27] = [
     Command::Quit,
     Command::Help,
     Command::Close,
     Command::PreviousCodePoint,
     Command::NextCodePoint,
+    Command::PreviousGroup,
+    Command::NextGroup,
     Command::MoveUp,
     Command::MoveDown,
     Command::MoveLeft,
@@ -74,6 +76,8 @@ pub enum Command {
     Close,
     PreviousCodePoint,
     NextCodePoint,
+    PreviousGroup,
+    NextGroup,
     MoveUp,
     MoveDown,
     MoveLeft,
@@ -102,6 +106,8 @@ impl Command {
             self,
             Self::PreviousCodePoint
                 | Self::NextCodePoint
+                | Self::PreviousGroup
+                | Self::NextGroup
                 | Self::MoveUp
                 | Self::MoveDown
                 | Self::MoveLeft
@@ -122,6 +128,8 @@ impl Command {
             Self::Close => "close",
             Self::PreviousCodePoint => "previous_code_point",
             Self::NextCodePoint => "next_code_point",
+            Self::PreviousGroup => "previous_group",
+            Self::NextGroup => "next_group",
             Self::MoveUp => "move_up",
             Self::MoveDown => "move_down",
             Self::MoveLeft => "move_left",
@@ -379,6 +387,8 @@ keybinding_context!(InspectorKeybindings, Context::Inspector, {
     next_code_point => (Command::NextCodePoint, ["l", "right"]),
     move_up => (Command::MoveUp, ["k", "up"]),
     move_down => (Command::MoveDown, ["j", "down"]),
+    previous_group => (Command::PreviousGroup, ["["]),
+    next_group => (Command::NextGroup, ["]"]),
     page_up => (Command::PageUp, ["ctrl-u"]),
     page_down => (Command::PageDown, ["ctrl-d"]),
     first => (Command::First, ["g"]),

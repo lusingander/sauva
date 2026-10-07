@@ -80,6 +80,35 @@ fn starts_and_restores_the_terminal_on_quit() -> termlens::Result<()> {
 }
 
 #[test]
+fn inspector_group_keys_show_section_headings_and_select_their_first_properties()
+-> termlens::Result<()> {
+    let mut terminal =
+        termlens::bin!("sauva", size(60, 16), args(["U+D800", "--graphics", "off"]))?;
+    terminal.wait_until(|screen| screen.row_text(2).trim_start().starts_with("Identity"))?;
+    terminal.send(Key::Char('j'))?;
+    terminal.send(Key::Char(']'))?;
+    let screen = terminal.snapshot_after(|screen| screen.row_text(2).trim_start().starts_with("Classification"))?;
+    assert!(screen.row_text(3).contains("General Category"), "{screen}");
+    assert_eq!(screen.cell(3, 3).unwrap().style().bg, Color::Indexed(6));
+
+    terminal.send(Key::Char('j'))?;
+    terminal.send(Key::Char('['))?;
+    let screen = terminal.snapshot_after(|screen| screen.row_text(2).trim_start().starts_with("Identity"))?;
+    assert!(screen.row_text(3).contains("Character"), "{screen}");
+    assert_eq!(screen.cell(3, 3).unwrap().style().bg, Color::Indexed(6));
+
+    terminal.send(Key::Char(']'))?;
+    terminal.send(Key::Char(']'))?;
+    let screen = terminal.snapshot_after(|screen| screen.row_text(2).trim_start().starts_with("Encoding"))?;
+    assert!(screen.row_text(3).contains("UTF-8"), "{screen}");
+    assert!(screen.contains("Not available"), "{screen}");
+    assert_eq!(screen.cell(3, 3).unwrap().style().bg, Color::Indexed(6));
+    terminal.send(Key::Char('q'))?;
+    assert!(terminal.wait_exit()?.success());
+    Ok(())
+}
+
+#[test]
 fn starts_at_the_code_point_from_the_command_line() -> termlens::Result<()> {
     let mut terminal = termlens::bin!(
         "sauva",

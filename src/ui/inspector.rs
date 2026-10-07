@@ -266,6 +266,52 @@ mod tests {
     }
 
     #[test]
+    fn section_jumps_select_properties_and_keep_headings_visible_after_redrawing() {
+        use crate::inspector::InspectorMove;
+
+        for code_point in [CodePoint::from('A'), CodePoint::new(0xd800).unwrap()] {
+            let mut state = AppState::with_selected(code_point);
+            let area = Rect::new(0, 0, 60, 16);
+            let fields = InspectorField::for_code_point(code_point);
+            let groups = viewport_metrics(area, &state).groups;
+            for group in &groups[1..] {
+                let metrics = viewport_metrics(area, &state);
+                update(
+                    &mut state,
+                    Action::ResizeInspectorViewport {
+                        viewport_height: metrics.viewport_height,
+                        document_height: metrics.document_height,
+                        field_ranges: metrics.field_ranges,
+                        groups: metrics.groups,
+                    },
+                );
+                update(&mut state, Action::MoveInspector(InspectorMove::NextGroup));
+                let metrics = viewport_metrics(area, &state);
+                update(
+                    &mut state,
+                    Action::ResizeInspectorViewport {
+                        viewport_height: metrics.viewport_height,
+                        document_height: metrics.document_height,
+                        field_ranges: metrics.field_ranges,
+                        groups: metrics.groups,
+                    },
+                );
+                assert_eq!(state.inspector().selected_index(), group.first_field);
+                assert!(
+                    state
+                        .inspector()
+                        .visible_range()
+                        .contains(&group.heading_line)
+                );
+                update(&mut state, Action::CopyInspectorValue);
+                let request = state.take_clipboard_request().unwrap();
+                assert_eq!(request.label(), fields[group.first_field].label());
+                assert_eq!(request.value(), fields[group.first_field].copy_value());
+            }
+        }
+    }
+
+    #[test]
     fn wrapped_properties_keep_padding_and_the_complete_value() {
         use ratatui::{buffer::Buffer, widgets::Widget};
 
