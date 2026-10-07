@@ -34,6 +34,7 @@ The glyph panel renders the selected code point and shows the font used, when sp
 | --- | --- |
 | <kbd>h</kbd> / <kbd>l</kbd>, <kbd>Left</kbd> / <kbd>Right</kbd> | Inspect the previous / next code point |
 | <kbd>j</kbd> / <kbd>k</kbd>, <kbd>Down</kbd> / <kbd>Up</kbd> | Select a property |
+| <kbd>[</kbd> / <kbd>]</kbd> | Select the first property of the previous / next section |
 | <kbd>Ctrl-U</kbd> / <kbd>Ctrl-D</kbd> | Move through properties by page |
 | <kbd>g</kbd> / <kbd>G</kbd> | Select the first / last property |
 | <kbd>y</kbd> | Copy the selected value |

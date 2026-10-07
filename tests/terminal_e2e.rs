@@ -80,6 +80,112 @@ fn starts_and_restores_the_terminal_on_quit() -> termlens::Result<()> {
 }
 
 #[test]
+fn inspector_group_keys_show_section_headings_and_select_their_first_properties()
+-> termlens::Result<()> {
+    let mut terminal =
+        termlens::bin!("sauva", size(60, 16), args(["U+D800", "--graphics", "off"]))?;
+    terminal.wait_until(|screen| screen.row_text(2).trim_start().starts_with("Identity"))?;
+    terminal.send(Key::Char('j'))?;
+    terminal.send(Key::Char(']'))?;
+    let screen = terminal.snapshot_after(|screen| {
+        screen
+            .row_text(2)
+            .trim_start()
+            .starts_with("Classification")
+    })?;
+    assert!(screen.row_text(3).contains("General Category"), "{screen}");
+    assert_eq!(screen.cell(3, 3).unwrap().style().bg, Color::Indexed(6));
+
+    terminal.send(Key::Char('j'))?;
+    terminal.send(Key::Char('['))?;
+    let screen = terminal
+        .snapshot_after(|screen| screen.row_text(2).trim_start().starts_with("Identity"))?;
+    assert!(screen.row_text(3).contains("Character"), "{screen}");
+    assert_eq!(screen.cell(3, 3).unwrap().style().bg, Color::Indexed(6));
+
+    terminal.send(Key::Char(']'))?;
+    terminal.send(Key::Char(']'))?;
+    let screen = terminal
+        .snapshot_after(|screen| screen.row_text(2).trim_start().starts_with("Encoding"))?;
+    assert!(screen.row_text(3).contains("UTF-8"), "{screen}");
+    assert!(screen.contains("Not available"), "{screen}");
+    assert_eq!(screen.cell(3, 3).unwrap().style().bg, Color::Indexed(6));
+    terminal.send(Key::Char('q'))?;
+    assert!(terminal.wait_exit()?.success());
+    Ok(())
+}
+
+#[test]
+fn sequence_group_keys_skip_cluster_members_and_preserve_selection_across_inspection()
+-> termlens::Result<()> {
+    let mut terminal = termlens::bin!(
+        "sauva",
+        size(100, 30),
+        args(["A\u{0301}👩‍💻B", "--graphics", "off"])
+    )?;
+    terminal.wait_until(|screen| screen.contains("1/6 · U+0041"))?;
+    terminal.send(Key::Char('j'))?;
+    terminal.wait_until(|screen| screen.contains("2/6 · U+0301"))?;
+    terminal.send(Key::Char(']'))?;
+    terminal.wait_until(|screen| screen.contains("3/6 · U+1F469"))?;
+    terminal.send(Key::Enter)?;
+    terminal.wait_until(|screen| screen.contains("Sequence 3/6 / Inspector"))?;
+    terminal.send(Key::Backspace)?;
+    terminal.wait_until(|screen| screen.contains("3/6 · U+1F469"))?;
+    terminal.send(Key::Char(']'))?;
+    terminal.wait_until(|screen| screen.contains("6/6 · U+0042"))?;
+    terminal.send(Key::Char('['))?;
+    terminal.wait_until(|screen| screen.contains("3/6 · U+1F469"))?;
+    terminal.send(Key::Char('j'))?;
+    terminal.wait_until(|screen| screen.contains("4/6 · U+200D"))?;
+    terminal.send(Key::Char('['))?;
+    terminal.wait_until(|screen| screen.contains("1/6 · U+0041"))?;
+    terminal.send(Key::F(1))?;
+    terminal
+        .wait_until(|screen| screen.contains("Select the first code point of the next grapheme"))?;
+    terminal.send(Key::F(1))?;
+    terminal.send(Key::Char('q'))?;
+    assert!(terminal.wait_exit()?.success());
+    Ok(())
+}
+
+#[test]
+fn normalization_group_keys_follow_result_clusters_and_update_the_original_highlight()
+-> termlens::Result<()> {
+    let mut terminal = termlens::bin!("sauva", size(100, 30), args(["ﬃ👩‍💻B", "--graphics", "off"]))?;
+    terminal.wait_until(|screen| screen.contains("5 code points"))?;
+    terminal.send(Key::Char('n'))?;
+    terminal.send(Key::Down)?;
+    terminal.send(Key::Down)?;
+    terminal.wait_until(|screen| screen.contains("NFKC Result"))?;
+    terminal.send(Key::Enter)?;
+    terminal.wait_until(|screen| screen.contains("1/7 · U+0066"))?;
+    for position in ["2/7 · U+0066", "3/7 · U+0069"] {
+        terminal.send(Key::Char(']'))?;
+        let screen = terminal.snapshot_after(|screen| screen.contains(position))?;
+        assert_eq!(screen.cell(3, 6).unwrap().style().bg, Color::Indexed(6));
+    }
+    terminal.send(Key::Char(']'))?;
+    let screen = terminal.snapshot_after(|screen| screen.contains("4/7 · U+1F469"))?;
+    assert_ne!(screen.cell(3, 6).unwrap().style().bg, Color::Indexed(6));
+    assert_eq!(screen.cell(4, 6).unwrap().style().bg, Color::Indexed(6));
+    terminal.send(Key::Char('j'))?;
+    terminal.wait_until(|screen| screen.contains("5/7 · U+200D"))?;
+    terminal.send(Key::Char('['))?;
+    let screen = terminal.snapshot_after(|screen| screen.contains("3/7 · U+0069"))?;
+    assert_eq!(screen.cell(3, 6).unwrap().style().bg, Color::Indexed(6));
+    terminal.send(Key::F(1))?;
+    terminal.wait_until(|screen| {
+        screen.contains("Keybindings · Normalization Result")
+            && screen.contains("Select the first code point of the next grapheme")
+    })?;
+    terminal.send(Key::F(1))?;
+    terminal.send(Key::Char('q'))?;
+    assert!(terminal.wait_exit()?.success());
+    Ok(())
+}
+
+#[test]
 fn starts_at_the_code_point_from_the_command_line() -> termlens::Result<()> {
     let mut terminal = termlens::bin!(
         "sauva",

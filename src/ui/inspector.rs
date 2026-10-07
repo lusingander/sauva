@@ -7,7 +7,7 @@ use ratatui::{
 };
 
 use crate::app::AppState;
-use crate::inspector::InspectorField;
+use crate::inspector::{InspectorField, InspectorGroup};
 use crate::ui::{
     key_value, layout, padded_line, padded_line_content_width,
     scrollbar::{self, ViewportScrollbar},
@@ -23,6 +23,7 @@ pub struct ViewportMetrics {
     pub viewport_height: usize,
     pub document_height: usize,
     pub field_ranges: Vec<std::ops::Range<usize>>,
+    pub groups: Vec<InspectorGroup>,
 }
 
 pub fn viewport_metrics(area: Rect, state: &AppState) -> ViewportMetrics {
@@ -36,6 +37,7 @@ pub fn viewport_metrics(area: Rect, state: &AppState) -> ViewportMetrics {
         viewport_height: usize::from(content.height),
         document_height: document.lines.len(),
         field_ranges: document.field_ranges,
+        groups: document.groups,
     }
 }
 
@@ -67,6 +69,7 @@ fn content_area(area: Rect) -> Rect {
 struct InspectorDocument {
     lines: Vec<Line<'static>>,
     field_ranges: Vec<std::ops::Range<usize>>,
+    groups: Vec<InspectorGroup>,
 }
 
 impl InspectorDocument {
@@ -82,6 +85,7 @@ impl InspectorDocument {
     ) -> Self {
         let mut builder = DocumentBuilder::new(width, color_theme);
         let mut field_ranges = Vec::new();
+        let mut groups = Vec::new();
         let mut previous_section = None;
         for (index, field) in InspectorField::for_code_point(code_point)
             .into_iter()
@@ -89,6 +93,10 @@ impl InspectorDocument {
         {
             if previous_section != Some(field.section()) {
                 builder.section(field.section().label());
+                groups.push(InspectorGroup {
+                    first_field: index,
+                    heading_line: builder.lines.len() - 1,
+                });
                 previous_section = Some(field.section());
             }
             let start = builder.lines.len();
@@ -100,6 +108,7 @@ impl InspectorDocument {
         Self {
             lines: builder.lines,
             field_ranges,
+            groups,
         }
     }
 }
@@ -230,6 +239,79 @@ mod tests {
     }
 
     #[test]
+    fn group_layout_tracks_headings_and_first_fields_after_wrapping() {
+        for (code_point, width) in [(0, 96), (0xe9, 56), (0xd800, 32)] {
+            let code_point = CodePoint::new(code_point).unwrap();
+            let document = InspectorDocument::for_code_point(code_point, width);
+            let fields = InspectorField::for_code_point(code_point);
+            let expected = fields
+                .iter()
+                .enumerate()
+                .filter(|(index, field)| {
+                    *index == 0 || fields[index - 1].section() != field.section()
+                })
+                .map(|(index, field)| (index, field.section().label()))
+                .collect::<Vec<_>>();
+
+            assert_eq!(document.groups.len(), expected.len());
+            for (group, (first_field, label)) in document.groups.iter().zip(expected) {
+                assert_eq!(group.first_field, first_field);
+                assert_eq!(document.lines[group.heading_line].to_string(), label);
+                assert_eq!(
+                    document.field_ranges[first_field].start,
+                    group.heading_line + 1
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn section_jumps_select_properties_and_keep_headings_visible_after_redrawing() {
+        use crate::inspector::InspectorMove;
+
+        for code_point in [CodePoint::from('A'), CodePoint::new(0xd800).unwrap()] {
+            let mut state = AppState::with_selected(code_point);
+            let area = Rect::new(0, 0, 60, 16);
+            let fields = InspectorField::for_code_point(code_point);
+            let groups = viewport_metrics(area, &state).groups;
+            for group in &groups[1..] {
+                let metrics = viewport_metrics(area, &state);
+                update(
+                    &mut state,
+                    Action::ResizeInspectorViewport {
+                        viewport_height: metrics.viewport_height,
+                        document_height: metrics.document_height,
+                        field_ranges: metrics.field_ranges,
+                        groups: metrics.groups,
+                    },
+                );
+                update(&mut state, Action::MoveInspector(InspectorMove::NextGroup));
+                let metrics = viewport_metrics(area, &state);
+                update(
+                    &mut state,
+                    Action::ResizeInspectorViewport {
+                        viewport_height: metrics.viewport_height,
+                        document_height: metrics.document_height,
+                        field_ranges: metrics.field_ranges,
+                        groups: metrics.groups,
+                    },
+                );
+                assert_eq!(state.inspector().selected_index(), group.first_field);
+                assert!(
+                    state
+                        .inspector()
+                        .visible_range()
+                        .contains(&group.heading_line)
+                );
+                update(&mut state, Action::CopyInspectorValue);
+                let request = state.take_clipboard_request().unwrap();
+                assert_eq!(request.label(), fields[group.first_field].label());
+                assert_eq!(request.value(), fields[group.first_field].copy_value());
+            }
+        }
+    }
+
+    #[test]
     fn wrapped_properties_keep_padding_and_the_complete_value() {
         use ratatui::{buffer::Buffer, widgets::Widget};
 
@@ -315,6 +397,7 @@ mod tests {
                 viewport_height: narrow.viewport_height,
                 document_height: narrow.document_height,
                 field_ranges: narrow.field_ranges,
+                groups: narrow.groups,
             },
         );
         update(
@@ -330,6 +413,7 @@ mod tests {
                 viewport_height: wide.viewport_height,
                 document_height: wide.document_height,
                 field_ranges: wide.field_ranges,
+                groups: wide.groups,
             },
         );
         assert_eq!(state.inspector().offset(), 0);

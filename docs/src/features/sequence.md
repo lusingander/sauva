@@ -60,6 +60,7 @@ Input order, repeated characters, spaces, and newlines are preserved. Labels and
 | Keys | Action |
 | --- | --- |
 | <kbd>j</kbd> / <kbd>k</kbd>, <kbd>Down</kbd> / <kbd>Up</kbd> | Select a code point |
+| <kbd>[</kbd> / <kbd>]</kbd> | Select the first code point of the previous / next grapheme cluster |
 | <kbd>g</kbd> / <kbd>G</kbd> | Select the first / last code point |
 | <kbd>Enter</kbd> | Open the selected code point in the Inspector |
 | <kbd>n</kbd> | Compare normalization forms |

@@ -17,4 +17,4 @@ expression: "render_to_text(&state, 60, 16)"
 
 
 
- k/j Move  Enter Inspect  BS/Esc Back  q Quit       F1 Help
+ k/j Move  Enter Inspect  BS/Esc Back               F1 Help

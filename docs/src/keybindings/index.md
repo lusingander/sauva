@@ -24,6 +24,8 @@ Context: `inspector`.
 | `next_code_point` | <kbd>l</kbd>, <kbd>Right</kbd> | Inspect the next code point |
 | `move_up` | <kbd>k</kbd>, <kbd>Up</kbd> | Select the previous property |
 | `move_down` | <kbd>j</kbd>, <kbd>Down</kbd> | Select the next property |
+| `previous_group` | <kbd>[</kbd> | Select the first property of the previous section |
+| `next_group` | <kbd>]</kbd> | Select the first property of the next section |
 | `page_up` | <kbd>Ctrl-U</kbd> | Move properties up one page |
 | `page_down` | <kbd>Ctrl-D</kbd> | Move properties down one page |
 | `first` | <kbd>g</kbd> | Select the first property |
@@ -58,6 +60,8 @@ Context: `sequence`.
 | `quit` | <kbd>q</kbd>, <kbd>Esc</kbd> | Quit |
 | `move_up` | <kbd>k</kbd>, <kbd>Up</kbd> | Select the previous code point |
 | `move_down` | <kbd>j</kbd>, <kbd>Down</kbd> | Select the next code point |
+| `previous_group` | <kbd>[</kbd> | Select the first code point of the previous grapheme cluster |
+| `next_group` | <kbd>]</kbd> | Select the first code point of the next grapheme cluster |
 | `first` | <kbd>g</kbd> | Select the first code point |
 | `last` | <kbd>G</kbd> | Select the last code point |
 | `activate` | <kbd>Enter</kbd> | Inspect the selected code point |
@@ -90,6 +94,8 @@ Context: `normalization_result`.
 | `back` | <kbd>Backspace</kbd> | Return to normalization comparison |
 | `move_up` | <kbd>k</kbd>, <kbd>Up</kbd> | Select the previous code point |
 | `move_down` | <kbd>j</kbd>, <kbd>Down</kbd> | Select the next code point |
+| `previous_group` | <kbd>[</kbd> | Select the first code point of the previous grapheme cluster |
+| `next_group` | <kbd>]</kbd> | Select the first code point of the next grapheme cluster |
 | `first` | <kbd>g</kbd> | Select the first code point |
 | `last` | <kbd>G</kbd> | Select the last code point |
 | `activate` | <kbd>Enter</kbd> | Inspect the selected code point |

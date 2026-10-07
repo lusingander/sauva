@@ -2,7 +2,9 @@ use tui_input::InputRequest;
 
 use crate::browser::{BrowseLevel, BrowseMove, BrowseState, BrowseTarget};
 use crate::help::{HelpMove, HelpState};
-use crate::inspector::{InspectorField, InspectorFieldId, InspectorMove, InspectorState};
+use crate::inspector::{
+    InspectorField, InspectorFieldId, InspectorGroup, InspectorMove, InspectorState,
+};
 use crate::normalization::{NormalizationMove, NormalizationState};
 use crate::preview::{GlyphPreviewState, GlyphPreviewUpdate};
 use crate::search::{SearchMove, SearchState};
@@ -26,6 +28,7 @@ pub enum Action {
         viewport_height: usize,
         document_height: usize,
         field_ranges: Vec<std::ops::Range<usize>>,
+        groups: Vec<InspectorGroup>,
     },
     OpenBrowser(BrowseLevel),
     AdvanceBrowser,
@@ -343,9 +346,12 @@ pub fn update(state: &mut AppState, action: Action) {
             viewport_height,
             document_height,
             field_ranges,
-        } => state
-            .inspector
-            .resize_viewport(viewport_height, document_height, field_ranges),
+            groups,
+        } => {
+            state
+                .inspector
+                .resize_viewport(viewport_height, document_height, field_ranges, groups)
+        }
         Action::OpenBrowser(level) if state.view == View::Inspector => {
             let previous_preview = state.preview_code_point();
             state.browse = Some(BrowseState::at(level, state.selected));
@@ -632,6 +638,55 @@ mod tests {
         let comparison = state.normalization().unwrap().comparison();
         assert_eq!(comparison.original_selection(original), 2..3);
         assert_eq!(comparison.original_visible_range(original), 1..3);
+    }
+
+    #[test]
+    fn result_group_jumps_follow_normalized_boundaries_and_preserve_the_original_selection() {
+        let mut state = AppState::with_sequence("A\u{0301}ﬃ👩‍💻B".to_owned());
+        update(&mut state, Action::MoveSequence(SequenceMove::Next));
+        update(&mut state, Action::OpenNormalization);
+        update(
+            &mut state,
+            Action::MoveNormalization(NormalizationMove::Next),
+        );
+        update(
+            &mut state,
+            Action::MoveNormalization(NormalizationMove::Next),
+        );
+        update(&mut state, Action::InspectNormalizationResult);
+        update(&mut state, Action::ResizeSequenceViewport(2));
+        update(&mut state, Action::ResizeNormalizationOriginalViewport(2));
+
+        for (index, original_range) in [(1, 2..3), (2, 2..3), (3, 2..3), (4, 3..6)] {
+            update(&mut state, Action::MoveSequence(SequenceMove::NextGroup));
+            assert_eq!(state.sequence().unwrap().selected_index(), index);
+            assert_eq!(state.sequence().unwrap().visible_range(), index..index + 2);
+            let original = state.original_sequence().unwrap().analysis();
+            let comparison = state.normalization().unwrap().comparison();
+            assert_eq!(comparison.original_selection(original), original_range);
+            assert!(
+                comparison
+                    .original_visible_range(original)
+                    .contains(&original_range.start)
+            );
+            assert_eq!(state.original_sequence().unwrap().selected_index(), 1);
+            assert_eq!(
+                state.preview_code_point(),
+                Some(state.sequence().unwrap().selected())
+            );
+        }
+        update(&mut state, Action::MoveSequence(SequenceMove::Next));
+        update(
+            &mut state,
+            Action::MoveSequence(SequenceMove::PreviousGroup),
+        );
+        assert_eq!(state.sequence().unwrap().selected_index(), 3);
+        update(&mut state, Action::InspectSequenceCodePoint);
+        update(&mut state, Action::ReturnToSequence);
+        assert_eq!(state.sequence().unwrap().selected_index(), 3);
+        update(&mut state, Action::ReturnToNormalization);
+        update(&mut state, Action::CloseNormalization);
+        assert_eq!(state.sequence().unwrap().selected_index(), 1);
     }
 
     #[test]
@@ -1397,6 +1452,7 @@ mod tests {
                 viewport_height,
                 document_height,
                 field_ranges: (0..document_height).map(|index| index..index + 1).collect(),
+                groups: Vec::new(),
             },
         );
     }

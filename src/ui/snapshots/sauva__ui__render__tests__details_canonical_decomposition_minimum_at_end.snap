@@ -17,4 +17,4 @@ expression: "render_to_text(&state, width, height)"
  Data                                                     ┃
   Unicode Version            17.0.0                       ┃
 
- h/l Point  k/j Field  y Copy  / Search  q Quit     F1 Help
+ h/l Point  k/j Field  [/] Section  y Copy  q Quit  F1 Help

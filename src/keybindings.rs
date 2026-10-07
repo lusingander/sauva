@@ -6,12 +6,14 @@ use serde::{Deserialize, Serialize};
 use tui_input::backend::crossterm::to_input_request;
 use umbra::optional;
 
-const ALL_COMMANDS: [Command; 25] = [
+const ALL_COMMANDS: [Command; 27] = [
     Command::Quit,
     Command::Help,
     Command::Close,
     Command::PreviousCodePoint,
     Command::NextCodePoint,
+    Command::PreviousGroup,
+    Command::NextGroup,
     Command::MoveUp,
     Command::MoveDown,
     Command::MoveLeft,
@@ -74,6 +76,8 @@ pub enum Command {
     Close,
     PreviousCodePoint,
     NextCodePoint,
+    PreviousGroup,
+    NextGroup,
     MoveUp,
     MoveDown,
     MoveLeft,
@@ -102,6 +106,8 @@ impl Command {
             self,
             Self::PreviousCodePoint
                 | Self::NextCodePoint
+                | Self::PreviousGroup
+                | Self::NextGroup
                 | Self::MoveUp
                 | Self::MoveDown
                 | Self::MoveLeft
@@ -122,6 +128,8 @@ impl Command {
             Self::Close => "close",
             Self::PreviousCodePoint => "previous_code_point",
             Self::NextCodePoint => "next_code_point",
+            Self::PreviousGroup => "previous_group",
+            Self::NextGroup => "next_group",
             Self::MoveUp => "move_up",
             Self::MoveDown => "move_down",
             Self::MoveLeft => "move_left",
@@ -379,6 +387,8 @@ keybinding_context!(InspectorKeybindings, Context::Inspector, {
     next_code_point => (Command::NextCodePoint, ["l", "right"]),
     move_up => (Command::MoveUp, ["k", "up"]),
     move_down => (Command::MoveDown, ["j", "down"]),
+    previous_group => (Command::PreviousGroup, ["["]),
+    next_group => (Command::NextGroup, ["]"]),
     page_up => (Command::PageUp, ["ctrl-u"]),
     page_down => (Command::PageDown, ["ctrl-d"]),
     first => (Command::First, ["g"]),
@@ -403,6 +413,8 @@ keybinding_context!(SequenceKeybindings, Context::Sequence, {
     quit => (Command::Quit, ["q", "esc"]),
     move_up => (Command::MoveUp, ["k", "up"]),
     move_down => (Command::MoveDown, ["j", "down"]),
+    previous_group => (Command::PreviousGroup, ["["]),
+    next_group => (Command::NextGroup, ["]"]),
     first => (Command::First, ["g"]),
     last => (Command::Last, ["G"]),
     activate => (Command::Activate, ["enter"]),
@@ -427,6 +439,8 @@ keybinding_context!(NormalizationResultKeybindings, Context::NormalizationResult
     back => (Command::Back, ["backspace"]),
     move_up => (Command::MoveUp, ["k", "up"]),
     move_down => (Command::MoveDown, ["j", "down"]),
+    previous_group => (Command::PreviousGroup, ["["]),
+    next_group => (Command::NextGroup, ["]"]),
     first => (Command::First, ["g"]),
     last => (Command::Last, ["G"]),
     activate => (Command::Activate, ["enter"]),
@@ -1040,6 +1054,46 @@ mod tests {
             keymap.resolve(Context::Inspector, named(KeyCode::Backspace)),
             None
         );
+    }
+
+    #[rstest]
+    #[case(Context::Inspector)]
+    #[case(Context::Sequence)]
+    #[case(Context::NormalizationResult)]
+    fn group_bindings_can_be_remapped_or_disabled_per_context(#[case] context: Context) {
+        let keymap = configured(&format!(
+            "[{}]\nprevious_group = ['a']\nnext_group = []\nmove_down = [']']",
+            context.config_name(),
+        ))
+        .unwrap();
+        assert_eq!(
+            keymap.resolve(context, plain('a')),
+            Some(Command::PreviousGroup)
+        );
+        assert_eq!(keymap.resolve(context, plain('[')), None);
+        assert_eq!(keymap.resolve(context, plain(']')), Some(Command::MoveDown));
+        assert!(keymap.keys_for(context, Command::NextGroup).is_empty());
+        for other in [
+            Context::Inspector,
+            Context::Sequence,
+            Context::NormalizationResult,
+        ] {
+            if other != context {
+                assert_eq!(
+                    keymap.resolve(other, plain('[')),
+                    Some(Command::PreviousGroup)
+                );
+                assert_eq!(keymap.resolve(other, plain(']')), Some(Command::NextGroup));
+            }
+        }
+    }
+
+    #[test]
+    fn conflicts_with_default_group_keys_identify_both_commands() {
+        let error = configured("[sequence]\nmove_down = [']']").unwrap_err();
+        let message = error.to_string();
+        assert!(message.contains("keybindings.sequence.move_down"));
+        assert!(message.contains("keybindings.sequence.next_group"));
     }
 
     #[test]

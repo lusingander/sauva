@@ -56,6 +56,7 @@ The original input is preserved throughout these operations.
 | Keys | In form comparison | In a result list |
 | --- | --- | --- |
 | <kbd>j</kbd> / <kbd>k</kbd>, <kbd>Down</kbd> / <kbd>Up</kbd> | Select a form | Select a code point |
+| <kbd>[</kbd> / <kbd>]</kbd> | — | Select the first code point of the previous / next grapheme cluster |
 | <kbd>g</kbd> / <kbd>G</kbd> | Select NFC / NFKD | Select the first / last code point |
 | <kbd>Enter</kbd> | Open the selected result | Inspect the selected code point |
 | <kbd>y</kbd> | Copy the exact normalized text | — |

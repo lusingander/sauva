@@ -186,6 +186,7 @@ fn resize_active_view(state: &mut AppState, area: Rect, keymap: &ResolvedKeymap)
                 viewport_height: metrics.viewport_height,
                 document_height: metrics.document_height,
                 field_ranges: metrics.field_ranges,
+                groups: metrics.groups,
             }
         }
         View::Browser => Action::ResizeBrowserViewport(browser_list_height(area)),
@@ -455,6 +456,7 @@ mod tests {
                 viewport_height: 10,
                 document_height: 22,
                 field_ranges: (0..22).map(|index| index..index + 1).collect(),
+                groups: Vec::new(),
             },
         );
         for _ in 0..3 {

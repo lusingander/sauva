@@ -91,7 +91,7 @@ Sauva rejects invalid bindings at startup, including:
 
 For example, binding <kbd>j</kbd> to `search.next_result` is rejected because <kbd>j</kbd> is needed for typing the query. Use an arrow key or another combination that is not an input editing key.
 
-When moving a key from one command to another, also remove it from the original command's binding. For example:
+When moving a key from one command to another, also remove it from the original command's binding. The same applies if new built-in bindings conflict with existing overrides. For example:
 
 ```toml
 [keybindings.inspector]
