@@ -40,6 +40,14 @@ Global bindings remain active in all contexts. When help is open, only its own b
 
 Disabling a local command does not disable the global binding for the same action. For example, disabling `keybindings.inspector.quit` leaves the default global <kbd>Ctrl-C</kbd> binding available.
 
+`previous_group` and `next_group` are available in `inspector`, `sequence`, and `normalization_result`. They move between sections in the Inspector and grapheme clusters in sequences. Each context can use different bindings:
+
+```toml
+[keybindings.sequence]
+previous_group = ["ctrl-p"]
+next_group = ["ctrl-n"]
+```
+
 ## Key Formats
 
 ### Characters
@@ -97,4 +105,12 @@ When moving a key from one command to another, also remove it from the original 
 [keybindings.inspector]
 next_code_point = ["right"]
 copy_value = ["y", "l"]
+```
+
+If an existing configuration assigns <kbd>[</kbd> or <kbd>]</kbd> to another command in one of the group navigation contexts, also remap or disable the corresponding group binding. For example:
+
+```toml
+[keybindings.sequence]
+next_group = []
+move_down = ["]"]
 ```

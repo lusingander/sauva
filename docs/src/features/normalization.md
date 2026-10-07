@@ -51,11 +51,14 @@ Press <kbd>Enter</kbd> again to inspect a result code point. <kbd>Backspace</kbd
 
 The original input is preserved throughout these operations.
 
+Use <kbd>[</kbd> / <kbd>]</kbd> to select the first code point of the previous / next grapheme cluster in the normalized result. Boundaries follow the result text: for example, normalizing `ﬃ` to `ffi` creates three clusters that can be visited separately. The corresponding original region follows the selection. Navigation stops at the first and last clusters, and <kbd>[</kbd> always targets the previous cluster even from the middle of the current one.
+
 ## Operations
 
 | Keys | In form comparison | In a result list |
 | --- | --- | --- |
 | <kbd>j</kbd> / <kbd>k</kbd>, <kbd>Down</kbd> / <kbd>Up</kbd> | Select a form | Select a code point |
+| <kbd>[</kbd> / <kbd>]</kbd> | — | Select the first code point of the previous / next grapheme cluster |
 | <kbd>g</kbd> / <kbd>G</kbd> | Select NFC / NFKD | Select the first / last code point |
 | <kbd>Enter</kbd> | Open the selected result | Inspect the selected code point |
 | <kbd>y</kbd> | Copy the exact normalized text | — |

@@ -60,10 +60,13 @@ Input order, repeated characters, spaces, and newlines are preserved. Labels and
 | Keys | Action |
 | --- | --- |
 | <kbd>j</kbd> / <kbd>k</kbd>, <kbd>Down</kbd> / <kbd>Up</kbd> | Select a code point |
+| <kbd>[</kbd> / <kbd>]</kbd> | Select the first code point of the previous / next grapheme cluster |
 | <kbd>g</kbd> / <kbd>G</kbd> | Select the first / last code point |
 | <kbd>Enter</kbd> | Open the selected code point in the Inspector |
 | <kbd>n</kbd> | Compare normalization forms |
 | <kbd>q</kbd>, <kbd>Esc</kbd> | Quit |
+
+Grapheme navigation brings the cluster's first code point into view, near the top of the list when space allows. <kbd>[</kbd> always moves to the previous cluster, even when a later member of the current cluster is selected. Both keys stop when there is no adjacent cluster; they do not wrap. If the text contains only one grapheme cluster, neither key changes the selection.
 
 ![Sequence Inspector](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/sequence-inspector.png)
 

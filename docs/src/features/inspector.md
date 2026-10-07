@@ -34,6 +34,7 @@ The glyph panel renders the selected code point and shows the font used, when sp
 | --- | --- |
 | <kbd>h</kbd> / <kbd>l</kbd>, <kbd>Left</kbd> / <kbd>Right</kbd> | Inspect the previous / next code point |
 | <kbd>j</kbd> / <kbd>k</kbd>, <kbd>Down</kbd> / <kbd>Up</kbd> | Select a property |
+| <kbd>[</kbd> / <kbd>]</kbd> | Select the first property of the previous / next section |
 | <kbd>Ctrl-U</kbd> / <kbd>Ctrl-D</kbd> | Move through properties by page |
 | <kbd>g</kbd> / <kbd>G</kbd> | Select the first / last property |
 | <kbd>y</kbd> | Copy the selected value |
@@ -43,6 +44,8 @@ The glyph panel renders the selected code point and shows the font used, when sp
 | <kbd>q</kbd>, <kbd>Esc</kbd> | Quit |
 
 Adjacent navigation follows code point values, even when the Inspector was opened from a sequence. <kbd>Backspace</kbd> returns to the sequence's existing selection.
+
+Section navigation selects a property and brings its section heading into view. <kbd>[</kbd> always moves to the previous section, even from the middle of the current one. Both keys stop when there is no adjacent section; they do not wrap. Sections containing unavailable values are included.
 
 ## Copying Values
 
