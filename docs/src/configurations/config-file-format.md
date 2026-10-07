@@ -33,7 +33,6 @@ fg = "#f5f7fa"
 bg = "#00000000"
 
 [ui]
-selection_cursor = ""
 input_cursor = "native"
 ```
 
@@ -99,19 +98,6 @@ Font lists are tried in the order given. Empty or whitespace-only family names a
 See [Glyph Preview](./glyph-preview.md) for examples and the complete font selection order.
 
 ## `ui`
-
-### `selection_cursor`
-
-The marker shown before a selected Inspector property, list entry, or code point.
-
-- Type: string.
-- Default: `""` (no visible marker).
-- Must be empty or occupy exactly one terminal cell, without control characters.
-
-```toml
-[ui]
-selection_cursor = "▸"
-```
 
 ### `input_cursor`
 

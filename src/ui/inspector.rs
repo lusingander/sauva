@@ -11,13 +11,12 @@ use crate::inspector::InspectorField;
 use crate::ui::{
     key_value, layout,
     scrollbar::{self, ViewportScrollbar},
-    settings::UiSettings,
     theme::ColorTheme,
     workspace,
 };
 use crate::unicode::CodePoint;
 
-const LABEL_WIDTH: usize = 29;
+const LABEL_WIDTH: usize = 27;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct ViewportMetrics {
@@ -40,20 +39,13 @@ pub fn viewport_metrics(area: Rect, state: &AppState) -> ViewportMetrics {
     }
 }
 
-pub fn render(
-    frame: &mut Frame,
-    area: Rect,
-    state: &AppState,
-    color_theme: &ColorTheme,
-    ui: &UiSettings,
-) {
+pub fn render(frame: &mut Frame, area: Rect, state: &AppState, color_theme: &ColorTheme) {
     let content = content_area(area);
     let document = InspectorDocument::with_color_theme(
         state.selected(),
         usize::from(content.width),
         state.inspector().selected_index(),
         color_theme,
-        ui,
     );
     let range = state.inspector().visible_range();
     let start = range.start.min(document.lines.len());
@@ -79,13 +71,7 @@ struct InspectorDocument {
 
 impl InspectorDocument {
     fn for_code_point(code_point: CodePoint, width: usize) -> Self {
-        Self::with_color_theme(
-            code_point,
-            width,
-            0,
-            &ColorTheme::default(),
-            &UiSettings::default(),
-        )
+        Self::with_color_theme(code_point, width, 0, &ColorTheme::default())
     }
 
     fn with_color_theme(
@@ -93,7 +79,6 @@ impl InspectorDocument {
         width: usize,
         selected_index: usize,
         color_theme: &ColorTheme,
-        ui: &UiSettings,
     ) -> Self {
         let mut builder = DocumentBuilder::new(width, color_theme);
         let mut field_ranges = Vec::new();
@@ -108,12 +93,7 @@ impl InspectorDocument {
             }
             let start = builder.lines.len();
             let selected = index == selected_index;
-            builder.fields(
-                field.label(),
-                field.values().iter().cloned(),
-                selected,
-                ui.selection_marker(selected),
-            );
+            builder.fields(field.label(), field.values().iter().cloned(), selected);
             field_ranges.push(start..builder.lines.len());
         }
 
@@ -155,19 +135,12 @@ impl DocumentBuilder {
         )));
     }
 
-    fn fields(
-        &mut self,
-        label: &str,
-        values: impl IntoIterator<Item = String>,
-        selected: bool,
-        selection_marker: &str,
-    ) {
+    fn fields(&mut self, label: &str, values: impl IntoIterator<Item = String>, selected: bool) {
         self.lines.extend(key_value::property_lines(
             label,
             values,
             self.width,
             self.label_width,
-            &format!("{selection_marker} "),
             Style::new().fg(self.color_theme.muted),
             Style::new(),
             selected.then(|| self.color_theme.selection.style()),

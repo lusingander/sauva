@@ -5,30 +5,30 @@ expression: "render_to_text(&state, width, height)"
  sauva / Browse / Blocks                                                                     U+0041
 
  Blocks                                                     │ Selection
-    000000–00007F  Basic Latin                              ┃  Name   Basic Latin
-    000080–0000FF  Latin-1 Supplement                       │  Plane  0
-    000100–00017F  Latin Extended-A                         │  Start  U+0000
-    000180–00024F  Latin Extended-B                         │  End    U+007F
-    000250–0002AF  IPA Extensions                           │  Size   128
-    0002B0–0002FF  Spacing Modifier Letters                 │
-    000300–00036F  Combining Diacritical Marks              │
-    000370–0003FF  Greek and Coptic                         │
-    000400–0004FF  Cyrillic                                 │
-    000500–00052F  Cyrillic Supplement                      │
-    000530–00058F  Armenian                                 │
-    000590–0005FF  Hebrew                                   │
-    000600–0006FF  Arabic                                   │
-    000700–00074F  Syriac                                   │
-    000750–00077F  Arabic Supplement                        │
-    000780–0007BF  Thaana                                   │
-    0007C0–0007FF  NKo                                      │
-    000800–00083F  Samaritan                                │
-    000840–00085F  Mandaic                                  │
-    000860–00086F  Syriac Supplement                        │
-    000870–00089F  Arabic Extended-B                        │
-    0008A0–0008FF  Arabic Extended-A                        │
-    000900–00097F  Devanagari                               │
-    000980–0009FF  Bengali                                  │
-    000A00–000A7F  Gurmukhi                                 │
+  000000–00007F  Basic Latin                                ┃  Name   Basic Latin
+  000080–0000FF  Latin-1 Supplement                         │  Plane  0
+  000100–00017F  Latin Extended-A                           │  Start  U+0000
+  000180–00024F  Latin Extended-B                           │  End    U+007F
+  000250–0002AF  IPA Extensions                             │  Size   128
+  0002B0–0002FF  Spacing Modifier Letters                   │
+  000300–00036F  Combining Diacritical Marks                │
+  000370–0003FF  Greek and Coptic                           │
+  000400–0004FF  Cyrillic                                   │
+  000500–00052F  Cyrillic Supplement                        │
+  000530–00058F  Armenian                                   │
+  000590–0005FF  Hebrew                                     │
+  000600–0006FF  Arabic                                     │
+  000700–00074F  Syriac                                     │
+  000750–00077F  Arabic Supplement                          │
+  000780–0007BF  Thaana                                     │
+  0007C0–0007FF  NKo                                        │
+  000800–00083F  Samaritan                                  │
+  000840–00085F  Mandaic                                    │
+  000860–00086F  Syriac Supplement                          │
+  000870–00089F  Arabic Extended-B                          │
+  0008A0–0008FF  Arabic Extended-A                          │
+  000900–00097F  Devanagari                                 │
+  000980–0009FF  Bengali                                    │
+  000A00–000A7F  Gurmukhi                                   │
                                                             │
  k/j Move  C-u/C-d Jump  g/G Ends  Enter Points  BS Back  Esc Close  q Quit                 F1 Help

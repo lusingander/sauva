@@ -406,7 +406,7 @@ fn normalization_reference_scrolls_on_jumps_and_resizes_without_moving_the_origi
 }
 
 #[test]
-fn sequence_clusters_keep_the_cursor_and_highlight_in_the_row_body() -> termlens::Result<()> {
+fn sequence_clusters_keep_the_highlight_in_the_row_body() -> termlens::Result<()> {
     let assert_cluster_highlight =
         |screen: &termlens::Screen, selected_rows: std::ops::Range<u16>| {
             for row in 3..11 {
@@ -419,13 +419,9 @@ fn sequence_clusters_keep_the_cursor_and_highlight_in_the_row_body() -> termlens
                 }
             }
         };
-    let directory = tempdir()?;
-    let path = directory.path().join("config.toml");
-    fs::write(&path, "[ui]\nselection_cursor = \"▸\"\n")?;
     let mut terminal = termlens::bin!(
         "sauva",
         size(100, 30),
-        env("SAUVA_CONFIG_FILE", &path),
         args(["--text", "🇯🇵X\r\n👨‍🔧", "--graphics", "off"])
     )?;
     let screen = terminal.snapshot_after(|screen| {
@@ -440,7 +436,7 @@ fn sequence_clusters_keep_the_cursor_and_highlight_in_the_row_body() -> termlens
     assert_eq!(screen.cell(4, 4).unwrap().contents(), "└");
     assert_eq!(screen.cell(4, 4).unwrap().style().bg, Color::Default);
     assert_cluster_highlight(&screen, 3..5);
-    assert_eq!(screen.cell(4, 6).unwrap().contents(), "▸");
+    assert_eq!(screen.cell(4, 6).unwrap().contents(), "2");
     assert_eq!(screen.cell(4, 6).unwrap().style().bg, Color::Indexed(6));
     assert_eq!(screen.cell(4, 57).unwrap().style().bg, Color::Indexed(6));
     insta::assert_snapshot!(screen.with_styles());
@@ -484,7 +480,7 @@ fn sequence_clusters_keep_the_cursor_and_highlight_in_the_row_body() -> termlens
     assert_eq!(screen.cell(9, 4).unwrap().contents(), "│");
     assert_eq!(screen.cell(9, 4).unwrap().style().bg, Color::Default);
     assert_cluster_highlight(&screen, 8..11);
-    assert_eq!(screen.cell(9, 6).unwrap().contents(), "▸");
+    assert_eq!(screen.cell(9, 6).unwrap().contents(), "7");
     assert_eq!(screen.cell(9, 6).unwrap().style().bg, Color::Indexed(6));
 
     terminal.send(Key::Enter)?;

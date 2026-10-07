@@ -5,12 +5,12 @@ expression: "render_to_text(&state, width, height)"
  sauva / Sequence                              1/6 · U+0041
 
  Code Points                   6 code points · 3 graphemes
-  1 ┌   1  U+0041    A — LATIN CAPITAL LETTER A
-    └   2  U+0301    ◌́ — COMBINING ACUTE ACCENT
-  2 •   3  U+0020    <SPACE> — SPACE
-  3 ┌   4  U+1F469   👩  — WOMAN
-    │   5  U+200D    <DEFAULT IGNORABLE> — ZERO WIDTH JOIN
-    └   6  U+1F4BB   💻  — PERSONAL COMPUTER
+  1 ┌ 1  U+0041    A — LATIN CAPITAL LETTER A
+    └ 2  U+0301    ◌́ — COMBINING ACUTE ACCENT
+  2 • 3  U+0020    <SPACE> — SPACE
+  3 ┌ 4  U+1F469   👩  — WOMAN
+    │ 5  U+200D    <DEFAULT IGNORABLE> — ZERO WIDTH JOINER
+    └ 6  U+1F4BB   💻  — PERSONAL COMPUTER
 
 
 

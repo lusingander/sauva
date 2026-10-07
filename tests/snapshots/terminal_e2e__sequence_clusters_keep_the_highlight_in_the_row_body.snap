@@ -6,14 +6,14 @@ size: 100x30  cursor: hidden
  sauva / Sequence                                                                     2/8 · U+1F1F5
 
  Code Points                   8 code points · 4 graphemes  │ Selection
-  1 ┌   1  U+1F1EF   🇯 — REGIONAL INDICATOR SYMBOL LETTER   │  Character        🇵
-    └ ▸ 2  U+1F1F5   🇵 — REGIONAL INDICATOR SYMBOL LETTER   │  Code Point       U+1F1F5
-  2 •   3  U+0058    X — LATIN CAPITAL LETTER X             │  Primary Name
-  3 ┌   4  U+000D    <CONTROL> — No Primary Name            │    REGIONAL INDICATOR SYMBOL LETTER P
-    └   5  U+000A    <CONTROL> — No Primary Name            │  Grapheme         1/4 · member 2/2
-  4 ┌   6  U+1F468   👨 — MAN                               │  Block
-    │   7  U+200D    <DEFAULT IGNORABLE> — ZERO WIDTH JOIN  │    Enclosed Alphanumeric Supplement
-    └   8  U+1F527   🔧 — WRENCH                            │  General Category So — Other Symbol
+  1 ┌ 1  U+1F1EF   🇯 — REGIONAL INDICATOR SYMBOL LETTER J   │  Character        🇵
+    └ 2  U+1F1F5   🇵 — REGIONAL INDICATOR SYMBOL LETTER P   │  Code Point       U+1F1F5
+  2 • 3  U+0058    X — LATIN CAPITAL LETTER X               │  Primary Name
+  3 ┌ 4  U+000D    <CONTROL> — No Primary Name              │    REGIONAL INDICATOR SYMBOL LETTER P
+    └ 5  U+000A    <CONTROL> — No Primary Name              │  Grapheme         1/4 · member 2/2
+  4 ┌ 6  U+1F468   👨 — MAN                                 │  Block
+    │ 7  U+200D    <DEFAULT IGNORABLE> — ZERO WIDTH JOINER  │    Enclosed Alphanumeric Supplement
+    └ 8  U+1F527   🔧 — WRENCH                              │  General Category So — Other Symbol
                                                             │
                                                             │ ─────────────────────────────────────
                                                             │ Glyph

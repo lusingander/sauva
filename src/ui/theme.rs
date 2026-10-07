@@ -90,7 +90,7 @@ pub struct ColorTheme {
     pub link: Color,
     #[nested]
     pub selection: SelectionColors,
-    /// Background emphasis for changed normalization spans, independent of the cursor.
+    /// Background emphasis for changed normalization spans, independent of the selection colors.
     #[nested]
     pub difference: DifferenceColors,
     #[nested]

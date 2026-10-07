@@ -9,22 +9,15 @@ use crate::{
         layout,
         scrollbar::{self, ViewportScrollbar},
         selectable_list_line, selection_preview,
-        settings::UiSettings,
         theme::ColorTheme,
         workspace,
     },
     unicode::{UnicodeDatabase, text::TextAnalysis},
 };
 
-pub fn render(
-    frame: &mut Frame,
-    area: Rect,
-    state: &AppState,
-    color_theme: &ColorTheme,
-    ui: &UiSettings,
-) {
+pub fn render(frame: &mut Frame, area: Rect, state: &AppState, color_theme: &ColorTheme) {
     if state.showing_normalization_result() {
-        super::normalization_result::render(frame, area, state, color_theme, ui);
+        super::normalization_result::render(frame, area, state, color_theme);
         return;
     }
     let layout = layout::sequence(area);
@@ -46,7 +39,6 @@ pub fn render(
         sequence,
         "Code Points",
         color_theme,
-        ui,
     );
 }
 
@@ -56,7 +48,6 @@ pub(super) fn render_list(
     sequence: &SequenceState,
     title: &str,
     color_theme: &ColorTheme,
-    ui: &UiSettings,
 ) {
     let count = sequence.code_points().len();
     let grapheme_count = sequence.analysis().graphemes().len();
@@ -106,13 +97,12 @@ pub(super) fn render_list(
             );
             let code_point = point.code_point();
             let selected = sequence.selected_index() == index;
-            let marker = ui.selection_marker(selected);
             let representation = UnicodeDatabase::display_representation(code_point);
             let name = UnicodeDatabase::primary_name_or_fallback(code_point);
             let code_point = format!("{code_point:<8}", code_point = code_point.to_string());
             let row = selectable_list_line(
                 Line::from(format!(
-                    "{marker} {:>position_width$}  {code_point}  {representation} — {name}",
+                    "{:>position_width$}  {code_point}  {representation} — {name}",
                     index + 1
                 )),
                 selected,
@@ -187,7 +177,6 @@ mod tests {
         width: u16,
         height: u16,
         color_theme: &ColorTheme,
-        ui: &UiSettings,
     ) -> Buffer {
         let mut state = state.clone();
         let area = Rect::new(0, 0, width, height);
@@ -200,7 +189,7 @@ mod tests {
         terminal
             .draw(|frame| {
                 frame.render_widget(Block::default().style(color_theme.base_style()), area);
-                render(frame, area, &state, color_theme, ui);
+                render(frame, area, &state, color_theme);
             })
             .unwrap();
         terminal.backend().buffer().clone()
@@ -221,13 +210,7 @@ mod tests {
 
         terminal
             .draw(|frame| {
-                render(
-                    frame,
-                    frame.area(),
-                    &state,
-                    &ColorTheme::default(),
-                    &UiSettings::default(),
-                );
+                render(frame, frame.area(), &state, &ColorTheme::default());
             })
             .unwrap();
         let text =
@@ -251,23 +234,17 @@ mod tests {
     #[test]
     fn shows_cluster_boundaries_separately_from_code_point_positions() {
         let state = AppState::with_sequence("A\u{0301} 👩‍💻".to_owned());
-        let buffer = render_to_buffer(
-            &state,
-            60,
-            16,
-            &ColorTheme::default(),
-            &UiSettings::default(),
-        );
+        let buffer = render_to_buffer(&state, 60, 16, &ColorTheme::default());
 
         let heading = row_text(&buffer, 0, 0, 60);
         assert!(heading.contains("6 code points · 3 graphemes"));
         for (row, prefix) in [
-            "1 ┌   1  U+0041",
-            "  └   2  U+0301",
-            "2 •   3  U+0020",
-            "3 ┌   4  U+1F469",
-            "  │   5  U+200D",
-            "  └   6  U+1F4BB",
+            "1 ┌ 1  U+0041",
+            "  └ 2  U+0301",
+            "2 • 3  U+0020",
+            "3 ┌ 4  U+1F469",
+            "  │ 5  U+200D",
+            "  └ 6  U+1F4BB",
         ]
         .into_iter()
         .enumerate()
@@ -277,12 +254,7 @@ mod tests {
     }
 
     #[rstest]
-    #[case("")]
-    #[case(">")]
-    #[case("▸")]
-    #[case(" ")]
-    fn highlights_only_the_body_background_and_reserves_the_cursor_cell(
-        #[case] selection_cursor: &str,
+    fn highlights_only_the_body_background(
         #[values(60, 100)] width: u16,
         #[values(0, 1, 2, 3, 4, 5)] selected_index: usize,
     ) {
@@ -301,11 +273,7 @@ mod tests {
             },
             ..Default::default()
         };
-        let ui = UiSettings {
-            selection_cursor: selection_cursor.to_owned(),
-            ..Default::default()
-        };
-        let buffer = render_to_buffer(&state, width, 16, &theme, &ui);
+        let buffer = render_to_buffer(&state, width, 16, &theme);
         let grapheme_indices = [0, 0, 1, 2, 2, 2];
         for (row, grapheme_index) in grapheme_indices.into_iter().enumerate() {
             let y = row as u16 + 1;
@@ -324,10 +292,7 @@ mod tests {
                 assert_eq!(cell.modifier.contains(Modifier::BOLD), grapheme_selected);
                 assert_eq!(cell.bg, theme.bg);
             }
-            assert_eq!(
-                buffer.cell((6, y)).unwrap().symbol(),
-                ui.selection_marker(selected)
-            );
+            assert_eq!(buffer.cell((6, y)).unwrap().symbol(), (row + 1).to_string());
             let mut x = 6;
             while x < 58 {
                 let cell = buffer.cell((x, y)).unwrap();
@@ -358,31 +323,23 @@ mod tests {
     #[test]
     fn keeps_the_column_width_stable_for_multi_digit_cluster_numbers() {
         let state = AppState::with_sequence("A".repeat(11));
-        let ui = UiSettings {
-            selection_cursor: ">".to_owned(),
-            ..Default::default()
-        };
-        let buffer = render_to_buffer(&state, 60, 16, &ColorTheme::default(), &ui);
+        let buffer = render_to_buffer(&state, 60, 16, &ColorTheme::default());
 
         assert_eq!(row_text(&buffer, 2, 1, 5), " 1 • ");
         assert_eq!(row_text(&buffer, 2, 10, 5), "10 • ");
         assert_eq!(row_text(&buffer, 2, 11, 5), "11 • ");
-        assert_eq!(buffer.cell((7, 1)).unwrap().symbol(), ">");
-        for y in 2..12 {
-            assert_eq!(buffer.cell((7, y)).unwrap().symbol(), " ");
+        for (row, position) in (1..=11).enumerate() {
+            assert_eq!(
+                row_text(&buffer, 7, row as u16 + 1, 2),
+                format!("{position:>2}")
+            );
         }
     }
 
     #[test]
     fn a_single_grapheme_still_lists_each_code_point() {
         let state = AppState::with_sequence("🇯🇵".to_owned());
-        let buffer = render_to_buffer(
-            &state,
-            60,
-            16,
-            &ColorTheme::default(),
-            &UiSettings::default(),
-        );
+        let buffer = render_to_buffer(&state, 60, 16, &ColorTheme::default());
 
         assert!(row_text(&buffer, 0, 0, 60).contains("2 code points · 1 grapheme"));
         assert_eq!(row_text(&buffer, 2, 1, 4), "1 ┌ ");
@@ -402,13 +359,7 @@ mod tests {
             (SequenceMove::Next, ["1 └ ", "2 • "], [false, true]),
         ] {
             update(&mut state, Action::MoveSequence(movement));
-            let buffer = render_to_buffer(
-                &state,
-                60,
-                4,
-                &ColorTheme::default(),
-                &UiSettings::default(),
-            );
+            let buffer = render_to_buffer(&state, 60, 4, &ColorTheme::default());
             assert_eq!(row_text(&buffer, 2, 1, 4), expected[0]);
             assert_eq!(row_text(&buffer, 2, 2, 4), expected[1]);
             let theme = ColorTheme::default();
@@ -440,7 +391,6 @@ mod tests {
             width,
             height,
             &ColorTheme::default(),
-            &UiSettings::default(),
         );
     }
 }

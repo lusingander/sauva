@@ -11,20 +11,14 @@ use ratatui::{
 use crate::{
     app::AppState,
     normalization::TextMetrics,
-    ui::{selectable_list_line, settings::UiSettings, theme::ColorTheme},
+    ui::{selectable_list_line, theme::ColorTheme},
     unicode::{
         CodePoint, GeneralCategory, UnicodeDatabase,
         text::{NormalizationForm, TextAnalysis},
     },
 };
 
-pub fn render(
-    frame: &mut Frame,
-    area: Rect,
-    state: &AppState,
-    theme: &ColorTheme,
-    ui: &UiSettings,
-) {
+pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorTheme) {
     let original = state.sequence().unwrap().analysis();
     let normalization = state.normalization().unwrap();
     let comparison = normalization.comparison();
@@ -86,7 +80,7 @@ pub fn render(
         .unwrap()
         .max(2);
     lines.push(table_row(
-        "  Form  vs Original",
+        "Form  vs Original",
         &format!(
             "{:>cp_width$}  {:>byte_width$}  {:>gc_width$}",
             "CP", "Bytes", "GC"
@@ -99,8 +93,7 @@ pub fn render(
         let metrics = metrics[index];
         let changed = original.normalization().get(form).is_changed();
         let left = format!(
-            "{} {:<4}  {}",
-            ui.selection_marker(selected),
+            "{:<4}  {}",
             form.label(),
             if changed { "Changed" } else { "Unchanged" }
         );

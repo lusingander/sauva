@@ -5,16 +5,16 @@ expression: "render_to_text(&state, width, height)"
  sauva / Browse / Blocks                             U+2FF0
 
  Blocks
-    002C00–002C5F  Glagolitic
-    002C60–002C7F  Latin Extended-C
-    002C80–002CFF  Coptic                                 ┃
-    002D00–002D2F  Georgian Supplement
-    002D30–002D7F  Tifinagh
-    002D80–002DDF  Ethiopic Extended
-    002DE0–002DFF  Cyrillic Extended-A
-    002E00–002E7F  Supplemental Punctuation
-    002E80–002EFF  CJK Radicals Supplement
-    002F00–002FDF  Kangxi Radicals
-    002FF0–002FFF  Ideographic Description Characters
+  002C00–002C5F  Glagolitic
+  002C60–002C7F  Latin Extended-C
+  002C80–002CFF  Coptic                                   ┃
+  002D00–002D2F  Georgian Supplement
+  002D30–002D7F  Tifinagh
+  002D80–002DDF  Ethiopic Extended
+  002DE0–002DFF  Cyrillic Extended-A
+  002E00–002E7F  Supplemental Punctuation
+  002E80–002EFF  CJK Radicals Supplement
+  002F00–002FDF  Kangxi Radicals
+  002FF0–002FFF  Ideographic Description Characters
 
  k/j Move  Enter Points  BS Back  Esc Close         F1 Help

@@ -124,7 +124,7 @@
       "additionalProperties": false
     },
     "differenceColors": {
-      "description": "Changed normalization spans, separate from the selection cursor. Underlining also identifies these spans.",
+      "description": "Changed normalization spans, separate from the selection colors. Underlining also identifies these spans.",
       "type": "object",
       "properties": {
         "fg": {
@@ -272,12 +272,6 @@
             }
           ],
           "default": "native"
-        },
-        "selection_cursor": {
-          "description": "The cursor shown in the reserved leading cell of selected Inspector properties, list entries, and code point entries. It must be empty or occupy exactly one terminal cell.",
-          "type": "string",
-          "pattern": "^(?:|[^\\u0000-\\u001F\\u007F]+)$",
-          "default": ""
         }
       },
       "additionalProperties": false

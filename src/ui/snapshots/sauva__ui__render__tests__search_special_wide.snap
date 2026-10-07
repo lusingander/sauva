@@ -7,7 +7,7 @@ expression: "render_to_text(&state, width, height)"
  Search  U+D800                                                                                     │ Selection
 ────────────────────────────────────────────────────────────────────────────────────────────────────│  Character        <SURROGATE>
  Results                                                                                  1 result  │  Code Point       U+D800
-    ·   U+D800    <SURROGATE> — No Primary Name                                                     │  Primary Name     No Primary Name
+  ·   U+D800    <SURROGATE> — No Primary Name                                                       │  Primary Name     No Primary Name
                                                                                                     │  Block            High Surrogates
                                                                                                     │  General Category Cs — Surrogate
                                                                                                     │

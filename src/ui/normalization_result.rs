@@ -6,7 +6,6 @@ use crate::{
         layout,
         scrollbar::{self, ViewportScrollbar},
         selectable_list_line, sequence,
-        settings::UiSettings,
         theme::ColorTheme,
         workspace,
     },
@@ -34,13 +33,7 @@ pub fn viewport_heights(area: Rect, state: &AppState) -> (usize, usize) {
     )
 }
 
-pub fn render(
-    frame: &mut Frame,
-    area: Rect,
-    state: &AppState,
-    theme: &ColorTheme,
-    ui: &UiSettings,
-) {
+pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorTheme) {
     let original = state.original_sequence().unwrap().analysis();
     let normalization = state.normalization().unwrap();
     let comparison = normalization.comparison();
@@ -52,7 +45,6 @@ pub fn render(
         &comparison.result,
         &format!("{} Result", normalization.form().label()),
         theme,
-        ui,
     );
 }
 
