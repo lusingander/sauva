@@ -18,6 +18,8 @@ Sleep 2s
 
 Show
 
+# Sequence
+
 Sleep 2s
 
 Type@300ms "jjjjjj"
@@ -25,6 +27,8 @@ Sleep 500ms
 
 Type "n"
 Sleep 1s
+
+# Normalization
 
 Type@500ms "jjj"
 Sleep 500ms
@@ -35,6 +39,8 @@ Sleep 100ms
 Enter
 Sleep 1s
 
+# Normalization result
+
 Type@300ms "jjj"
 
 Screenshot "./img/sequence-normalization-result.png"
@@ -43,10 +49,36 @@ Sleep 100ms
 Type@300ms "jjjjj"
 Sleep 1s
 
+Type "Y"
+Sleep 1s
+
+Screenshot "./img/sequence-normalization-result-copy.png"
+Sleep 100ms
+
+Type "j"
+Sleep 500ms
+
+Enter
+Sleep 1s
+
 Backspace
 Sleep 500ms
 Backspace
 Sleep 1s
+
+# Sequence
+
+Type "Y"
+Sleep 1s
+
+Screenshot "./img/sequence-copy.png"
+Sleep 100ms
+
+Type@300ms "jjj"
+Sleep 500ms
+
+Escape
+Sleep 500ms
 
 Type@300ms "jjj"
 Sleep 500ms
