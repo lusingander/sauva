@@ -11,10 +11,10 @@ expression: "render_to_text(&state, 100, 30)"
   3 ┌  4  U+1F469   👩  — WOMAN                              │    COMBINING ACUTE ACCENT
     │  5  U+200D    <DEFAULT IGNORABLE> — ZERO WIDTH JOIN   │  Grapheme         1/3 · member 2/2
     └  6  U+1F4BB   💻  — PERSONAL COMPUTER                  │  Block
-                                                            │    Combining Diacritical Marks
+                                                                                   cal Marks
                   ┌ Copy ────────────────────────────────────────────────────────┐
-                  │ Sequence · CP 2/6 · U+0301                                   │ark
-                  │                                                              │─────────────────
+                  │ Sequence · CP 2/6 · U+0301                                   │ rk
+                  │                                                              │ ────────────────
                   │  Code Point                                          U+0301  │
                   │  Grapheme Cluster                             2 code points  │
                   │  Whole Input                                  6 code points  │
@@ -23,7 +23,7 @@ expression: "render_to_text(&state, 100, 30)"
                   │ Á                                                            │
                   │ U+0041 U+0301                                                │
                   └──────────────────────────────────────────────────────────────┘
-                                                            │
+
                                                             │
                                                             │
                                                             │

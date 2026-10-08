@@ -1,6 +1,6 @@
 use ratatui::{
     Frame,
-    layout::Rect,
+    layout::{Margin, Rect},
     style::Style,
     text::{Line, Span},
     widgets::{Block, Borders, Clear, Paragraph},
@@ -18,14 +18,15 @@ use crate::{
 pub(super) fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorTheme) {
     let dialog = state.copy_dialog().expect("the copy dialog is open");
     let sequence = state.sequence().expect("copy candidates have a sequence");
-    let width = area.width.saturating_sub(4).min(64);
-    let height = area.height.min(11);
-    let area = Rect::new(
+    let width = area.width.saturating_sub(2).min(66);
+    let height = area.height.min(13);
+    let background = Rect::new(
         area.x + (area.width - width) / 2,
         area.y + (area.height - height) / 2,
         width,
         height,
     );
+    let area = background.inner(Margin::new(1, 1));
     let muted = Style::new().fg(theme.muted);
     let block = Block::default()
         .borders(Borders::ALL)
@@ -39,7 +40,8 @@ pub(super) fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &Co
         inner.width.saturating_sub(2),
         inner.height,
     );
-    frame.render_widget(Clear, area);
+    frame.render_widget(Clear, background);
+    frame.render_widget(Block::default().style(theme.base_style()), background);
     frame.render_widget(block, area);
 
     let source = if state.showing_normalization_result() {

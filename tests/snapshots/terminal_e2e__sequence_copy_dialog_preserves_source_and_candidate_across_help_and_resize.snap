@@ -5,7 +5,7 @@ expression: screen.with_styles()
 size: 60x16  cursor: hidden
  sauva / Sequence                              2/6 · U+0301
 
- Code Points                   6 code points · 3 graphemes
+
   ┌ Copy ────────────────────────────────────────────────┐
   │ Sequence · CP 2/6 · U+0301                           │
   │                                                      │
@@ -22,7 +22,6 @@ size: 60x16  cursor: hidden
 
 styles:
 0: 0-5 fg=6 bold; 47-59 fg=8
-2: 1-11 fg=4 bold; 31-57 fg=8
 3: 2 fg=8; 3-8 fg=4 bold; 9-57 fg=8
 4: 2 fg=8; 4-29 fg=8; 57 fg=8
 5: 2 fg=8; 57 fg=8

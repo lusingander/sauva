@@ -4,7 +4,7 @@ expression: text
 ---
  sauva / Sequence / NFKC Result               7/7 · U+1F4BB
 
- Original         6 CP   NFKC Result           7 CP · 5 GC
+
   ┌ Copy ────────────────────────────────────────────────┐
   │ NFKC Result · CP 7/7 · U+1F4BB                       │
   │                                                      │
