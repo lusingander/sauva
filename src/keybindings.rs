@@ -461,8 +461,8 @@ keybinding_context!(CopyDialogKeybindings, Context::CopyDialog, {
     close => (Command::Close, ["esc"]),
     move_up => (Command::MoveUp, ["k", "up"]),
     move_down => (Command::MoveDown, ["j", "down"]),
-    first => (Command::First, ["g", "home"]),
-    last => (Command::Last, ["G", "end"]),
+    first => (Command::First, ["g"]),
+    last => (Command::Last, ["G"]),
     activate => (Command::Activate, ["enter"]),
 });
 

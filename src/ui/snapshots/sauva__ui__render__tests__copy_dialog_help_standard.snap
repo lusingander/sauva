@@ -14,8 +14,8 @@ expression: text
  Keybindings · Copy Dialog
   k  Up                    Select the previous copy candidate
   j  Down                  Select the next copy candidate
-  g  Home                  Select the first copy candidate
-  G  End                   Select the last copy candidate
+  g                        Select the first copy candidate
+  G                        Select the last copy candidate
   Enter                    Copy the selected candidate
   Esc                      Cancel and return to the source screen
   Ctrl-c                   Quit

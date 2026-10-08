@@ -112,8 +112,8 @@ Context: `copy_dialog`. These bindings apply to the candidate list opened from S
 | --- | --- | --- |
 | `move_up` | <kbd>k</kbd>, <kbd>Up</kbd> | Select the previous candidate |
 | `move_down` | <kbd>j</kbd>, <kbd>Down</kbd> | Select the next candidate |
-| `first` | <kbd>g</kbd>, <kbd>Home</kbd> | Select Code Point |
-| `last` | <kbd>G</kbd>, <kbd>End</kbd> | Select the whole input or result |
+| `first` | <kbd>g</kbd> | Select Code Point |
+| `last` | <kbd>G</kbd> | Select the whole input or result |
 | `activate` | <kbd>Enter</kbd> | Copy the selected candidate |
 | `close` | <kbd>Esc</kbd> | Cancel and return to the source screen |
 
