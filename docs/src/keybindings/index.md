@@ -66,6 +66,7 @@ Context: `sequence`.
 | `last` | <kbd>G</kbd> | Select the last code point |
 | `activate` | <kbd>Enter</kbd> | Inspect the selected code point |
 | `normalize` | <kbd>n</kbd> | Compare normalization forms |
+| `open_copy_dialog` | <kbd>Y</kbd> | Open copy candidates |
 
 ## Normalization
 
@@ -99,8 +100,24 @@ Context: `normalization_result`.
 | `first` | <kbd>g</kbd> | Select the first code point |
 | `last` | <kbd>G</kbd> | Select the last code point |
 | `activate` | <kbd>Enter</kbd> | Inspect the selected code point |
+| `open_copy_dialog` | <kbd>Y</kbd> | Open copy candidates for the normalized text |
 
 Use <kbd>Backspace</kbd> in the Inspector to return to this result.
+
+## Copy Dialog
+
+Context: `copy_dialog`. These bindings apply to the candidate list opened from Sequence or Normalization Result. The source screen's bindings are inactive while the dialog is open.
+
+| Command | Keys | Action |
+| --- | --- | --- |
+| `move_up` | <kbd>k</kbd>, <kbd>Up</kbd> | Select the previous candidate |
+| `move_down` | <kbd>j</kbd>, <kbd>Down</kbd> | Select the next candidate |
+| `first` | <kbd>g</kbd>, <kbd>Home</kbd> | Select Code Point |
+| `last` | <kbd>G</kbd>, <kbd>End</kbd> | Select the whole input or result |
+| `activate` | <kbd>Enter</kbd> | Copy the selected candidate |
+| `close` | <kbd>Esc</kbd> | Cancel and return to the source screen |
+
+Global <kbd>F1</kbd> opens the shared Copy Dialog help. Closing help restores the candidate selection. Global <kbd>Ctrl-C</kbd> still quits.
 
 ## Browse Lists
 

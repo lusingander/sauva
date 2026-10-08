@@ -64,8 +64,21 @@ Input order, repeated characters, spaces, and newlines are preserved. Labels and
 | <kbd>g</kbd> / <kbd>G</kbd> | Select the first / last code point |
 | <kbd>Enter</kbd> | Open the selected code point in the Inspector |
 | <kbd>n</kbd> | Compare normalization forms |
+| <kbd>Y</kbd> | Open copy candidates |
 | <kbd>q</kbd>, <kbd>Esc</kbd> | Quit |
 
 ![Sequence Inspector](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/sequence-inspector.png)
 
 <kbd>Backspace</kbd> in the Inspector returns to the sequence. From Sequence, press <kbd>n</kbd> to open [Normalization](./normalization.md).
+
+## Copying
+
+Press <kbd>Y</kbd> to choose what to copy:
+
+- **Code Point**: the selected code point as text.
+- **Grapheme Cluster**: the entire cluster containing the selected code point, including members outside the visible list.
+- **Whole Input**: the original input in its original order.
+
+Select a candidate with <kbd>j</kbd> / <kbd>k</kbd> or the arrow keys, then press <kbd>Enter</kbd> to copy. <kbd>Esc</kbd> cancels. The preview shows the candidate's text and code point notation; labels, dotted circles, and ellipses are display aids and are not copied. Whitespace, newlines, and invisible characters are preserved exactly.
+
+The glyph image is hidden while the dialog or its help is open and restored when you return to Sequence. <kbd>F1</kbd> opens the shared Copy Dialog help; closing help returns to the same candidate. A successful copy closes the dialog and shows confirmation in the footer. If copying fails, the dialog stays open with an error so you can retry.
