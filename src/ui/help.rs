@@ -545,7 +545,7 @@ fn short_help_items(context: Context, has_sequence: bool) -> Vec<ShortHelpItem> 
             short(&[C::First, C::Last], "Ends", 3),
             short(&[C::Activate], "Inspect", 1),
             short(&[C::Normalize], "Normalize", 1),
-            short(&[C::OpenCopyDialog], "Copy…", 0),
+            short(&[C::OpenCopyDialog], "Copy...", 0),
             short(&[C::Quit], "Quit", 0),
         ],
         Context::Normalization => vec![
@@ -559,7 +559,7 @@ fn short_help_items(context: Context, has_sequence: bool) -> Vec<ShortHelpItem> 
             short(&[C::MoveUp, C::MoveDown], "Move", 1),
             short(&[C::PreviousGroup, C::NextGroup], "Grapheme", 2),
             short(&[C::Activate], "Inspect", 1),
-            short(&[C::OpenCopyDialog], "Copy…", 0),
+            short(&[C::OpenCopyDialog], "Copy...", 0),
             short(&[C::Back, C::Close], "Back", 0),
             short(&[C::Quit], "Quit", 3),
         ],

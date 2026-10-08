@@ -939,7 +939,7 @@ mod tests {
         let (width, height) = MINIMUM_SIZE;
 
         let screen = render_to_text(&state, width, height);
-        assert!(screen.contains("Y Copy…"));
+        assert!(screen.contains("Y Copy..."));
         insta::assert_snapshot!(screen);
     }
 

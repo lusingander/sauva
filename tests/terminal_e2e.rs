@@ -227,7 +227,7 @@ fn normalized_copy_dialog_uses_result_text_and_custom_bindings() -> termlens::Re
     terminal.wait_until(|screen| screen.contains("1/4 · U+00C1"))?;
     terminal.send(Key::Down)?;
     let screen = terminal.snapshot_after(|screen| screen.contains("2/4 · U+0066"))?;
-    assert!(screen.contains("C Copy…"), "{screen}");
+    assert!(screen.contains("C Copy..."), "{screen}");
     terminal.send(Key::Char('C'))?;
     terminal.wait_until(|screen| {
         screen.contains("NFKC Result") && screen.contains("Preview · 1 CP · 1 byte")
