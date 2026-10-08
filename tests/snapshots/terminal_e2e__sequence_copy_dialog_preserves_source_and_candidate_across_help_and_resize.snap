@@ -3,7 +3,7 @@ source: tests/terminal_e2e.rs
 expression: screen.with_styles()
 ---
 size: 60x16  cursor: hidden
- sauva / Sequence / Copy                       2/6 · U+0301
+ sauva / Sequence                              2/6 · U+0301
 
  C┌ Copy ────────────────────────────────────────────────┐
   │ Sequence · CP 2/6 · U+0301                           │

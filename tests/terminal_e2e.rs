@@ -162,7 +162,7 @@ fn sequence_copy_dialog_preserves_source_and_candidate_across_help_and_resize()
     terminal.wait_until(|screen| screen.contains("2/6 · U+0301"))?;
     terminal.send(Key::Char('Y'))?;
     terminal.wait_until(|screen| {
-        screen.contains("Sequence / Copy") && screen.contains("Preview · 1 CP · 2 bytes")
+        screen.contains("Sequence") && screen.contains("Preview · 1 CP · 2 bytes")
     })?;
     terminal.send(Key::Down)?;
     terminal.wait_until(|screen| screen.contains("Preview · 2 CP · 3 bytes"))?;
@@ -172,7 +172,7 @@ fn sequence_copy_dialog_preserves_source_and_candidate_across_help_and_resize()
     terminal.wait_until(|screen| screen.size() == (60, 16) && screen.contains("Copy Dialog"))?;
     terminal.send(Key::Esc)?;
     let screen = terminal.snapshot_after(|screen| {
-        screen.contains("Sequence / Copy") && screen.contains("Preview · 2 CP · 3 bytes")
+        screen.contains("Sequence") && screen.contains("Preview · 2 CP · 3 bytes")
     })?;
     assert!(screen.contains("Enter Copy"), "{screen}");
     assert!(screen.contains("Esc Cancel"), "{screen}");
@@ -187,7 +187,7 @@ fn sequence_copy_dialog_preserves_source_and_candidate_across_help_and_resize()
     })?;
     terminal.send(Key::Esc)?;
     terminal.wait_until(|screen| {
-        screen.contains("2/6 · U+0301") && !screen.contains("Sequence / Copy")
+        screen.contains("2/6 · U+0301") && !screen.contains("Preview ·")
     })?;
     terminal.send(Key::Char('Y'))?;
     terminal.wait_until(|screen| screen.contains("Preview · 1 CP · 2 bytes"))?;
@@ -231,7 +231,7 @@ fn normalized_copy_dialog_uses_result_text_and_custom_bindings() -> termlens::Re
     assert!(screen.contains("C Copy…"), "{screen}");
     terminal.send(Key::Char('C'))?;
     terminal.wait_until(|screen| {
-        screen.contains("NFKC Result / Copy") && screen.contains("Preview · 1 CP · 1 byte")
+        screen.contains("NFKC Result") && screen.contains("Preview · 1 CP · 1 byte")
     })?;
     terminal.send(Key::Char('l'))?;
     terminal.send(Key::Char('l'))?;
@@ -254,7 +254,7 @@ fn normalized_copy_dialog_uses_result_text_and_custom_bindings() -> termlens::Re
     terminal.wait_until(|screen| screen.contains("Preview · 4 CP · 5 bytes"))?;
     terminal.send(Key::Char('x'))?;
     terminal.wait_until(|screen| {
-        screen.contains("2/4 · U+0066") && !screen.contains("NFKC Result / Copy")
+        screen.contains("2/4 · U+0066") && !screen.contains("Preview ·")
     })?;
     terminal.send(Key::Esc)?;
     terminal.wait_until(|screen| screen.contains("Sequence / Normalization"))?;

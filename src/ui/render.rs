@@ -124,10 +124,7 @@ fn header_location(state: &AppState, context: Context) -> String {
             state.normalization().unwrap().form().label()
         ),
         Context::Normalization => "Sequence / Normalization".to_owned(),
-        Context::CopyDialog => format!(
-            "{} / Copy",
-            header_location(state, view_context_for_state(state))
-        ),
+        Context::CopyDialog => header_location(state, view_context_for_state(state)),
         _ => help::context_label(context).to_owned(),
     }
 }

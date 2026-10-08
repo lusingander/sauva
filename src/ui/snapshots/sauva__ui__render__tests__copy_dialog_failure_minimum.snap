@@ -2,7 +2,7 @@
 source: src/ui/render.rs
 expression: text
 ---
- sauva / Sequence / Copy                       2/6 · U+0301
+ sauva / Sequence                              2/6 · U+0301
 
  C┌ Copy ────────────────────────────────────────────────┐
   │ Sequence · CP 2/6 · U+0301                           │

@@ -2,7 +2,7 @@
 source: src/ui/render.rs
 expression: "render_to_text(&state, 100, 30)"
 ---
- sauva / Sequence / Copy                                                               2/6 · U+0301
+ sauva / Sequence                                                                      2/6 · U+0301
 
  Code Points                   6 code points · 3 graphemes  │ Selection
   1 ┌  1  U+0041    A — LATIN CAPITAL LETTER A              │  Character        ◌́
