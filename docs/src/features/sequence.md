@@ -80,5 +80,3 @@ Press <kbd>Y</kbd> to choose what to copy:
 - **Whole Input**: the original input in its original order.
 
 Select a candidate with <kbd>j</kbd> / <kbd>k</kbd> or the arrow keys, then press <kbd>Enter</kbd> to copy. <kbd>Esc</kbd> cancels. The preview shows the candidate's text and code point notation; labels, dotted circles, and ellipses are display aids and are not copied. Whitespace, newlines, and invisible characters are preserved exactly.
-
-The glyph image is hidden while the dialog or its help is open and restored when you return to Sequence. <kbd>F1</kbd> opens the shared Copy Dialog help; closing help returns to the same candidate. A successful copy closes the dialog and shows confirmation in the footer. If copying fails, the dialog stays open with an error so you can retry.
