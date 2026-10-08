@@ -93,13 +93,6 @@ impl AnalyzedCodePoint {
         self.code_point
     }
 
-    #[cfg_attr(
-        not(test),
-        expect(
-            dead_code,
-            reason = "Exact scalar source offsets remain part of the analysis metadata."
-        )
-    )]
     pub fn byte_range(&self) -> Range<usize> {
         self.byte_range.clone()
     }

@@ -1,6 +1,7 @@
 use tui_input::InputRequest;
 
 use crate::browser::{BrowseLevel, BrowseMove, BrowseState, BrowseTarget};
+use crate::copy_dialog::{CopyDialogState, CopyMove};
 use crate::help::{HelpMove, HelpState};
 use crate::inspector::{
     InspectorField, InspectorFieldId, InspectorGroup, InspectorMove, InspectorState,
@@ -53,6 +54,11 @@ pub enum Action {
     InspectNormalizationResult,
     ReturnToNormalization,
     CopyNormalizationResult,
+    OpenCopyDialog,
+    CloseCopyDialog,
+    MoveCopyDialog(CopyMove),
+    CopyDialogSelection,
+    CompleteCopyDialog(FooterStatus),
     UpdateGlyphPreview(GlyphPreviewUpdate),
     ShowFooterStatus(FooterStatus),
 }
@@ -129,6 +135,7 @@ pub struct ClipboardRequest {
     label: &'static str,
     success_message: String,
     value: Option<String>,
+    from_copy_dialog: bool,
 }
 
 impl ClipboardRequest {
@@ -142,6 +149,10 @@ impl ClipboardRequest {
 
     pub fn value(&self) -> Option<&str> {
         self.value.as_deref()
+    }
+
+    pub const fn from_copy_dialog(&self) -> bool {
+        self.from_copy_dialog
     }
 }
 
@@ -157,6 +168,7 @@ pub struct AppState {
     normalization: Option<NormalizationState>,
     showing_normalization_result: bool,
     help: HelpState,
+    copy_dialog: Option<CopyDialogState>,
     glyph_preview: GlyphPreviewState,
     clipboard_request: Option<ClipboardRequest>,
     footer_status: Option<FooterStatus>,
@@ -176,6 +188,7 @@ impl AppState {
             normalization: None,
             showing_normalization_result: false,
             help: HelpState::new(),
+            copy_dialog: None,
             glyph_preview: GlyphPreviewState::new(),
             clipboard_request: None,
             footer_status: None,
@@ -257,6 +270,10 @@ impl AppState {
         self.help
     }
 
+    pub fn copy_dialog(&self) -> Option<&CopyDialogState> {
+        self.copy_dialog.as_ref()
+    }
+
     pub const fn glyph_preview(&self) -> &GlyphPreviewState {
         &self.glyph_preview
     }
@@ -270,7 +287,7 @@ impl AppState {
     }
 
     pub fn preview_code_point(&self) -> Option<CodePoint> {
-        if self.help.is_open() {
+        if self.help.is_open() || self.copy_dialog.is_some() {
             return None;
         }
 
@@ -297,6 +314,26 @@ impl Default for AppState {
 }
 
 pub fn update(state: &mut AppState, action: Action) {
+    // A dialog owns input without replacing the underlying screen or selection.
+    if state.copy_dialog.is_some()
+        && !matches!(
+            action,
+            Action::Quit
+                | Action::ToggleHelp
+                | Action::CloseHelp
+                | Action::MoveHelp(_)
+                | Action::ResizeHelpViewport { .. }
+                | Action::OpenCopyDialog
+                | Action::CloseCopyDialog
+                | Action::MoveCopyDialog(_)
+                | Action::CopyDialogSelection
+                | Action::CompleteCopyDialog(_)
+                | Action::UpdateGlyphPreview(_)
+                | Action::ShowFooterStatus(_)
+        )
+    {
+        return;
+    }
     if action.clears_footer_status() {
         state.footer_status = None;
     }
@@ -339,6 +376,7 @@ pub fn update(state: &mut AppState, action: Action) {
                         format!("Copied {}", field.label())
                     },
                     value: field.copy_value().map(str::to_owned),
+                    from_copy_dialog: false,
                 });
         }
         Action::CopyInspectorValue => {}
@@ -545,9 +583,65 @@ pub fn update(state: &mut AppState, action: Action) {
                         .source()
                         .to_owned(),
                 ),
+                from_copy_dialog: false,
             });
         }
         Action::CopyNormalizationResult => {}
+        Action::OpenCopyDialog
+            if state.view == View::Sequence
+                && !state.help.is_open()
+                && state.copy_dialog.is_none() =>
+        {
+            state.copy_dialog = Some(CopyDialogState::default());
+        }
+        Action::OpenCopyDialog => {}
+        Action::CloseCopyDialog if !state.help.is_open() => state.copy_dialog = None,
+        Action::CloseCopyDialog => {}
+        Action::MoveCopyDialog(movement) if !state.help.is_open() => {
+            if let Some(dialog) = &mut state.copy_dialog {
+                dialog.move_selection(movement);
+            }
+        }
+        Action::MoveCopyDialog(_) => {}
+        Action::CopyDialogSelection if !state.help.is_open() && state.copy_dialog.is_some() => {
+            let target = state.copy_dialog.as_ref().unwrap().selected_target();
+            let value = target.text(state.sequence().unwrap()).to_owned();
+            let source = if state.showing_normalization_result {
+                format!(
+                    "{} Result",
+                    state.normalization.as_ref().unwrap().form().label()
+                )
+            } else {
+                "Input".to_owned()
+            };
+            let count = value.chars().count();
+            state.clipboard_request = Some(ClipboardRequest {
+                label: target.label(),
+                success_message: format!(
+                    "Copied {} ({source}): {count} code point{}",
+                    target.label(),
+                    if count == 1 { "" } else { "s" },
+                ),
+                value: Some(value),
+                from_copy_dialog: true,
+            });
+            state.copy_dialog.as_mut().unwrap().clear_error();
+        }
+        Action::CopyDialogSelection => {}
+        Action::CompleteCopyDialog(status) if state.copy_dialog.is_some() => match status.level() {
+            FooterStatusLevel::Info => {
+                state.copy_dialog = None;
+                state.footer_status = Some(status);
+            }
+            FooterStatusLevel::Warning => {
+                state
+                    .copy_dialog
+                    .as_mut()
+                    .unwrap()
+                    .set_error(status.message().to_owned());
+            }
+        },
+        Action::CompleteCopyDialog(_) => {}
         Action::UpdateGlyphPreview(update) => state.glyph_preview.apply(update),
         Action::ShowFooterStatus(status) => state.footer_status = Some(status),
     }
@@ -829,6 +923,94 @@ mod tests {
                 &mut state,
                 Action::MoveNormalization(NormalizationMove::Next),
             );
+        }
+    }
+
+    #[test]
+    fn copy_dialog_and_help_preserve_the_source_selection_and_own_input() {
+        let mut state = AppState::with_sequence("A\u{0301}👩‍💻".to_owned());
+        update(&mut state, Action::ResizeSequenceViewport(1));
+        update(&mut state, Action::MoveSequence(SequenceMove::Next));
+        let original_visible = state.sequence().unwrap().visible_range();
+        update(&mut state, Action::OpenCopyDialog);
+        assert_eq!(state.preview_code_point(), None);
+        update(&mut state, Action::MoveCopyDialog(CopyMove::Next));
+        update(&mut state, Action::ToggleHelp);
+        update(&mut state, Action::MoveCopyDialog(CopyMove::Last));
+        update(&mut state, Action::CloseCopyDialog);
+        update(&mut state, Action::MoveSequence(SequenceMove::Last));
+        update(&mut state, Action::CopyDialogSelection);
+        assert!(state.take_clipboard_request().is_none());
+        assert_eq!(state.copy_dialog().unwrap().selected_index(), 1);
+        update(&mut state, Action::CloseHelp);
+        update(&mut state, Action::CopyDialogSelection);
+        let request = state.take_clipboard_request().unwrap();
+        assert_eq!(request.value(), Some("A\u{0301}"));
+        assert!(request.from_copy_dialog());
+        update(
+            &mut state,
+            Action::CompleteCopyDialog(FooterStatus::info(request.success_message())),
+        );
+        assert!(state.copy_dialog().is_none());
+        assert_eq!(state.sequence().unwrap().selected_index(), 1);
+        assert_eq!(state.sequence().unwrap().visible_range(), original_visible);
+        assert_eq!(
+            state.preview_code_point(),
+            Some(state.sequence().unwrap().selected())
+        );
+    }
+
+    #[test]
+    fn copy_dialog_uses_the_normalized_result_and_leaves_the_original_untouched() {
+        let mut state = AppState::with_sequence("A\u{0301}ﬃ".to_owned());
+        update(&mut state, Action::MoveSequence(SequenceMove::Last));
+        update(&mut state, Action::OpenNormalization);
+        update(
+            &mut state,
+            Action::MoveNormalization(NormalizationMove::Next),
+        );
+        update(
+            &mut state,
+            Action::MoveNormalization(NormalizationMove::Next),
+        );
+        update(&mut state, Action::InspectNormalizationResult);
+        update(&mut state, Action::MoveSequence(SequenceMove::Next));
+        update(&mut state, Action::OpenCopyDialog);
+        update(&mut state, Action::CopyDialogSelection);
+        assert_eq!(state.take_clipboard_request().unwrap().value(), Some("f"));
+        update(&mut state, Action::MoveCopyDialog(CopyMove::Next));
+        update(&mut state, Action::CopyDialogSelection);
+        assert_eq!(state.take_clipboard_request().unwrap().value(), Some("f"));
+        update(&mut state, Action::MoveCopyDialog(CopyMove::Last));
+        update(&mut state, Action::CopyDialogSelection);
+        let request = state.take_clipboard_request().unwrap();
+        assert_eq!(request.value(), Some("Áffi"));
+        assert!(request.success_message().contains("NFKC Result"));
+        update(&mut state, Action::CloseCopyDialog);
+        assert!(state.showing_normalization_result());
+        assert_eq!(state.sequence().unwrap().selected_index(), 1);
+        assert_eq!(
+            state.original_sequence().unwrap().analysis().source(),
+            "A\u{0301}ﬃ"
+        );
+        assert_eq!(state.original_sequence().unwrap().selected_index(), 2);
+    }
+
+    #[test]
+    fn copy_dialog_supports_single_code_point_results_and_is_scoped_to_sequence_views() {
+        let mut state = AppState::new();
+        update(&mut state, Action::OpenCopyDialog);
+        assert!(state.copy_dialog().is_none());
+        let mut state = AppState::with_sequence("A\u{0301}".to_owned());
+        update(&mut state, Action::OpenNormalization);
+        update(&mut state, Action::OpenCopyDialog);
+        assert!(state.copy_dialog().is_none());
+        update(&mut state, Action::InspectNormalizationResult);
+        update(&mut state, Action::OpenCopyDialog);
+        for _ in 0..3 {
+            update(&mut state, Action::CopyDialogSelection);
+            assert_eq!(state.take_clipboard_request().unwrap().value(), Some("Á"));
+            update(&mut state, Action::MoveCopyDialog(CopyMove::Next));
         }
     }
 

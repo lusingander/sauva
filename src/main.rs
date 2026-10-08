@@ -3,6 +3,7 @@ mod browser;
 mod cli;
 mod clipboard;
 mod config;
+mod copy_dialog;
 mod fixtures;
 mod glyph;
 mod graphics;

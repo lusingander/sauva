@@ -122,6 +122,7 @@ fn run_event_loop(
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum VisibleScreen {
     Help,
+    CopyDialog,
     Inspector,
     Browser(BrowseLevel),
     Search,
@@ -134,6 +135,9 @@ impl VisibleScreen {
     fn for_state(state: &AppState) -> Self {
         if state.help().is_open() {
             return Self::Help;
+        }
+        if state.copy_dialog().is_some() {
+            return Self::CopyDialog;
         }
 
         match state.view() {
@@ -163,7 +167,12 @@ fn handle_clipboard_request(state: &mut AppState, clipboard: &mut impl Clipboard
             Err(error) => FooterStatus::warning(error.to_string()),
         },
     };
-    update(state, Action::ShowFooterStatus(status));
+    let action = if request.from_copy_dialog() {
+        Action::CompleteCopyDialog(status)
+    } else {
+        Action::ShowFooterStatus(status)
+    };
+    update(state, action);
 }
 
 fn resize_active_view(state: &mut AppState, area: Rect, keymap: &ResolvedKeymap) {
@@ -176,6 +185,9 @@ fn resize_active_view(state: &mut AppState, area: Rect, keymap: &ResolvedKeymap)
                 document_height: metrics.document_height,
             },
         );
+        return;
+    }
+    if state.copy_dialog().is_some() {
         return;
     }
 
@@ -374,6 +386,57 @@ mod tests {
             VisibleScreen::for_state(&state),
             VisibleScreen::NormalizationResult
         );
+    }
+
+    #[test]
+    fn copy_dialog_clears_on_open_help_return_and_close_but_not_candidate_changes() {
+        let mut state = fixtures::sequence();
+        assert!(transition_requires_clear(
+            &mut state,
+            Action::OpenCopyDialog
+        ));
+        assert!(!transition_requires_clear(
+            &mut state,
+            Action::MoveCopyDialog(crate::copy_dialog::CopyMove::Next)
+        ));
+        assert!(transition_requires_clear(&mut state, Action::ToggleHelp));
+        assert!(transition_requires_clear(&mut state, Action::CloseHelp));
+        assert_eq!(VisibleScreen::for_state(&state), VisibleScreen::CopyDialog);
+        assert!(transition_requires_clear(
+            &mut state,
+            Action::CloseCopyDialog
+        ));
+        assert_eq!(VisibleScreen::for_state(&state), VisibleScreen::Sequence);
+    }
+
+    #[test]
+    fn dialog_copy_closes_only_on_success_and_keeps_failures_available_for_retry() {
+        let mut state = AppState::with_sequence("A\u{0301}\t\r\n\u{1b}".to_owned());
+        update(&mut state, Action::OpenCopyDialog);
+        update(
+            &mut state,
+            Action::MoveCopyDialog(crate::copy_dialog::CopyMove::Last),
+        );
+        let mut failing = TestClipboard::failing(ClipboardError::Busy);
+        update(&mut state, Action::CopyDialogSelection);
+        handle_clipboard_request(&mut state, &mut failing);
+        assert_eq!(failing.writes, ["A\u{0301}\t\r\n\u{1b}"]);
+        assert_eq!(state.copy_dialog().unwrap().selected_index(), 2);
+        assert_eq!(
+            state.copy_dialog().unwrap().error(),
+            Some("Clipboard is busy")
+        );
+        assert!(state.footer_status().is_none());
+        let mut succeeding = TestClipboard::succeeding();
+        update(&mut state, Action::CopyDialogSelection);
+        handle_clipboard_request(&mut state, &mut succeeding);
+        assert_eq!(succeeding.writes, failing.writes);
+        assert!(state.copy_dialog().is_none());
+        assert_eq!(
+            state.footer_status().unwrap().message(),
+            "Copied Whole Text (Input): 6 code points"
+        );
+        assert_eq!(state.sequence().unwrap().selected_index(), 0);
     }
 
     #[test]
