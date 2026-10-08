@@ -625,22 +625,14 @@ pub fn update(state: &mut AppState, action: Action) {
                 value: Some(value),
                 from_copy_dialog: true,
             });
-            state.copy_dialog.as_mut().unwrap().clear_error();
         }
         Action::CopyDialogSelection => {}
-        Action::CompleteCopyDialog(status) if state.copy_dialog.is_some() => match status.level() {
-            FooterStatusLevel::Info => {
+        Action::CompleteCopyDialog(status) if state.copy_dialog.is_some() => {
+            if status.level() == FooterStatusLevel::Info {
                 state.copy_dialog = None;
-                state.footer_status = Some(status);
             }
-            FooterStatusLevel::Warning => {
-                state
-                    .copy_dialog
-                    .as_mut()
-                    .unwrap()
-                    .set_error(status.message().to_owned());
-            }
-        },
+            state.footer_status = Some(status);
+        }
         Action::CompleteCopyDialog(_) => {}
         Action::UpdateGlyphPreview(update) => state.glyph_preview.apply(update),
         Action::ShowFooterStatus(status) => state.footer_status = Some(status),

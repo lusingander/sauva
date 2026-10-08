@@ -351,8 +351,7 @@ mod tests {
             Action::CompleteCopyDialog(crate::app::FooterStatus::warning("Clipboard is busy")),
         );
         let text = render_to_text(&state, 60, 16);
-        assert!(text.contains("Clipboard is busy"));
-        assert!(text.lines().last().unwrap().contains("Enter Copy"));
+        assert!(text.lines().last().unwrap().contains("Clipboard is busy"));
         insta::assert_snapshot!(text);
     }
 

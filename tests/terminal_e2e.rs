@@ -186,9 +186,8 @@ fn sequence_copy_dialog_preserves_source_and_candidate_across_help_and_resize()
         screen.size() == (100, 30) && screen.contains("Preview · 6 CP · 15 bytes")
     })?;
     terminal.send(Key::Esc)?;
-    terminal.wait_until(|screen| {
-        screen.contains("2/6 · U+0301") && !screen.contains("Preview ·")
-    })?;
+    terminal
+        .wait_until(|screen| screen.contains("2/6 · U+0301") && !screen.contains("Preview ·"))?;
     terminal.send(Key::Char('Y'))?;
     terminal.wait_until(|screen| screen.contains("Preview · 1 CP · 2 bytes"))?;
     terminal.send(Key::Esc)?;
@@ -253,9 +252,8 @@ fn normalized_copy_dialog_uses_result_text_and_custom_bindings() -> termlens::Re
     terminal.send(Key::F(1))?;
     terminal.wait_until(|screen| screen.contains("Preview · 4 CP · 5 bytes"))?;
     terminal.send(Key::Char('x'))?;
-    terminal.wait_until(|screen| {
-        screen.contains("2/4 · U+0066") && !screen.contains("Preview ·")
-    })?;
+    terminal
+        .wait_until(|screen| screen.contains("2/4 · U+0066") && !screen.contains("Preview ·"))?;
     terminal.send(Key::Esc)?;
     terminal.wait_until(|screen| screen.contains("Sequence / Normalization"))?;
     terminal.send(Key::Esc)?;

@@ -43,7 +43,6 @@ pub enum CopyMove {
 #[derive(Debug, Clone, Default)]
 pub struct CopyDialogState {
     selected_index: usize,
-    error: Option<String>,
 }
 
 impl CopyDialogState {
@@ -55,18 +54,6 @@ impl CopyDialogState {
         CopyTarget::ALL[self.selected_index]
     }
 
-    pub fn error(&self) -> Option<&str> {
-        self.error.as_deref()
-    }
-
-    pub fn set_error(&mut self, error: String) {
-        self.error = Some(error);
-    }
-
-    pub fn clear_error(&mut self) {
-        self.error = None;
-    }
-
     pub fn move_selection(&mut self, movement: CopyMove) {
         let last = CopyTarget::ALL.len() - 1;
         self.selected_index = match movement {
@@ -75,7 +62,6 @@ impl CopyDialogState {
             CopyMove::First => 0,
             CopyMove::Last => last,
         };
-        self.clear_error();
     }
 }
 

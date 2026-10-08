@@ -119,11 +119,7 @@ pub(super) fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &Co
             muted,
         ),
         Line::default(),
-        if let Some(error) = dialog.error() {
-            Line::styled(error.to_owned(), Style::new().fg(theme.status.warning))
-        } else {
-            Line::styled("Display aids are not copied", muted)
-        },
+        Line::styled("Display aids are not copied", muted),
     ]);
     frame.render_widget(Paragraph::new(lines), content);
 }

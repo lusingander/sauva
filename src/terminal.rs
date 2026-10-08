@@ -423,10 +423,23 @@ mod tests {
         assert_eq!(failing.writes, ["A\u{0301}\t\r\n\u{1b}"]);
         assert_eq!(state.copy_dialog().unwrap().selected_index(), 2);
         assert_eq!(
-            state.copy_dialog().unwrap().error(),
-            Some("Clipboard is busy")
+            state.footer_status().unwrap().message(),
+            "Clipboard is busy"
+        );
+        assert_eq!(
+            state.footer_status().unwrap().level(),
+            crate::app::FooterStatusLevel::Warning
+        );
+        update(
+            &mut state,
+            Action::MoveCopyDialog(crate::copy_dialog::CopyMove::Previous),
         );
         assert!(state.footer_status().is_none());
+        assert_eq!(state.copy_dialog().unwrap().selected_index(), 1);
+        update(
+            &mut state,
+            Action::MoveCopyDialog(crate::copy_dialog::CopyMove::Last),
+        );
         let mut succeeding = TestClipboard::succeeding();
         update(&mut state, Action::CopyDialogSelection);
         handle_clipboard_request(&mut state, &mut succeeding);

@@ -15,6 +15,6 @@ expression: text
   │ Á                                                    │
   │ U+0041 U+0301                                        │
   │                                                      │
-  │ Clipboard is busy                                    │
+  │ Display aids are not copied                          │
   └──────────────────────────────────────────────────────┘
- k/j Move  Enter Copy  Esc Cancel  C-c Quit         F1 Help
+ Clipboard is busy
