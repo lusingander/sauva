@@ -4,7 +4,8 @@ expression: text
 ---
  sauva / Sequence                              2/6 · U+0301
 
- C┌ Copy ────────────────────────────────────────────────┐
+ Code Points                   6 code points · 3 graphemes
+  ┌ Copy ────────────────────────────────────────────────┐
   │ Sequence · CP 2/6 · U+0301                           │
   │                                                      │
   │  Code Point                                  U+0301  │
@@ -14,7 +15,6 @@ expression: text
   │ Preview · 2 CP · 3 bytes                             │
   │ Á                                                    │
   │ U+0041 U+0301                                        │
-  │                                                      │
-  │ Display aids are not copied                          │
   └──────────────────────────────────────────────────────┘
+
  k/j Move  Enter Copy  Esc Cancel  C-c Quit         F1 Help

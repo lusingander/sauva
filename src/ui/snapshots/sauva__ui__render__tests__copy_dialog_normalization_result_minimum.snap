@@ -4,7 +4,8 @@ expression: text
 ---
  sauva / Sequence / NFKC Result               7/7 · U+1F4BB
 
- O┌ Copy ────────────────────────────────────────────────┐
+ Original         6 CP   NFKC Result           7 CP · 5 GC
+  ┌ Copy ────────────────────────────────────────────────┐
   │ NFKC Result · CP 7/7 · U+1F4BB                       │
   │                                                      │
   │  Code Point                                 U+1F4BB  │
@@ -14,7 +15,6 @@ expression: text
   │ Preview · 7 CP · 16 bytes                            │
   │ Áffi👩‍💻                                                │
   │ U+00C1 U+0066 U+0066 U+0069 U+1F469 U+200D U+1F4BB   │
-  │                                                      │
-  │ Display aids are not copied                          │
   └──────────────────────────────────────────────────────┘
+
  k/j Move  Enter Copy  Esc Cancel  C-c Quit         F1 Help

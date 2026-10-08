@@ -310,7 +310,6 @@ mod tests {
         assert!(footer.contains("Esc Cancel"));
         assert!(footer.contains("F1 Help"));
         assert!(text.contains("Preview · 2 CP · 3 bytes"));
-        assert!(text.contains("Display aids are not copied"));
         insta::assert_snapshot!(text);
     }
 

@@ -19,7 +19,7 @@ pub(super) fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &Co
     let dialog = state.copy_dialog().expect("the copy dialog is open");
     let sequence = state.sequence().expect("copy candidates have a sequence");
     let width = area.width.saturating_sub(4).min(64);
-    let height = area.height.min(13);
+    let height = area.height.min(11);
     let area = Rect::new(
         area.x + (area.width - width) / 2,
         area.y + (area.height - height) / 2,
@@ -118,8 +118,6 @@ pub(super) fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &Co
             ),
             muted,
         ),
-        Line::default(),
-        Line::styled("Display aids are not copied", muted),
     ]);
     frame.render_widget(Paragraph::new(lines), content);
 }
