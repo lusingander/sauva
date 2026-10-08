@@ -95,7 +95,14 @@ pub(super) fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &Co
         Line::default(),
         Line::from(vec![
             Span::styled("Preview", theme.heading_style()),
-            Span::styled(format!(" · {count} CP · {} bytes", text.len()), muted),
+            Span::styled(
+                format!(
+                    " · {count} CP · {} byte{}",
+                    text.len(),
+                    if text.len() == 1 { "" } else { "s" }
+                ),
+                muted,
+            ),
         ]),
         Line::from(fit_atoms(
             text.graphemes(true).map(safe_cluster),

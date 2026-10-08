@@ -137,6 +137,73 @@ mod tests {
         assert_eq!(glyph_preview_request(area, &state).unwrap(), original);
     }
 
+    #[rstest::rstest]
+    #[case(crate::graphics::GraphicsProtocol::Kitty)]
+    #[case(crate::graphics::GraphicsProtocol::Iterm2)]
+    fn copy_dialog_hides_and_restores_the_runtime_image(
+        #[case] protocol: crate::graphics::GraphicsProtocol,
+    ) {
+        use crate::{
+            app::{Action, update},
+            glyph::runtime::GlyphPreviewRuntime,
+            graphics::{GraphicsAvailability, GraphicsProtocol},
+            preview::GlyphPreviewStatus,
+        };
+        use ratatui::buffer::Buffer;
+
+        let mut state = fixtures::sequence();
+        let area = Rect::new(0, 0, 100, 30);
+        let mut runtime = GlyphPreviewRuntime::new(GraphicsAvailability::Available(protocol));
+        let mut synchronize = |state: &mut AppState| {
+            let request = glyph_preview_request(area, state);
+            let mut output = Vec::new();
+            let preview = runtime.synchronize(
+                &mut output,
+                request.map_or(state.selected(), |request| request.code_point),
+                request.map(|request| request.placeholder),
+                None,
+            );
+            update(state, Action::UpdateGlyphPreview(preview));
+            let mut rendered = Buffer::empty(area);
+            runtime.render_image(&mut rendered);
+            (output, rendered)
+        };
+        synchronize(&mut state);
+        assert_eq!(state.glyph_preview().status(), GlyphPreviewStatus::Ready);
+
+        update(&mut state, Action::OpenCopyDialog);
+        let (hidden_output, hidden_image) = synchronize(&mut state);
+        assert_eq!(state.glyph_preview().status(), GlyphPreviewStatus::Hidden);
+        assert!(
+            hidden_image
+                .content
+                .iter()
+                .all(|cell| !cell.symbol().contains("]1337;"))
+        );
+        if protocol == GraphicsProtocol::Kitty {
+            assert!(String::from_utf8_lossy(&hidden_output).contains("a=d"));
+        }
+        for action in [Action::ToggleHelp, Action::CloseHelp] {
+            update(&mut state, action);
+            assert!(synchronize(&mut state).0.is_empty());
+            assert_eq!(state.glyph_preview().status(), GlyphPreviewStatus::Hidden);
+        }
+
+        update(&mut state, Action::CloseCopyDialog);
+        let (restored_output, restored_image) = synchronize(&mut state);
+        assert_eq!(state.glyph_preview().status(), GlyphPreviewStatus::Ready);
+        if protocol == GraphicsProtocol::Kitty {
+            assert!(!restored_output.is_empty());
+        } else {
+            assert!(
+                restored_image
+                    .content
+                    .iter()
+                    .any(|cell| cell.symbol().contains("]1337;"))
+            );
+        }
+    }
+
     #[test]
     fn list_padding_survives_clipping_wide_and_combining_graphemes() {
         use ratatui::{buffer::Buffer, style::Modifier, widgets::Widget};
