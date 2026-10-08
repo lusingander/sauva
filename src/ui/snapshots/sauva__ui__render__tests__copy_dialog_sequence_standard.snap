@@ -1,0 +1,34 @@
+---
+source: src/ui/render.rs
+expression: "render_to_text(&state, 100, 30)"
+---
+ sauva / Sequence / Copy                                                               2/6 · U+0301
+
+ Code Points                   6 code points · 3 graphemes  │ Selection
+  1 ┌  1  U+0041    A — LATIN CAPITAL LETTER A              │  Character        ◌́
+    └  2  U+0301    ◌́ — COMBINING ACUTE ACCENT              │  Code Point       U+0301
+  2 •  3  U+0020    <SPACE> — SPACE                         │  Primary Name
+  3 ┌  4  U+1F469   👩  — WOMAN                              │    COMBINING ACUTE ACCENT
+    │  5  U+200D    <DEFAULT IGNORABLE> — ZERO WIDTH JOIN   │  Grapheme         1/3 · member 2/2
+    └  6  U+1F4BB   💻  — PERSONAL COMPUTER                  │  Block
+                  ┌ Copy ────────────────────────────────────────────────────────┐ical Marks
+                  │ Sequence · CP 2/6 · U+0301                                   │
+                  │                                                              │ark
+                  │  Code Point                                          U+0301  │─────────────────
+                  │  Grapheme Cluster                             2 code points  │
+                  │  Whole Input                                  6 code points  │
+                  │                                                              │
+                  │ Preview · 2 CP · 3 bytes                                     │
+                  │ Á                                                            │
+                  │ U+0041 U+0301                                                │
+                  │                                                              │
+                  │ Display aids are not copied                                  │
+                  └──────────────────────────────────────────────────────────────┘
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+
+ k/j Move  Enter Copy  Esc Cancel  C-c Quit                                                 F1 Help

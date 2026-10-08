@@ -321,6 +321,7 @@ mod tests {
             "[keybindings.sequence]",
             "[keybindings.normalization]",
             "[keybindings.normalization_result]",
+            "[keybindings.copy_dialog]",
             "[keybindings.browse_plane]",
             "[keybindings.browse_range]",
             "[keybindings.browse_block]",

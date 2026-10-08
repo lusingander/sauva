@@ -1,0 +1,34 @@
+---
+source: src/ui/render.rs
+expression: text
+---
+ sauva / Help                                                                           Copy Dialog
+
+ About
+  sauva - Terminal Unicode Explorer
+
+  Version: 1.2.3
+
+  https://example.com/sauva
+
+ Keybindings · Copy Dialog
+  k  Up                    Select the previous copy candidate
+  j  Down                  Select the next copy candidate
+  g  Home                  Select the first copy candidate
+  G  End                   Select the last copy candidate
+  Enter                    Copy the selected candidate
+  Esc                      Cancel and return to the source screen
+  Ctrl-c                   Quit
+  F1                       Open or close help
+
+  Copy the selected code point, its whole grapheme cluster, or the whole input or normalization
+  result. Text is copied exactly; preview labels and dotted circles are display aids only. Closing
+  help returns to the same copy candidate.
+
+
+
+
+
+
+
+ k/j Move  C-u/C-d Page  g/G Ends  Esc Close  C-c Quit                                     F1 Close

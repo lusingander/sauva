@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use tui_input::backend::crossterm::to_input_request;
 use umbra::optional;
 
-const ALL_COMMANDS: [Command; 27] = [
+const ALL_COMMANDS: [Command; 28] = [
     Command::Quit,
     Command::Help,
     Command::Close,
@@ -23,6 +23,7 @@ const ALL_COMMANDS: [Command; 27] = [
     Command::First,
     Command::Last,
     Command::CopyValue,
+    Command::OpenCopyDialog,
     Command::OpenSearch,
     Command::BrowsePlanes,
     Command::BrowseRanges,
@@ -44,6 +45,7 @@ pub enum Context {
     Sequence,
     Normalization,
     NormalizationResult,
+    CopyDialog,
     BrowsePlane,
     BrowseRange,
     BrowseBlock,
@@ -60,6 +62,7 @@ impl Context {
             Self::Sequence => "sequence",
             Self::Normalization => "normalization",
             Self::NormalizationResult => "normalization_result",
+            Self::CopyDialog => "copy_dialog",
             Self::BrowsePlane => "browse_plane",
             Self::BrowseRange => "browse_range",
             Self::BrowseBlock => "browse_block",
@@ -87,6 +90,7 @@ pub enum Command {
     First,
     Last,
     CopyValue,
+    OpenCopyDialog,
     OpenSearch,
     BrowsePlanes,
     BrowseRanges,
@@ -139,6 +143,7 @@ impl Command {
             Self::First => "first",
             Self::Last => "last",
             Self::CopyValue => "copy_value",
+            Self::OpenCopyDialog => "open_copy_dialog",
             Self::OpenSearch => "search",
             Self::BrowsePlanes => "browse_planes",
             Self::BrowseRanges => "browse_ranges",
@@ -307,6 +312,9 @@ pub struct Keybindings {
     normalization_result: NormalizationResultKeybindings,
     #[garde(dive)]
     #[nested]
+    copy_dialog: CopyDialogKeybindings,
+    #[garde(dive)]
+    #[nested]
     browse_plane: BrowsePlaneKeybindings,
     #[garde(dive)]
     #[nested]
@@ -331,6 +339,7 @@ impl Keybindings {
         self.sequence.append_bindings(&mut bindings);
         self.normalization.append_bindings(&mut bindings);
         self.normalization_result.append_bindings(&mut bindings);
+        self.copy_dialog.append_bindings(&mut bindings);
         self.browse_plane.append_bindings(&mut bindings);
         self.browse_range.append_bindings(&mut bindings);
         self.browse_block.append_bindings(&mut bindings);
@@ -419,6 +428,7 @@ keybinding_context!(SequenceKeybindings, Context::Sequence, {
     last => (Command::Last, ["G"]),
     activate => (Command::Activate, ["enter"]),
     normalize => (Command::Normalize, ["n"]),
+    open_copy_dialog => (Command::OpenCopyDialog, ["Y"]),
 });
 
 keybinding_context!(NormalizationKeybindings, Context::Normalization, {
@@ -443,6 +453,16 @@ keybinding_context!(NormalizationResultKeybindings, Context::NormalizationResult
     next_group => (Command::NextGroup, ["]"]),
     first => (Command::First, ["g"]),
     last => (Command::Last, ["G"]),
+    activate => (Command::Activate, ["enter"]),
+    open_copy_dialog => (Command::OpenCopyDialog, ["Y"]),
+});
+
+keybinding_context!(CopyDialogKeybindings, Context::CopyDialog, {
+    close => (Command::Close, ["esc"]),
+    move_up => (Command::MoveUp, ["k", "up"]),
+    move_down => (Command::MoveDown, ["j", "down"]),
+    first => (Command::First, ["g", "home"]),
+    last => (Command::Last, ["G", "end"]),
     activate => (Command::Activate, ["enter"]),
 });
 
@@ -787,6 +807,7 @@ impl ResolvedKeymap {
             Context::Sequence,
             Context::Normalization,
             Context::NormalizationResult,
+            Context::CopyDialog,
             Context::BrowsePlane,
             Context::BrowseRange,
             Context::BrowseBlock,
@@ -888,6 +909,41 @@ mod tests {
     fn configured(toml: &str) -> Result<ResolvedKeymap, KeybindingError> {
         let config: OptionalKeybindings = toml::from_str(toml).unwrap();
         ResolvedKeymap::with_config(config.into())
+    }
+
+    #[test]
+    fn copy_bindings_are_customizable_without_leaking_into_search() {
+        let keymap =
+            configured("[sequence]\nopen_copy_dialog = ['C']\n[copy_dialog]\nactivate = ['y']")
+                .unwrap();
+        assert_eq!(
+            keymap.resolve(Context::Sequence, plain('C')),
+            Some(Command::OpenCopyDialog)
+        );
+        assert_eq!(keymap.resolve(Context::Sequence, plain('Y')), None);
+        assert_eq!(
+            keymap.resolve(Context::NormalizationResult, plain('Y')),
+            Some(Command::OpenCopyDialog)
+        );
+        assert_eq!(
+            keymap.resolve(Context::CopyDialog, plain('y')),
+            Some(Command::Activate)
+        );
+        assert_eq!(
+            keymap.resolve(Context::CopyDialog, named(KeyCode::Enter)),
+            None
+        );
+        assert_eq!(keymap.resolve(Context::Search, plain('Y')), None);
+        let error = configured("[copy_dialog]\nmove_down = ['ctrl-c']").unwrap_err();
+        assert!(matches!(
+            error,
+            KeybindingError::GlobalConflict {
+                context: Context::CopyDialog,
+                command: Command::MoveDown,
+                global_command: Command::Quit,
+                ..
+            }
+        ));
     }
 
     #[test]

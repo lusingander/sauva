@@ -151,7 +151,7 @@ impl ClipboardRequest {
         self.value.as_deref()
     }
 
-    pub const fn from_copy_dialog(&self) -> bool {
+    pub const fn is_from_copy_dialog(&self) -> bool {
         self.from_copy_dialog
     }
 }
@@ -946,7 +946,7 @@ mod tests {
         update(&mut state, Action::CopyDialogSelection);
         let request = state.take_clipboard_request().unwrap();
         assert_eq!(request.value(), Some("A\u{0301}"));
-        assert!(request.from_copy_dialog());
+        assert!(request.is_from_copy_dialog());
         update(
             &mut state,
             Action::CompleteCopyDialog(FooterStatus::info(request.success_message())),

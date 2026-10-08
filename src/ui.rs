@@ -1,4 +1,5 @@
 pub mod browser;
+mod copy_dialog;
 mod glyph_preview;
 pub mod help;
 pub mod inspector;
@@ -12,6 +13,7 @@ mod search;
 mod selection_preview;
 mod sequence;
 pub mod settings;
+mod text_preview;
 pub mod theme;
 mod workspace;
 
@@ -118,6 +120,22 @@ fn padded_line(mut line: Line<'static>, width: usize) -> Line<'static> {
 mod tests {
     use super::*;
     use crate::fixtures;
+
+    #[test]
+    fn copy_dialog_and_its_help_hide_preview_requests_until_returning_to_sequence() {
+        use crate::app::{Action, update};
+        let mut state = fixtures::sequence();
+        let area = Rect::new(0, 0, 100, 30);
+        let original = glyph_preview_request(area, &state).unwrap();
+        update(&mut state, Action::OpenCopyDialog);
+        assert!(glyph_preview_request(area, &state).is_none());
+        update(&mut state, Action::ToggleHelp);
+        assert!(glyph_preview_request(area, &state).is_none());
+        update(&mut state, Action::CloseHelp);
+        assert!(glyph_preview_request(area, &state).is_none());
+        update(&mut state, Action::CloseCopyDialog);
+        assert_eq!(glyph_preview_request(area, &state).unwrap(), original);
+    }
 
     #[test]
     fn list_padding_survives_clipping_wide_and_combining_graphemes() {

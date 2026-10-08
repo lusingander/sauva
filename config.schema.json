@@ -433,6 +433,9 @@
         },
         "normalize": {
           "$ref": "#/definitions/keyArray"
+        },
+        "open_copy_dialog": {
+          "$ref": "#/definitions/keyArray"
         }
       },
       "additionalProperties": false
@@ -458,6 +461,19 @@
         "quit": { "$ref": "#/definitions/keyArray" },
         "close": { "$ref": "#/definitions/keyArray" },
         "back": { "$ref": "#/definitions/keyArray" },
+        "move_up": { "$ref": "#/definitions/keyArray" },
+        "move_down": { "$ref": "#/definitions/keyArray" },
+        "first": { "$ref": "#/definitions/keyArray" },
+        "last": { "$ref": "#/definitions/keyArray" },
+        "activate": { "$ref": "#/definitions/keyArray" },
+        "open_copy_dialog": { "$ref": "#/definitions/keyArray" }
+      },
+      "additionalProperties": false
+    },
+    "copyDialogKeybindings": {
+      "type": "object",
+      "properties": {
+        "close": { "$ref": "#/definitions/keyArray" },
         "move_up": { "$ref": "#/definitions/keyArray" },
         "move_down": { "$ref": "#/definitions/keyArray" },
         "first": { "$ref": "#/definitions/keyArray" },
@@ -658,6 +674,9 @@
         },
         "normalization_result": {
           "$ref": "#/definitions/normalizationResultKeybindings"
+        },
+        "copy_dialog": {
+          "$ref": "#/definitions/copyDialogKeybindings"
         },
         "browse_plane": {
           "$ref": "#/definitions/browsePlaneKeybindings"

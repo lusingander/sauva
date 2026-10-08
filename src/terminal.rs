@@ -167,7 +167,7 @@ fn handle_clipboard_request(state: &mut AppState, clipboard: &mut impl Clipboard
             Err(error) => FooterStatus::warning(error.to_string()),
         },
     };
-    let action = if request.from_copy_dialog() {
+    let action = if request.is_from_copy_dialog() {
         Action::CompleteCopyDialog(status)
     } else {
         Action::ShowFooterStatus(status)

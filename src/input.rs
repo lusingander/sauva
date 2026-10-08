@@ -6,6 +6,7 @@ use tui_input::backend::crossterm::to_input_request;
 use crate::{
     app::{Action, AppState, CodePointMove, View},
     browser::{BrowseLevel, BrowseMove},
+    copy_dialog::CopyMove,
     help::HelpMove,
     inspector::InspectorMove,
     keybindings::{Command, Context, KeyChord, ResolvedKeymap},
@@ -57,6 +58,14 @@ pub fn action_for_key(state: &AppState, key: KeyEvent, keymap: &ResolvedKeymap) 
 }
 
 pub fn context_for_state(state: &AppState) -> Context {
+    if state.copy_dialog().is_some() {
+        Context::CopyDialog
+    } else {
+        view_context_for_state(state)
+    }
+}
+
+pub fn view_context_for_state(state: &AppState) -> Context {
     match state.view() {
         View::Inspector => Context::Inspector,
         View::Search => Context::Search,
@@ -89,6 +98,13 @@ fn action_for_command(context: Context, command: Command) -> Option<Action> {
     match (context, command) {
         (_, C::Quit) => Some(Action::Quit),
         (_, C::Help) => Some(Action::ToggleHelp),
+        (X::Sequence | X::NormalizationResult, C::OpenCopyDialog) => Some(Action::OpenCopyDialog),
+        (X::CopyDialog, C::Close) => Some(Action::CloseCopyDialog),
+        (X::CopyDialog, C::MoveUp) => Some(Action::MoveCopyDialog(CopyMove::Previous)),
+        (X::CopyDialog, C::MoveDown) => Some(Action::MoveCopyDialog(CopyMove::Next)),
+        (X::CopyDialog, C::First) => Some(Action::MoveCopyDialog(CopyMove::First)),
+        (X::CopyDialog, C::Last) => Some(Action::MoveCopyDialog(CopyMove::Last)),
+        (X::CopyDialog, C::Activate) => Some(Action::CopyDialogSelection),
         (X::Help, C::Close) => Some(Action::CloseHelp),
         (X::Help, C::MoveUp) => Some(Action::MoveHelp(HelpMove::LineBackward)),
         (X::Help, C::MoveDown) => Some(Action::MoveHelp(HelpMove::LineForward)),
@@ -162,6 +178,61 @@ mod tests {
 
     fn action_for_key(state: &AppState, key: KeyEvent) -> Option<Action> {
         super::action_for_key(state, key, &ResolvedKeymap::default())
+    }
+
+    #[test]
+    fn copy_keys_are_scoped_to_sequence_and_dialog_and_help_takes_precedence() {
+        let mut state = AppState::with_sequence("A\u{0301}".to_owned());
+        let key = |code| KeyEvent::new(code, KeyModifiers::NONE);
+        assert_eq!(
+            action_for_key(&state, key(KeyCode::Char('Y'))),
+            Some(Action::OpenCopyDialog)
+        );
+        crate::app::update(&mut state, Action::OpenNormalization);
+        crate::app::update(&mut state, Action::InspectNormalizationResult);
+        assert_eq!(
+            action_for_key(&state, key(KeyCode::Char('Y'))),
+            Some(Action::OpenCopyDialog)
+        );
+        crate::app::update(&mut state, Action::OpenCopyDialog);
+        assert_eq!(context_for_state(&state), Context::CopyDialog);
+        assert_eq!(
+            action_for_key(&state, key(KeyCode::Enter)),
+            Some(Action::CopyDialogSelection)
+        );
+        assert_eq!(
+            action_for_key(&state, key(KeyCode::Char('j'))),
+            Some(Action::MoveCopyDialog(CopyMove::Next))
+        );
+        for code in [
+            KeyCode::Char('n'),
+            KeyCode::Char(']'),
+            KeyCode::Char('q'),
+            KeyCode::Backspace,
+        ] {
+            assert_eq!(action_for_key(&state, key(code)), None);
+        }
+        crate::app::update(&mut state, Action::ToggleHelp);
+        assert_eq!(
+            action_for_key(&state, key(KeyCode::Esc)),
+            Some(Action::CloseHelp)
+        );
+        assert_eq!(action_for_key(&state, key(KeyCode::Enter)), None);
+        assert_eq!(
+            action_for_key(&state, key(KeyCode::Char('j'))),
+            Some(Action::MoveHelp(HelpMove::LineForward))
+        );
+        crate::app::update(&mut state, Action::CloseHelp);
+        assert_eq!(
+            action_for_key(&state, key(KeyCode::Esc)),
+            Some(Action::CloseCopyDialog)
+        );
+        let mut search = AppState::new();
+        crate::app::update(&mut search, Action::OpenSearch);
+        assert_eq!(
+            action_for_key(&search, key(KeyCode::Char('Y'))),
+            Some(Action::EditSearch(InputRequest::InsertChar('Y')))
+        );
     }
 
     #[test]
