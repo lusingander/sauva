@@ -10,6 +10,15 @@ help = ["f2"]
 next_code_point = ["l", "right", "n"]
 back = ["backspace"]
 browse_planes = []
+
+[keybindings.sequence]
+open_copy_dialog = ["C"]
+
+[keybindings.normalization_result]
+open_copy_dialog = ["C"]
+
+[keybindings.copy_dialog]
+activate = ["enter", "y"]
 ```
 
 - Each array replaces the keys for one command in one context.
@@ -30,6 +39,7 @@ Use `sauva --print-default-config` to see every context, command, and default bi
 | `sequence` | The original input sequence |
 | `normalization` | Normalization form comparison |
 | `normalization_result` | A normalized sequence |
+| `copy_dialog` | Copy candidate list in Sequence and Normalization Result |
 | `browse_plane` | Plane list |
 | `browse_range` | Range list |
 | `browse_block` | Block list |

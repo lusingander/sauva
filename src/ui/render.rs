@@ -8,10 +8,10 @@ use ratatui::{
 
 use crate::{
     app::{AppState, FooterStatusLevel, View},
-    input::context_for_state,
+    input::{context_for_state, view_context_for_state},
     keybindings::{Context, ResolvedKeymap},
     ui::{
-        browser, glyph_preview, help, inspector,
+        browser, copy_dialog, glyph_preview, help, inspector,
         layout::{MINIMUM_SIZE, calculate},
         normalization, search, sequence,
         settings::UiSettings,
@@ -49,6 +49,9 @@ pub fn render(
             View::Search => search::render(frame, layout.main, state, color_theme, ui),
             View::Sequence => sequence::render(frame, layout.main, state, color_theme),
             View::Normalization => normalization::render(frame, layout.main, state, color_theme),
+        }
+        if state.copy_dialog().is_some() {
+            copy_dialog::render(frame, layout.main, state, color_theme);
         }
     }
     render_footer(frame, layout.footer, state, keymap, color_theme);
@@ -121,6 +124,7 @@ fn header_location(state: &AppState, context: Context) -> String {
             state.normalization().unwrap().form().label()
         ),
         Context::Normalization => "Sequence / Normalization".to_owned(),
+        Context::CopyDialog => header_location(state, view_context_for_state(state)),
         _ => help::context_label(context).to_owned(),
     }
 }
@@ -290,6 +294,90 @@ mod tests {
         },
         ui::theme::{DifferenceColors, SelectionColors, StatusColors},
     };
+
+    #[test]
+    fn copy_dialog_sequence_standard() {
+        let state = sequence_copy_dialog();
+        insta::assert_snapshot!(render_to_text(&state, 100, 30));
+    }
+
+    #[test]
+    fn copy_dialog_sequence_minimum() {
+        let state = sequence_copy_dialog();
+        let text = render_to_text(&state, 60, 16);
+        let footer = text.lines().last().unwrap();
+        assert!(footer.contains("Enter Copy"));
+        assert!(footer.contains("Esc Cancel"));
+        assert!(footer.contains("F1 Help"));
+        assert!(text.contains("Preview · 2 CP · 3 bytes"));
+        insta::assert_snapshot!(text);
+    }
+
+    #[test]
+    fn copy_dialog_normalization_result_minimum() {
+        let mut state = AppState::with_sequence("A\u{0301}ﬃ👩‍💻".to_owned());
+        update(&mut state, Action::OpenNormalization);
+        update(
+            &mut state,
+            Action::MoveNormalization(crate::normalization::NormalizationMove::Next),
+        );
+        update(
+            &mut state,
+            Action::MoveNormalization(crate::normalization::NormalizationMove::Next),
+        );
+        update(&mut state, Action::InspectNormalizationResult);
+        update(&mut state, Action::ResizeSequenceViewport(10));
+        update(
+            &mut state,
+            Action::MoveSequence(crate::sequence::SequenceMove::Last),
+        );
+        update(&mut state, Action::OpenCopyDialog);
+        update(
+            &mut state,
+            Action::MoveCopyDialog(crate::copy_dialog::CopyMove::Last),
+        );
+        let text = render_to_text(&state, 60, 16);
+        assert!(text.contains("Whole NFKC Result"));
+        assert!(text.contains("Preview · 7 CP"));
+        insta::assert_snapshot!(text);
+    }
+
+    #[test]
+    fn copy_dialog_failure_minimum() {
+        let mut state = sequence_copy_dialog();
+        update(
+            &mut state,
+            Action::CompleteCopyDialog(crate::app::FooterStatus::warning("Clipboard is busy")),
+        );
+        let text = render_to_text(&state, 60, 16);
+        assert!(text.lines().last().unwrap().contains("Clipboard is busy"));
+        insta::assert_snapshot!(text);
+    }
+
+    #[test]
+    fn copy_dialog_help_standard() {
+        let mut state = sequence_copy_dialog();
+        update(&mut state, Action::ToggleHelp);
+        let text = render_to_text(&state, 100, 30);
+        assert!(text.contains("Keybindings · Copy Dialog"));
+        assert!(text.contains("Copy the selected candidate"));
+        insta::assert_snapshot!(text);
+    }
+
+    fn sequence_copy_dialog() -> AppState {
+        let mut state = fixtures::sequence();
+        update(&mut state, Action::ResizeSequenceViewport(25));
+        update(
+            &mut state,
+            Action::MoveSequence(crate::sequence::SequenceMove::Next),
+        );
+        update(&mut state, Action::OpenCopyDialog);
+        update(
+            &mut state,
+            Action::MoveCopyDialog(crate::copy_dialog::CopyMove::Next),
+        );
+        state
+    }
 
     #[test]
     fn result_inspector_breadcrumb_preserves_sequence_parent() {
@@ -850,7 +938,9 @@ mod tests {
         let state = fixtures::sequence();
         let (width, height) = MINIMUM_SIZE;
 
-        insta::assert_snapshot!(render_to_text(&state, width, height));
+        let screen = render_to_text(&state, width, height);
+        assert!(screen.contains("Y Copy..."));
+        insta::assert_snapshot!(screen);
     }
 
     #[test]

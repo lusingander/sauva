@@ -1,0 +1,20 @@
+---
+source: src/ui/render.rs
+expression: text
+---
+ sauva / Sequence / NFKC Result               7/7 · U+1F4BB
+
+
+  ┌ Copy ────────────────────────────────────────────────┐
+  │ NFKC Result · CP 7/7 · U+1F4BB                       │
+  │                                                      │
+  │  Code Point                                 U+1F4BB  │
+  │  Grapheme Cluster                     3 code points  │
+  │  Whole NFKC Result                    7 code points  │
+  │                                                      │
+  │ Preview · 7 CP · 16 bytes                            │
+  │ Áffi👩‍💻                                                │
+  │ U+00C1 U+0066 U+0066 U+0069 U+1F469 U+200D U+1F4BB   │
+  └──────────────────────────────────────────────────────┘
+
+ k/j Move  Enter Copy  Esc Cancel  C-c Quit         F1 Help

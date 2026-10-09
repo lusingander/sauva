@@ -60,7 +60,12 @@ The original input is preserved throughout these operations.
 | <kbd>g</kbd> / <kbd>G</kbd> | Select NFC / NFKD | Select the first / last code point |
 | <kbd>Enter</kbd> | Open the selected result | Inspect the selected code point |
 | <kbd>y</kbd> | Copy the exact normalized text | — |
+| <kbd>Y</kbd> | — | Open copy candidates |
 | <kbd>Backspace</kbd>, <kbd>Esc</kbd> | Return to the original sequence | Return to form comparison |
 | <kbd>q</kbd> | Quit | Quit |
 
 Copying includes whitespace and newlines in the normalized result. Select a form and press <kbd>y</kbd> in the comparison screen to copy the whole result.
+
+In a result list, press <kbd>Y</kbd> to open the same [copy dialog as Sequence](./sequence.md#copying). The candidates are the selected result code point, its entire grapheme cluster, and **Whole NFC / NFD / NFKC / NFKD Result**, depending on the active form. Each candidate uses the normalized text; the original input remains unchanged. The dialog identifies the active form above the candidates.
+
+![Normalization result Copy](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/sequence-normalization-result-copy.png)

@@ -247,6 +247,13 @@ fn document(
             width,
         ));
     }
+    if context == Context::CopyDialog {
+        lines.push(Line::default());
+        lines.extend(wrap_plain_text(
+            "Copy the selected code point, its whole grapheme cluster, or the whole input or normalization result. Text is copied exactly; preview labels and dotted circles are display aids only. Closing help returns to the same copy candidate.",
+            width,
+        ));
+    }
 
     Text::from(lines)
 }
@@ -390,6 +397,7 @@ fn help_items(context: Context, has_sequence: bool) -> Vec<HelpItem> {
             item(C::Last, "Select the last code point"),
             item(C::Activate, "Inspect the selected code point"),
             item(C::Normalize, "Compare Unicode normalization forms"),
+            item(C::OpenCopyDialog, "Open copy candidates"),
             item(C::Quit, "Quit"),
         ],
         Context::Normalization => vec![
@@ -417,8 +425,18 @@ fn help_items(context: Context, has_sequence: bool) -> Vec<HelpItem> {
             item(C::First, "Select the first code point"),
             item(C::Last, "Select the last code point"),
             item(C::Activate, "Inspect the selected code point"),
+            item(C::OpenCopyDialog, "Open copy candidates"),
             item(C::Back, "Return to normalization comparison"),
             item(C::Close, "Return to normalization comparison"),
+            item(C::Quit, "Quit"),
+        ],
+        Context::CopyDialog => vec![
+            item(C::MoveUp, "Select the previous copy candidate"),
+            item(C::MoveDown, "Select the next copy candidate"),
+            item(C::First, "Select the first copy candidate"),
+            item(C::Last, "Select the last copy candidate"),
+            item(C::Activate, "Copy the selected candidate"),
+            item(C::Close, "Cancel and return to the source screen"),
             item(C::Quit, "Quit"),
         ],
         Context::BrowsePlane => vec![
@@ -527,6 +545,7 @@ fn short_help_items(context: Context, has_sequence: bool) -> Vec<ShortHelpItem> 
             short(&[C::First, C::Last], "Ends", 3),
             short(&[C::Activate], "Inspect", 1),
             short(&[C::Normalize], "Normalize", 1),
+            short(&[C::OpenCopyDialog], "Copy...", 0),
             short(&[C::Quit], "Quit", 0),
         ],
         Context::Normalization => vec![
@@ -540,7 +559,14 @@ fn short_help_items(context: Context, has_sequence: bool) -> Vec<ShortHelpItem> 
             short(&[C::MoveUp, C::MoveDown], "Move", 1),
             short(&[C::PreviousGroup, C::NextGroup], "Grapheme", 2),
             short(&[C::Activate], "Inspect", 1),
+            short(&[C::OpenCopyDialog], "Copy...", 0),
             short(&[C::Back, C::Close], "Back", 0),
+            short(&[C::Quit], "Quit", 3),
+        ],
+        Context::CopyDialog => vec![
+            short(&[C::MoveUp, C::MoveDown], "Move", 1),
+            short(&[C::Activate], "Copy", 0),
+            short(&[C::Close], "Cancel", 0),
             short(&[C::Quit], "Quit", 3),
         ],
         Context::BrowsePlane => vec![
@@ -667,6 +693,7 @@ pub fn context_label(context: Context) -> &'static str {
         Context::Sequence => "Sequence",
         Context::Normalization => "Normalization",
         Context::NormalizationResult => "Normalization Result",
+        Context::CopyDialog => "Copy Dialog",
         Context::BrowsePlane => "Browse Planes",
         Context::BrowseRange => "Browse Ranges",
         Context::BrowseBlock => "Browse Blocks",

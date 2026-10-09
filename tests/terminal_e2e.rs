@@ -150,6 +150,120 @@ fn sequence_group_keys_skip_cluster_members_and_preserve_selection_across_inspec
 }
 
 #[test]
+fn sequence_copy_dialog_preserves_source_and_candidate_across_help_and_resize()
+-> termlens::Result<()> {
+    let mut terminal = termlens::bin!(
+        "sauva",
+        size(100, 30),
+        args(["A\u{0301}👩‍💻B", "--graphics", "off"])
+    )?;
+    terminal.wait_until(|screen| screen.contains("1/6 · U+0041"))?;
+    terminal.send(Key::Down)?;
+    terminal.wait_until(|screen| screen.contains("2/6 · U+0301"))?;
+    terminal.send(Key::Char('Y'))?;
+    terminal.wait_until(|screen| {
+        screen.contains("Sequence") && screen.contains("Preview · 1 CP · 2 bytes")
+    })?;
+    terminal.send(Key::Down)?;
+    terminal.wait_until(|screen| screen.contains("Preview · 2 CP · 3 bytes"))?;
+    terminal.send(Key::F(1))?;
+    terminal.wait_until(|screen| screen.contains("Keybindings · Copy Dialog"))?;
+    terminal.resize(60, 16)?;
+    terminal.wait_until(|screen| screen.size() == (60, 16) && screen.contains("Copy Dialog"))?;
+    terminal.send(Key::Esc)?;
+    let screen = terminal.snapshot_after(|screen| {
+        screen.contains("Sequence") && screen.contains("Preview · 2 CP · 3 bytes")
+    })?;
+    assert!(screen.contains("Enter Copy"), "{screen}");
+    assert!(screen.contains("Esc Cancel"), "{screen}");
+    assert!(screen.contains("U+0041 U+0301"), "{screen}");
+    insta::assert_snapshot!(screen.with_styles());
+
+    terminal.send(Key::Char('G'))?;
+    terminal.wait_until(|screen| screen.contains("Preview · 6 CP · 15 bytes"))?;
+    terminal.resize(100, 30)?;
+    terminal.wait_until(|screen| {
+        screen.size() == (100, 30) && screen.contains("Preview · 6 CP · 15 bytes")
+    })?;
+    terminal.send(Key::Esc)?;
+    terminal
+        .wait_until(|screen| screen.contains("2/6 · U+0301") && !screen.contains("Preview ·"))?;
+    terminal.send(Key::Char('Y'))?;
+    terminal.wait_until(|screen| screen.contains("Preview · 1 CP · 2 bytes"))?;
+    terminal.send(Key::Esc)?;
+    terminal.send(Key::Char('q'))?;
+    assert!(terminal.wait_exit()?.success());
+    Ok(())
+}
+
+#[test]
+fn normalized_copy_dialog_uses_result_text_and_custom_bindings() -> termlens::Result<()> {
+    let directory = tempdir()?;
+    let path = directory.path().join("config.toml");
+    fs::write(
+        &path,
+        r#"
+            [keybindings.normalization_result]
+            open_copy_dialog = ["C"]
+
+            [keybindings.copy_dialog]
+            move_down = ["l"]
+            activate = ["y"]
+            close = ["x"]
+        "#,
+    )?;
+    let mut terminal = termlens::bin!(
+        "sauva",
+        size(60, 16),
+        env("SAUVA_CONFIG_FILE", &path),
+        args(["A\u{0301}ﬃ", "--graphics", "off"])
+    )?;
+    terminal.wait_until(|screen| screen.contains("1/3 · U+0041"))?;
+    terminal.send(Key::Char('n'))?;
+    terminal.send(Key::Down)?;
+    terminal.send(Key::Down)?;
+    terminal.wait_until(|screen| screen.contains("NFKC Result"))?;
+    terminal.send(Key::Enter)?;
+    terminal.wait_until(|screen| screen.contains("1/4 · U+00C1"))?;
+    terminal.send(Key::Down)?;
+    let screen = terminal.snapshot_after(|screen| screen.contains("2/4 · U+0066"))?;
+    assert!(screen.contains("C Copy..."), "{screen}");
+    terminal.send(Key::Char('C'))?;
+    terminal.wait_until(|screen| {
+        screen.contains("NFKC Result") && screen.contains("Preview · 1 CP · 1 byte")
+    })?;
+    terminal.send(Key::Char('l'))?;
+    terminal.send(Key::Char('l'))?;
+    let screen = terminal.snapshot_after(|screen| screen.contains("Preview · 4 CP · 5 bytes"))?;
+    assert!(screen.contains("Whole NFKC Result"), "{screen}");
+    assert!(screen.contains("Áffi"), "{screen}");
+    assert!(screen.contains("U+00C1 U+0066 U+0066 U+0069"), "{screen}");
+    assert!(screen.contains("y Copy"), "{screen}");
+    assert!(screen.contains("x Cancel"), "{screen}");
+    terminal.resize(100, 30)?;
+    terminal.wait_until(|screen| {
+        screen.size() == (100, 30) && screen.contains("Preview · 4 CP · 5 bytes")
+    })?;
+    terminal.send(Key::F(1))?;
+    terminal.wait_until(|screen| {
+        screen.contains("Keybindings · Copy Dialog")
+            && screen.contains("Copy the selected candidate")
+    })?;
+    terminal.send(Key::F(1))?;
+    terminal.wait_until(|screen| screen.contains("Preview · 4 CP · 5 bytes"))?;
+    terminal.send(Key::Char('x'))?;
+    terminal
+        .wait_until(|screen| screen.contains("2/4 · U+0066") && !screen.contains("Preview ·"))?;
+    terminal.send(Key::Esc)?;
+    terminal.wait_until(|screen| screen.contains("Sequence / Normalization"))?;
+    terminal.send(Key::Esc)?;
+    terminal.wait_until(|screen| screen.contains("1/3 · U+0041"))?;
+    terminal.send(Key::Char('q'))?;
+    assert!(terminal.wait_exit()?.success());
+    Ok(())
+}
+
+#[test]
 fn normalization_group_keys_follow_result_clusters_and_update_the_original_highlight()
 -> termlens::Result<()> {
     let mut terminal = termlens::bin!("sauva", size(100, 30), args(["ﬃ👩‍💻B", "--graphics", "off"]))?;

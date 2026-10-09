@@ -31,4 +31,4 @@ expression: "render_to_text(&state, 100, 30)"
 
 
 
- k/j Move  [/] Grapheme  Enter Inspect  BS/Esc Back  q Quit                                 F1 Help
+ k/j Move  [/] Grapheme  Enter Inspect  Y Copy...  BS/Esc Back  q Quit                      F1 Help
