@@ -80,3 +80,5 @@ Press <kbd>Y</kbd> to choose what to copy:
 - **Whole Input**: the original input in its original order.
 
 Select a candidate with <kbd>j</kbd> / <kbd>k</kbd> or the arrow keys, then press <kbd>Enter</kbd> to copy. <kbd>Esc</kbd> cancels. The preview shows the candidate's text and code point notation; labels, dotted circles, and ellipses are display aids and are not copied. Whitespace, newlines, and invisible characters are preserved exactly.
+
+![Sequence Copy](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/sequence-copy.png)
