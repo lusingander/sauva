@@ -169,7 +169,13 @@ fn sequence_copy_dialog_preserves_source_and_candidate_across_help_and_resize()
     terminal.send(Key::F(1))?;
     terminal.wait_until(|screen| screen.contains("Keybindings · Copy Dialog"))?;
     terminal.resize(60, 16)?;
-    terminal.wait_until(|screen| screen.size() == (60, 16) && screen.contains("Copy Dialog"))?;
+    // The emulator resizes before the app repaints. Wait for its footer on
+    // the new bottom row before sending another key.
+    terminal.wait_until(|screen| {
+        screen.size() == (60, 16)
+            && screen.contains("Keybindings · Copy Dialog")
+            && screen.row_text(15).contains("F1 Close")
+    })?;
     terminal.send(Key::Esc)?;
     let screen = terminal.snapshot_after(|screen| {
         screen.contains("Sequence") && screen.contains("Preview · 2 CP · 3 bytes")
@@ -183,14 +189,23 @@ fn sequence_copy_dialog_preserves_source_and_candidate_across_help_and_resize()
     terminal.wait_until(|screen| screen.contains("Preview · 6 CP · 15 bytes"))?;
     terminal.resize(100, 30)?;
     terminal.wait_until(|screen| {
-        screen.size() == (100, 30) && screen.contains("Preview · 6 CP · 15 bytes")
+        screen.size() == (100, 30)
+            && screen.contains("Preview · 6 CP · 15 bytes")
+            && screen.row_text(29).contains("Enter Copy")
+            && screen.row_text(29).contains("F1 Help")
     })?;
     terminal.send(Key::Esc)?;
-    terminal
-        .wait_until(|screen| screen.contains("2/6 · U+0301") && !screen.contains("Preview ·"))?;
+    // The source header is also visible behind the dialog. Its footer confirms
+    // that Esc was handled before the next character can form an Alt chord.
+    terminal.wait_until(|screen| {
+        screen.contains("2/6 · U+0301") && screen.row_text(29).contains("Y Copy...")
+    })?;
     terminal.send(Key::Char('Y'))?;
     terminal.wait_until(|screen| screen.contains("Preview · 1 CP · 2 bytes"))?;
     terminal.send(Key::Esc)?;
+    terminal.wait_until(|screen| {
+        screen.contains("2/6 · U+0301") && screen.row_text(29).contains("Y Copy...")
+    })?;
     terminal.send(Key::Char('q'))?;
     assert!(terminal.wait_exit()?.success());
     Ok(())
@@ -242,7 +257,10 @@ fn normalized_copy_dialog_uses_result_text_and_custom_bindings() -> termlens::Re
     assert!(screen.contains("x Cancel"), "{screen}");
     terminal.resize(100, 30)?;
     terminal.wait_until(|screen| {
-        screen.size() == (100, 30) && screen.contains("Preview · 4 CP · 5 bytes")
+        screen.size() == (100, 30)
+            && screen.contains("Preview · 4 CP · 5 bytes")
+            && screen.row_text(29).contains("y Copy")
+            && screen.row_text(29).contains("F1 Help")
     })?;
     terminal.send(Key::F(1))?;
     terminal.wait_until(|screen| {
@@ -252,8 +270,9 @@ fn normalized_copy_dialog_uses_result_text_and_custom_bindings() -> termlens::Re
     terminal.send(Key::F(1))?;
     terminal.wait_until(|screen| screen.contains("Preview · 4 CP · 5 bytes"))?;
     terminal.send(Key::Char('x'))?;
-    terminal
-        .wait_until(|screen| screen.contains("2/4 · U+0066") && !screen.contains("Preview ·"))?;
+    terminal.wait_until(|screen| {
+        screen.contains("2/4 · U+0066") && screen.row_text(29).contains("C Copy...")
+    })?;
     terminal.send(Key::Esc)?;
     terminal.wait_until(|screen| screen.contains("Sequence / Normalization"))?;
     terminal.send(Key::Esc)?;
