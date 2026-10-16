@@ -77,7 +77,6 @@ Sleep 2s
 Type "m"
 Sleep 1s
 
-Screenshot "./img/bookmark-removed.png"
 Sleep 2s
 
 # The list contains only the entries with fixed registration times.
