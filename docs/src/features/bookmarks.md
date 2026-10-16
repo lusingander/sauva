@@ -4,10 +4,6 @@ Save code points to revisit them across sessions. In the Inspector, press <kbd>m
 
 ![Bookmarked code point](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/bookmark-added.png)
 
-Press <kbd>m</kbd> again to remove the bookmark. The header's bookmark indicator disappears, and the footer confirms the removal.
-
-![Bookmark removed](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/bookmark-removed.png)
-
 ## Bookmark List
 
 Press <kbd>M</kbd> in the Inspector to open Bookmarks. Entries show the character, code point, and Unicode name, ordered by registration time with the newest first. The selected entry's details include its registration time; narrow terminals show these details below the list.
