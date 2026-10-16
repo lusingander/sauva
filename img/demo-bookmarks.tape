@@ -64,9 +64,12 @@ Sleep 2s
 
 Show
 
-# Inspector: add and remove a bookmark.
+# Inspector: bookmark B and keep A unchanged for the loop.
 
 Sleep 2s
+
+Type "l"
+Sleep 500ms
 
 Type "m"
 Sleep 1s
@@ -74,13 +77,13 @@ Sleep 1s
 Screenshot "./img/bookmark-added.png"
 Sleep 100ms
 
-Type "m"
-Sleep 1s
-
-# The list contains only the entries with fixed registration times.
+# Select a seeded bookmark so the screenshot has a fixed registration time.
 
 Type "M"
 Sleep 1s
+
+Type "j"
+Sleep 500ms
 
 Screenshot "./img/bookmarks.png"
 Sleep 100ms
@@ -88,13 +91,19 @@ Sleep 100ms
 Type@400ms "jjjj"
 Sleep 500ms
 
-Type "g"
+Type "gj"
 Sleep 500ms
 
 Enter
 Sleep 1s
 
 Backspace
+Sleep 500ms
+
+Escape
+Sleep 500ms
+
+Type "h"
 Sleep 2s
 
 Hide
