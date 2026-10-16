@@ -23,39 +23,7 @@ Type@1ms `export XDG_DATA_HOME="$sauva_bookmark_demo_dir"`
 Enter
 Type@1ms `mkdir -p "$XDG_DATA_HOME/sauva"`
 Enter
-Type@1ms `cat > "$XDG_DATA_HOME/sauva/bookmarks.toml" <<'BOOKMARKS'`
-Enter
-Type@1ms "[[bookmarks]]"
-Enter
-Type@1ms `code_point = "U+2192"`
-Enter
-Type@1ms `added_at = "2026-10-15T03:00:00Z"`
-Enter
-Type@1ms "[[bookmarks]]"
-Enter
-Type@1ms `code_point = "U+00D7"`
-Enter
-Type@1ms `added_at = "2026-10-14T03:00:00Z"`
-Enter
-Type@1ms "[[bookmarks]]"
-Enter
-Type@1ms `code_point = "U+2212"`
-Enter
-Type@1ms `added_at = "2026-10-13T03:00:00Z"`
-Enter
-Type@1ms "[[bookmarks]]"
-Enter
-Type@1ms `code_point = "U+0301"`
-Enter
-Type@1ms `added_at = "2026-10-12T03:00:00Z"`
-Enter
-Type@1ms "[[bookmarks]]"
-Enter
-Type@1ms `code_point = "U+200B"`
-Enter
-Type@1ms `added_at = "2026-10-11T03:00:00Z"`
-Enter
-Type@1ms "BOOKMARKS"
+Type@1ms `cp ./img/bookmarks.toml "$XDG_DATA_HOME/sauva/bookmarks.toml"`
 Enter
 
 Type "cargo run --release -- --graphics iterm2 U+0041"
