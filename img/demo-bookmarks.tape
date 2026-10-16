@@ -79,5 +79,7 @@ Sleep 2s
 
 Hide
 
+Sleep 100ms
+
 Type "q"
 Sleep 500ms
