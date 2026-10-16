@@ -99,7 +99,7 @@ pub fn viewport_metrics(area: Rect, state: &AppState, keymap: &ResolvedKeymap) -
     let context = context_for_state(state);
     let document = document(
         context,
-        state.sequence().is_some(),
+        state.has_inspector_parent(),
         keymap,
         Style::new(),
         Style::new(),
@@ -124,7 +124,7 @@ pub fn render(
     let sections = help_sections(area);
     let document = document(
         context,
-        state.sequence().is_some(),
+        state.has_inspector_parent(),
         keymap,
         Style::new().fg(color_theme.fg),
         Style::new().fg(color_theme.key),
@@ -184,12 +184,12 @@ fn about_document(
 
 pub fn footer(
     context: Context,
-    has_sequence: bool,
+    has_inspector_parent: bool,
     width: u16,
     keymap: &ResolvedKeymap,
     color_theme: &ColorTheme,
 ) -> FooterContent {
-    let mut items = short_help_items(context, has_sequence)
+    let mut items = short_help_items(context, has_inspector_parent)
         .into_iter()
         .filter_map(|item| render_short_help_item(context, item, keymap))
         .collect::<Vec<_>>();
@@ -228,13 +228,13 @@ pub fn footer(
 
 fn document(
     context: Context,
-    has_sequence: bool,
+    has_inspector_parent: bool,
     keymap: &ResolvedKeymap,
     normal_style: Style,
     key_style: Style,
     width: usize,
 ) -> Text<'static> {
-    let mut lines = help_items(context, has_sequence)
+    let mut lines = help_items(context, has_inspector_parent)
         .into_iter()
         .filter_map(|item| help_lines(context, item, keymap, normal_style, key_style, width))
         .flatten()
@@ -345,7 +345,7 @@ fn wrap_words(text: &str, width: usize) -> Vec<String> {
     lines
 }
 
-fn help_items(context: Context, has_sequence: bool) -> Vec<HelpItem> {
+fn help_items(context: Context, has_inspector_parent: bool) -> Vec<HelpItem> {
     use Command as C;
 
     let mut items = match context {
@@ -368,11 +368,25 @@ fn help_items(context: Context, has_sequence: bool) -> Vec<HelpItem> {
             item(C::Last, "Select the last property"),
             item(C::CopyValue, "Copy the selected property value"),
             item(C::OpenSearch, "Open search"),
+            item(C::ToggleBookmark, "Add or remove the code point's bookmark"),
+            item(C::OpenBookmarks, "Open bookmarks"),
             item(C::BrowsePlanes, "Browse planes"),
             item(C::BrowseRanges, "Browse ranges"),
             item(C::BrowseBlocks, "Browse blocks"),
             item(C::BrowseCodePoints, "Browse code points"),
-            item(C::Back, "Return to the sequence"),
+            item(C::Back, "Return to the previous screen"),
+            item(C::Quit, "Quit"),
+        ],
+        Context::Bookmarks => vec![
+            item(C::MoveUp, "Select the previous bookmark"),
+            item(C::MoveDown, "Select the next bookmark"),
+            item(C::PageUp, "Move up one page"),
+            item(C::PageDown, "Move down one page"),
+            item(C::First, "Select the first bookmark"),
+            item(C::Last, "Select the last bookmark"),
+            item(C::Activate, "Inspect the selected code point"),
+            item(C::ToggleBookmark, "Remove the selected bookmark"),
+            item(C::Close, "Return to the Inspector"),
             item(C::Quit, "Quit"),
         ],
         Context::Search => vec![
@@ -502,7 +516,7 @@ fn help_items(context: Context, has_sequence: bool) -> Vec<HelpItem> {
         ],
         Context::Global => vec![item(C::Quit, "Quit")],
     };
-    if !has_sequence && context == Context::Inspector {
+    if !has_inspector_parent && context == Context::Inspector {
         items.retain(|item| item.command != C::Back);
     }
     items.push(item(C::Help, "Open or close help"));
@@ -517,7 +531,7 @@ fn item(command: Command, description: &'static str) -> HelpItem {
 }
 
 #[rustfmt::skip]
-fn short_help_items(context: Context, has_sequence: bool) -> Vec<ShortHelpItem> {
+fn short_help_items(context: Context, has_inspector_parent: bool) -> Vec<ShortHelpItem> {
     use Command as C;
 
     let mut items = match context {
@@ -529,9 +543,19 @@ fn short_help_items(context: Context, has_sequence: bool) -> Vec<ShortHelpItem> 
             short(&[C::First, C::Last], "Ends", 3),
             short(&[C::CopyValue], "Copy", 1),
             short(&[C::OpenSearch], "Search", 2),
+            short(&[C::ToggleBookmark, C::OpenBookmarks], "Bookmarks", 3),
             short(&[C::BrowsePlanes, C::BrowseRanges, C::BrowseBlocks, C::BrowseCodePoints], "Browse", 2),
-            short(&[C::Back], "Sequence", 1),
+            short(&[C::Back], "Back", 1),
             short(&[C::Quit], "Quit", 0),
+        ],
+        Context::Bookmarks => vec![
+            short(&[C::MoveUp, C::MoveDown], "Move", 1),
+            short(&[C::PageUp, C::PageDown], "Page", 3),
+            short(&[C::First, C::Last], "Ends", 3),
+            short(&[C::Activate], "Inspect", 0),
+            short(&[C::ToggleBookmark], "Remove", 0),
+            short(&[C::Close], "Close", 0),
+            short(&[C::Quit], "Quit", 3),
         ],
         Context::Search => vec![
             short(&[C::PreviousResult, C::NextResult], "Move", 1),
@@ -615,7 +639,7 @@ fn short_help_items(context: Context, has_sequence: bool) -> Vec<ShortHelpItem> 
             short(&[C::Quit], "Quit", 0),
         ],
     };
-    if !has_sequence && context == Context::Inspector {
+    if !has_inspector_parent && context == Context::Inspector {
         items.retain(|item| !item.commands.contains(&C::Back));
     }
     items
@@ -690,6 +714,7 @@ pub fn context_label(context: Context) -> &'static str {
         Context::Global => "Global",
         Context::Inspector => "Inspector",
         Context::Search => "Search",
+        Context::Bookmarks => "Bookmarks",
         Context::Sequence => "Sequence",
         Context::Normalization => "Normalization",
         Context::NormalizationResult => "Normalization Result",
@@ -857,39 +882,41 @@ mod tests {
     }
 
     #[test]
-    fn inspector_help_only_offers_a_sequence_return_when_one_exists() {
+    fn inspector_help_only_offers_back_when_a_sequence_or_bookmark_parent_exists() {
         let keymap = ResolvedKeymap::default();
-        let without_sequence = document(
-            Context::Inspector,
-            false,
-            &keymap,
-            Style::new(),
-            Style::new(),
-            80,
-        )
-        .to_string();
-        let with_sequence = document(
-            Context::Inspector,
-            true,
-            &keymap,
-            Style::new(),
-            Style::new(),
-            80,
-        )
-        .to_string();
-
-        assert!(!without_sequence.contains("Return to the sequence"));
-        assert!(with_sequence.contains("Return to the sequence"));
-        assert!(
-            footer_text(footer(
+        let mut sequence = AppState::with_sequence("AB".to_owned());
+        crate::app::update(&mut sequence, crate::app::Action::InspectSequenceCodePoint);
+        let mut bookmark = AppState::new();
+        bookmark.set_bookmarks(vec![crate::bookmarks::Bookmark::new(
+            bookmark.selected(),
+            jiff::Timestamp::UNIX_EPOCH,
+        )]);
+        crate::app::update(&mut bookmark, crate::app::Action::OpenBookmarks);
+        crate::app::update(&mut bookmark, crate::app::Action::InspectBookmark);
+        for (state, expected) in [(AppState::new(), false), (sequence, true), (bookmark, true)] {
+            let has_parent = state.has_inspector_parent();
+            let text = document(
                 Context::Inspector,
-                true,
-                140,
+                has_parent,
                 &keymap,
-                &ColorTheme::default(),
-            ))
-            .contains("BS Sequence")
-        );
+                Style::new(),
+                Style::new(),
+                80,
+            )
+            .to_string();
+            assert_eq!(text.contains("Return to the previous screen"), expected);
+            assert_eq!(
+                footer_text(footer(
+                    Context::Inspector,
+                    has_parent,
+                    140,
+                    &keymap,
+                    &ColorTheme::default()
+                ))
+                .contains("BS Back"),
+                expected
+            );
+        }
     }
 
     #[test]

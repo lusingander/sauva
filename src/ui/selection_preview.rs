@@ -1,12 +1,15 @@
+use jiff::tz::TimeZone;
 use ratatui::{Frame, layout::Rect, widgets::Paragraph};
 
 use crate::{
+    bookmarks::Bookmark,
     inspector::InspectorDetails,
     preview::GlyphPreviewState,
     sequence::SequenceState,
     ui::glyph_preview,
     ui::key_value::{self, KeyValue},
     ui::layout,
+    ui::settings::{UiSettings, format_bookmark_date},
     ui::theme::ColorTheme,
     ui::workspace,
     unicode::{CodePoint, NameAlias},
@@ -37,6 +40,18 @@ pub fn render_sequence(
     color_theme: &ColorTheme,
 ) {
     let details = SelectionDetails::for_sequence(sequence);
+    render_details(frame, area, details, glyph_preview_state, color_theme);
+}
+
+pub fn render_bookmark(
+    frame: &mut Frame,
+    area: Rect,
+    bookmark: Bookmark,
+    glyph_preview_state: &GlyphPreviewState,
+    ui: &UiSettings,
+    color_theme: &ColorTheme,
+) {
+    let details = SelectionDetails::for_bookmark(bookmark, ui);
     render_details(frame, area, details, glyph_preview_state, color_theme);
 }
 
@@ -88,6 +103,13 @@ pub fn glyph_area_for_sequence(area: Rect, sequence: &SequenceState) -> Option<R
     glyph_area_for_entries(area, &details.entries())
 }
 
+pub fn glyph_area_for_bookmark(area: Rect, bookmark: Bookmark, ui: &UiSettings) -> Option<Rect> {
+    glyph_area_for_entries(
+        area,
+        &SelectionDetails::for_bookmark(bookmark, ui).entries(),
+    )
+}
+
 fn glyph_area_for_entries(area: Rect, entries: &[KeyValue<'_>]) -> Option<Rect> {
     glyph_layout_for_entries(area, entries).map(|layout| layout.glyph)
 }
@@ -126,6 +148,7 @@ struct SelectionDetails {
     code_point: String,
     matched_alias: Option<NameAlias>,
     grapheme: Option<String>,
+    added_at: Option<String>,
 }
 
 impl SelectionDetails {
@@ -140,6 +163,7 @@ impl SelectionDetails {
             code_point,
             matched_alias,
             grapheme: None,
+            added_at: None,
         }
     }
 
@@ -155,6 +179,19 @@ impl SelectionDetails {
             point.index_in_grapheme() + 1,
             grapheme.code_point_range().len(),
         ));
+        details
+    }
+
+    fn for_bookmark(bookmark: Bookmark, ui: &UiSettings) -> Self {
+        let mut details = Self::new(bookmark.code_point(), None);
+        details.added_at = Some(
+            format_bookmark_date(
+                bookmark.added_at(),
+                &ui.bookmark_date_format,
+                TimeZone::system(),
+            )
+            .unwrap_or_else(|_| bookmark.added_at().to_string()),
+        );
         details
     }
 
@@ -177,6 +214,9 @@ impl SelectionDetails {
             KeyValue::new("Block", self.details.block()),
             KeyValue::new("General Category", &self.category),
         ]);
+        if let Some(added_at) = &self.added_at {
+            entries.push(KeyValue::new("Added at", added_at));
+        }
         entries
     }
 }

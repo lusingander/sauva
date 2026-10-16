@@ -9,6 +9,125 @@ fn spawn(graphics: &str) -> termlens::Result<Terminal> {
 }
 
 #[test]
+fn bookmarks_persist_and_show_configured_dates_and_restore_the_source_inspector()
+-> termlens::Result<()> {
+    let directory = tempdir()?;
+    let path = directory.path().join("config.toml");
+    fs::write(
+        &path,
+        "[ui]\nbookmark_date_format = '%d/%m/%Y %H:%M:%S %Z'\n",
+    )?;
+    let data = directory.path().join("sauva");
+    fs::create_dir(&data)?;
+    fs::write(
+        data.join("bookmarks.toml"),
+        "[[bookmarks]]\ncode_point = 'U+2192'\nadded_at = '2020-01-02T03:04:05Z'\n",
+    )?;
+    let launch = || {
+        termlens::bin!(
+            "sauva",
+            size(100, 30),
+            env("SAUVA_CONFIG_FILE", &path),
+            env("XDG_DATA_HOME", directory.path()),
+            env("TZ", "Asia/Tokyo"),
+            args(["--graphics", "off"])
+        )
+    };
+    let mut terminal = launch()?;
+    terminal.wait_until(|screen| screen.contains("LATIN CAPITAL LETTER A"))?;
+    terminal.send(Key::Char('m'))?;
+    terminal.wait_until(|screen| {
+        screen.row_text(0).contains("U+0041  * Bookmarked")
+            && screen.row_text(29).contains("Bookmarked U+0041")
+    })?;
+    terminal.send(Key::Char('M'))?;
+    terminal.wait_until(|screen| screen.row_text(0).contains("2 bookmarks · U+0041"))?;
+    terminal.send(Key::Char('j'))?;
+    terminal.wait_until(|screen| {
+        screen.row_text(0).contains("2 bookmarks · U+2192")
+            && screen.contains("02/01/2020 12:04:05 JST")
+    })?;
+    terminal.send(Key::F(1))?;
+    terminal.wait_until(|screen| screen.contains("Keybindings · Bookmarks"))?;
+    terminal.send(Key::F(1))?;
+    terminal.wait_until(|screen| screen.row_text(0).contains("2 bookmarks · U+2192"))?;
+    terminal.send(Key::Enter)?;
+    terminal.wait_until(|screen| {
+        screen.row_text(0).contains("Bookmarks / Inspector") && screen.contains("RIGHTWARDS ARROW")
+    })?;
+    terminal.send(Key::Backspace)?;
+    terminal.wait_until(|screen| screen.row_text(0).contains("2 bookmarks · U+2192"))?;
+    terminal.resize(60, 16)?;
+    terminal.wait_until(|screen| {
+        screen.row_text(15).contains("Esc Close") && screen.contains("02/01/2020 12:04:05 JST")
+    })?;
+    terminal.send(Key::Char('m'))?;
+    terminal.wait_until(|screen| {
+        screen.row_text(15).contains("Removed bookmark U+2192")
+            && screen.row_text(0).contains("1 bookmark · U+0041")
+    })?;
+    terminal.send(Key::Esc)?;
+    terminal.wait_until(|screen| {
+        screen.row_text(0).contains("Inspector")
+            && screen.row_text(0).contains("U+0041  * Bookmarked")
+            && !screen.row_text(15).contains("Esc Close")
+    })?;
+    terminal.send(Key::Char('q'))?;
+    assert!(terminal.wait_exit()?.success());
+
+    let mut restored = launch()?;
+    restored.wait_until(|screen| screen.row_text(0).contains("U+0041  * Bookmarked"))?;
+    restored.send(Key::Char('M'))?;
+    restored.wait_until(|screen| screen.row_text(0).contains("1 bookmark · U+0041"))?;
+    restored.send(Key::Char('m'))?;
+    restored.wait_until(|screen| {
+        screen.contains("No bookmarks yet") && screen.contains("Removed bookmark U+0041")
+    })?;
+    restored.send(Key::Enter)?;
+    restored.wait_until(|screen| screen.row_text(0).contains("0 bookmarks"))?;
+    restored.send(Key::Esc)?;
+    restored.wait_until(|screen| {
+        screen.contains("Identity") && !screen.row_text(0).contains("Bookmarked")
+    })?;
+    restored.send(Key::Char('q'))?;
+    assert!(restored.wait_exit()?.success());
+    let file: toml::Value =
+        toml::from_str(&fs::read_to_string(data.join("bookmarks.toml"))?).unwrap();
+    assert!(file["bookmarks"].as_array().unwrap().is_empty());
+    Ok(())
+}
+
+#[test]
+fn invalid_bookmark_files_report_save_failure_without_changing_registration() -> termlens::Result<()>
+{
+    let directory = tempdir()?;
+    let config = directory.path().join("config.toml");
+    fs::write(&config, "")?;
+    let data = directory.path().join("sauva");
+    fs::create_dir(&data)?;
+    let bookmarks = data.join("bookmarks.toml");
+    let invalid = "invalid bookmark file";
+    fs::write(&bookmarks, invalid)?;
+    let mut terminal = termlens::bin!(
+        "sauva",
+        size(100, 30),
+        env("SAUVA_CONFIG_FILE", &config),
+        env("XDG_DATA_HOME", directory.path()),
+        args(["--graphics", "off"])
+    )?;
+    terminal.wait_until(|screen| screen.row_text(29).contains("Failed to read bookmarks"))?;
+    terminal.send(Key::Char('m'))?;
+    let screen = terminal
+        .snapshot_after(|screen| screen.row_text(29).contains("Failed to save bookmarks"))?;
+    assert!(!screen.row_text(0).contains("* Bookmarked"), "{screen}");
+    assert!(screen.contains("LATIN CAPITAL LETTER A"), "{screen}");
+    assert_eq!(fs::read_to_string(&bookmarks)?, invalid);
+    terminal.send(Key::Char('q'))?;
+    assert!(terminal.wait_exit()?.success());
+    Ok(())
+}
+
+#[test]
 fn custom_keybindings_appear_in_help_and_drive_the_app() -> termlens::Result<()> {
     let directory = tempdir()?;
     let path = directory.path().join("config.toml");
@@ -31,6 +150,7 @@ fn custom_keybindings_appear_in_help_and_drive_the_app() -> termlens::Result<()>
     terminal.snapshot_after(|screen| screen.contains("LATIN CAPITAL LETTER A"))?;
 
     terminal.send(Key::F(2))?;
+    terminal.send(Key::Char('G'))?;
     let help = terminal.snapshot_after(|screen| {
         screen.contains("sauva / Help")
             && screen.contains("Keybindings · Inspector")

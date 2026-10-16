@@ -1,4 +1,5 @@
 mod app;
+mod bookmarks;
 mod browser;
 mod cli;
 mod clipboard;
@@ -41,6 +42,13 @@ fn run() -> Result<(), Box<dyn Error>> {
     }
     let config = config::load()?;
     let mut state = initial_state(options.demo(), options.target());
+    match bookmarks::load() {
+        Ok(entries) => state.set_bookmarks(entries),
+        Err(error) => app::update(
+            &mut state,
+            app::Action::ShowFooterStatus(app::FooterStatus::warning(error.to_string())),
+        ),
+    }
 
     terminal::run(
         &mut state,

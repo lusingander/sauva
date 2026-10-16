@@ -34,6 +34,7 @@ bg = "#00000000"
 
 [ui]
 input_cursor = "native"
+bookmark_date_format = "%Y-%m-%d %H:%M %Z"
 ```
 
 Use `sauva --print-default-config` to print the full configuration, including every default keybinding.
@@ -110,6 +111,20 @@ The cursor shown in the search input.
 [ui]
 input_cursor = { text = "|" }
 ```
+
+### `bookmark_date_format`
+
+The [strftime format](https://docs.rs/jiff/latest/jiff/fmt/strtime/index.html) for bookmark registration times, shown in the selected entry's details. Times use the local time zone.
+
+- Default: `"%Y-%m-%d %H:%M %Z"`, such as `2026-10-16 14:32 JST`.
+- The format must produce nonempty text without control characters.
+
+```toml
+[ui]
+bookmark_date_format = "%Y-%m-%d %H:%M:%S %:z"
+```
+
+See [Bookmarks](../features/bookmarks.md) for the list controls and storage location.
 
 ## `keybindings`
 
