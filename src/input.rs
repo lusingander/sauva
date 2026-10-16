@@ -5,6 +5,7 @@ use tui_input::backend::crossterm::to_input_request;
 
 use crate::{
     app::{Action, AppState, CodePointMove, View},
+    bookmarks::BookmarkMove,
     browser::{BrowseLevel, BrowseMove},
     copy_dialog::CopyMove,
     help::HelpMove,
@@ -46,6 +47,10 @@ pub fn action_for_key(state: &AppState, key: KeyEvent, keymap: &ResolvedKeymap) 
         if key.kind == KeyEventKind::Repeat && !command.is_repeatable() {
             return None;
         }
+        if context == Context::Inspector && command == Command::Back && state.inspecting_bookmark()
+        {
+            return Some(Action::ReturnToBookmarks);
+        }
         return action_for_command(context, command);
     }
 
@@ -69,6 +74,7 @@ pub fn view_context_for_state(state: &AppState) -> Context {
     match state.view() {
         View::Inspector => Context::Inspector,
         View::Search => Context::Search,
+        View::Bookmarks => Context::Bookmarks,
         View::Sequence => {
             if state.showing_normalization_result() {
                 Context::NormalizationResult
@@ -124,6 +130,16 @@ fn action_for_command(context: Context, command: Command) -> Option<Action> {
         (X::Inspector, C::Last) => Some(Action::MoveInspector(InspectorMove::Last)),
         (X::Inspector, C::CopyValue) => Some(Action::CopyInspectorValue),
         (X::Inspector, C::OpenSearch) => Some(Action::OpenSearch),
+        (X::Inspector, C::OpenBookmarks) => Some(Action::OpenBookmarks),
+        (X::Inspector | X::Bookmarks, C::ToggleBookmark) => Some(Action::ToggleBookmark),
+        (X::Bookmarks, C::Close) => Some(Action::CloseBookmarks),
+        (X::Bookmarks, C::MoveUp) => Some(Action::MoveBookmarks(BookmarkMove::Previous)),
+        (X::Bookmarks, C::MoveDown) => Some(Action::MoveBookmarks(BookmarkMove::Next)),
+        (X::Bookmarks, C::PageUp) => Some(Action::MoveBookmarks(BookmarkMove::PageBackward)),
+        (X::Bookmarks, C::PageDown) => Some(Action::MoveBookmarks(BookmarkMove::PageForward)),
+        (X::Bookmarks, C::First) => Some(Action::MoveBookmarks(BookmarkMove::First)),
+        (X::Bookmarks, C::Last) => Some(Action::MoveBookmarks(BookmarkMove::Last)),
+        (X::Bookmarks, C::Activate) => Some(Action::InspectBookmark),
         (X::Inspector, C::BrowsePlanes) => Some(Action::OpenBrowser(BrowseLevel::Plane)),
         (X::Inspector, C::BrowseRanges) => Some(Action::OpenBrowser(BrowseLevel::Range)),
         (X::Inspector, C::BrowseBlocks) => Some(Action::OpenBrowser(BrowseLevel::Block)),
@@ -171,6 +187,7 @@ fn action_for_command(context: Context, command: Command) -> Option<Action> {
 
 #[cfg(test)]
 mod tests {
+    use crate::unicode::CodePoint;
     use rstest::rstest;
     use tui_input::InputRequest;
 
@@ -178,6 +195,50 @@ mod tests {
 
     fn action_for_key(state: &AppState, key: KeyEvent) -> Option<Action> {
         super::action_for_key(state, key, &ResolvedKeymap::default())
+    }
+
+    #[test]
+    fn bookmark_keys_are_scoped_and_help_and_key_repeat_do_not_toggle_bookmarks() {
+        let key = |character| KeyEvent::new(KeyCode::Char(character), KeyModifiers::NONE);
+        let mut state = AppState::new();
+        state.set_bookmarks(vec![crate::bookmarks::Bookmark::new(
+            CodePoint::from('A'),
+            jiff::Timestamp::UNIX_EPOCH,
+        )]);
+        assert_eq!(
+            action_for_key(&state, key('m')),
+            Some(Action::ToggleBookmark)
+        );
+        assert_eq!(
+            action_for_key(&state, key('M')),
+            Some(Action::OpenBookmarks)
+        );
+        let mut repeat = key('m');
+        repeat.kind = KeyEventKind::Repeat;
+        assert_eq!(action_for_key(&state, repeat), None);
+        crate::app::update(&mut state, Action::OpenBookmarks);
+        assert_eq!(
+            action_for_key(&state, key('j')),
+            Some(Action::MoveBookmarks(BookmarkMove::Next))
+        );
+        assert_eq!(
+            action_for_key(&state, key('m')),
+            Some(Action::ToggleBookmark)
+        );
+        crate::app::update(&mut state, Action::InspectBookmark);
+        assert_eq!(
+            action_for_key(
+                &state,
+                KeyEvent::new(KeyCode::Backspace, KeyModifiers::NONE)
+            ),
+            Some(Action::ReturnToBookmarks)
+        );
+        crate::app::update(&mut state, Action::ToggleHelp);
+        assert_eq!(action_for_key(&state, key('m')), None);
+        assert_eq!(
+            action_for_key(&search_state(), key('M')),
+            Some(Action::EditSearch(InputRequest::InsertChar('M')))
+        );
     }
 
     #[test]

@@ -11,6 +11,7 @@ use ratatui::{
 
 use crate::{
     app::{Action, AppState, FooterStatus, View, update},
+    bookmarks,
     browser::BrowseLevel,
     clipboard::{ClipboardWriter, SystemClipboard},
     glyph::{
@@ -23,7 +24,9 @@ use crate::{
     keybindings::ResolvedKeymap,
     ui::{
         self, inspector,
-        layout::{browser_list_height, search_result_height, sequence_list_height},
+        layout::{
+            bookmarks_list_height, browser_list_height, search_result_height, sequence_list_height,
+        },
         normalization_result, render,
         settings::UiSettings,
         theme::ColorTheme,
@@ -78,7 +81,7 @@ fn run_event_loop(
     while state.is_running() {
         let size = terminal.size()?;
         let area = Rect::new(0, 0, size.width, size.height);
-        let preview_request = ui::glyph_preview_request(area, state);
+        let preview_request = ui::glyph_preview_request(area, state, ui);
         let preview_code_point = preview_request
             .map(|request| request.code_point)
             .unwrap_or_else(|| state.selected());
@@ -108,6 +111,7 @@ fn run_event_loop(
             let previous_screen = VisibleScreen::for_state(state);
             update(state, action);
             handle_clipboard_request(state, clipboard);
+            handle_bookmark_request(state);
             if previous_screen != VisibleScreen::for_state(state) {
                 // Some terminals retain parts of combining-character sequences after a differential redraw.
                 // Clear at screen boundaries so the next screen starts from empty cells without clearing during ordinary navigation.
@@ -126,6 +130,7 @@ enum VisibleScreen {
     Inspector,
     Browser(BrowseLevel),
     Search,
+    Bookmarks,
     Sequence,
     Normalization,
     NormalizationResult,
@@ -149,6 +154,7 @@ impl VisibleScreen {
                     .level(),
             ),
             View::Search => Self::Search,
+            View::Bookmarks => Self::Bookmarks,
             View::Sequence if state.showing_normalization_result() => Self::NormalizationResult,
             View::Sequence => Self::Sequence,
             View::Normalization => Self::Normalization,
@@ -171,6 +177,17 @@ fn handle_clipboard_request(state: &mut AppState, clipboard: &mut impl Clipboard
         Action::CompleteCopyDialog(status)
     } else {
         Action::ShowFooterStatus(status)
+    };
+    update(state, action);
+}
+
+fn handle_bookmark_request(state: &mut AppState) {
+    let Some(request) = state.take_bookmark_request() else {
+        return;
+    };
+    let action = match bookmarks::set_bookmarked(request.code_point, request.bookmarked) {
+        Ok(entries) => Action::CompleteBookmark { entries, request },
+        Err(error) => Action::ShowFooterStatus(FooterStatus::warning(error.to_string())),
     };
     update(state, action);
 }
@@ -203,6 +220,7 @@ fn resize_active_view(state: &mut AppState, area: Rect, keymap: &ResolvedKeymap)
         }
         View::Browser => Action::ResizeBrowserViewport(browser_list_height(area)),
         View::Search => Action::ResizeSearchViewport(search_result_height(area)),
+        View::Bookmarks => Action::ResizeBookmarksViewport(bookmarks_list_height(area)),
         View::Sequence if state.showing_normalization_result() => {
             let (original, result) = normalization_result::viewport_heights(area, state);
             update(state, Action::ResizeNormalizationOriginalViewport(original));

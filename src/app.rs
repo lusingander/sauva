@@ -1,5 +1,6 @@
 use tui_input::InputRequest;
 
+use crate::bookmarks::{Bookmark, BookmarkMove, BookmarkState};
 use crate::browser::{BrowseLevel, BrowseMove, BrowseState, BrowseTarget};
 use crate::copy_dialog::{CopyDialogState, CopyMove};
 use crate::help::{HelpMove, HelpState};
@@ -43,6 +44,17 @@ pub enum Action {
     EditSearch(InputRequest),
     MoveSearch(SearchMove),
     ResizeSearchViewport(usize),
+    OpenBookmarks,
+    CloseBookmarks,
+    MoveBookmarks(BookmarkMove),
+    ResizeBookmarksViewport(usize),
+    InspectBookmark,
+    ReturnToBookmarks,
+    ToggleBookmark,
+    CompleteBookmark {
+        entries: Vec<Bookmark>,
+        request: BookmarkRequest,
+    },
     MoveSequence(SequenceMove),
     ResizeSequenceViewport(usize),
     ResizeNormalizationOriginalViewport(usize),
@@ -71,6 +83,7 @@ impl Action {
                 | Self::ResizeInspectorViewport { .. }
                 | Self::ResizeBrowserViewport(_)
                 | Self::ResizeSearchViewport(_)
+                | Self::ResizeBookmarksViewport(_)
                 | Self::ResizeSequenceViewport(_)
                 | Self::ResizeNormalizationOriginalViewport(_)
                 | Self::UpdateGlyphPreview(_)
@@ -90,6 +103,7 @@ pub enum View {
     Inspector,
     Browser,
     Search,
+    Bookmarks,
     Sequence,
     Normalization,
 }
@@ -138,6 +152,12 @@ pub struct ClipboardRequest {
     from_copy_dialog: bool,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct BookmarkRequest {
+    pub code_point: CodePoint,
+    pub bookmarked: bool,
+}
+
 impl ClipboardRequest {
     pub fn success_message(&self) -> &str {
         &self.success_message
@@ -164,6 +184,10 @@ pub struct AppState {
     inspector: InspectorState,
     browse: Option<BrowseState>,
     search: Option<SearchState>,
+    bookmarks: BookmarkState,
+    inspecting_bookmark: bool,
+    bookmark_origin: Option<CodePoint>,
+    bookmark_request: Option<BookmarkRequest>,
     sequence: Option<SequenceState>,
     normalization: Option<NormalizationState>,
     showing_normalization_result: bool,
@@ -184,6 +208,10 @@ impl AppState {
             inspector: InspectorState::new(),
             browse: None,
             search: None,
+            bookmarks: BookmarkState::default(),
+            inspecting_bookmark: false,
+            bookmark_origin: None,
+            bookmark_request: None,
             sequence: None,
             normalization: None,
             showing_normalization_result: false,
@@ -232,6 +260,26 @@ impl AppState {
 
     pub fn search(&self) -> Option<&SearchState> {
         self.search.as_ref()
+    }
+
+    pub const fn bookmarks(&self) -> &BookmarkState {
+        &self.bookmarks
+    }
+
+    pub fn set_bookmarks(&mut self, entries: Vec<Bookmark>) {
+        self.bookmarks.replace(entries);
+    }
+
+    pub const fn inspecting_bookmark(&self) -> bool {
+        self.inspecting_bookmark
+    }
+
+    pub fn has_inspector_parent(&self) -> bool {
+        self.inspecting_bookmark || self.sequence().is_some()
+    }
+
+    pub fn take_bookmark_request(&mut self) -> Option<BookmarkRequest> {
+        self.bookmark_request.take()
     }
 
     pub fn sequence(&self) -> Option<&SequenceState> {
@@ -301,6 +349,7 @@ impl AppState {
                 .as_ref()
                 .and_then(SearchState::selected_result)
                 .map(|result| result.code_point()),
+            View::Bookmarks => self.bookmarks.selected().map(Bookmark::code_point),
             View::Sequence => self.sequence().map(SequenceState::selected),
             View::Normalization => None,
         }
@@ -397,6 +446,77 @@ pub fn update(state: &mut AppState, action: Action) {
             refresh_preview_for_change(state, previous_preview);
         }
         Action::OpenBrowser(_) => {}
+        Action::OpenBookmarks if state.view == View::Inspector => {
+            let previous_preview = state.preview_code_point();
+            if !state.inspecting_bookmark {
+                state.bookmark_origin = Some(state.selected);
+            }
+            state.bookmarks.select(state.selected);
+            state.view = View::Bookmarks;
+            refresh_preview_for_change(state, previous_preview);
+        }
+        Action::OpenBookmarks => {}
+        Action::CloseBookmarks if state.view == View::Bookmarks => {
+            let previous_preview = state.preview_code_point();
+            if let Some(origin) = state.bookmark_origin.take() {
+                select_code_point(state, origin);
+            }
+            state.inspecting_bookmark = false;
+            state.view = View::Inspector;
+            refresh_preview_for_change(state, previous_preview);
+        }
+        Action::CloseBookmarks => {}
+        Action::MoveBookmarks(movement) if state.view == View::Bookmarks => {
+            let previous_preview = state.preview_code_point();
+            state.bookmarks.move_selection(movement);
+            refresh_preview_for_change(state, previous_preview);
+        }
+        Action::MoveBookmarks(_) => {}
+        Action::ResizeBookmarksViewport(height) => state.bookmarks.resize_viewport(height),
+        Action::InspectBookmark if state.view == View::Bookmarks => {
+            if let Some(entry) = state.bookmarks.selected() {
+                let previous_preview = state.preview_code_point();
+                select_code_point(state, entry.code_point());
+                state.inspecting_bookmark = true;
+                state.view = View::Inspector;
+                refresh_preview_for_change(state, previous_preview);
+            }
+        }
+        Action::InspectBookmark => {}
+        Action::ReturnToBookmarks if state.view == View::Inspector && state.inspecting_bookmark => {
+            let previous_preview = state.preview_code_point();
+            state.view = View::Bookmarks;
+            refresh_preview_for_change(state, previous_preview);
+        }
+        Action::ReturnToBookmarks => {}
+        Action::ToggleBookmark if !state.help.is_open() => {
+            let code_point = match state.view {
+                View::Inspector => Some(state.selected),
+                View::Bookmarks => state.bookmarks.selected().map(Bookmark::code_point),
+                _ => None,
+            };
+            if let Some(code_point) = code_point {
+                state.bookmark_request = Some(BookmarkRequest {
+                    code_point,
+                    bookmarked: !state.bookmarks.contains(code_point),
+                });
+            }
+        }
+        Action::ToggleBookmark => {}
+        Action::CompleteBookmark { entries, request } => {
+            let previous_preview = state.preview_code_point();
+            state.bookmarks.replace(entries);
+            state.footer_status = Some(FooterStatus::info(format!(
+                "{} {}",
+                if request.bookmarked {
+                    "Bookmarked"
+                } else {
+                    "Removed bookmark"
+                },
+                request.code_point,
+            )));
+            refresh_preview_for_change(state, previous_preview);
+        }
         Action::AdvanceBrowser if state.view == View::Browser => {
             let previous_preview = state.preview_code_point();
             let (target, cursor) = {
@@ -514,6 +634,7 @@ pub fn update(state: &mut AppState, action: Action) {
         }
         Action::ResizeNormalizationOriginalViewport(_) => {}
         Action::InspectSequenceCodePoint if state.view == View::Sequence => {
+            state.inspecting_bookmark = false;
             let selected = state
                 .sequence()
                 .expect("the sequence view always has sequence state")
@@ -522,7 +643,11 @@ pub fn update(state: &mut AppState, action: Action) {
             state.view = View::Inspector;
         }
         Action::InspectSequenceCodePoint => {}
-        Action::ReturnToSequence if state.view == View::Inspector && state.sequence.is_some() => {
+        Action::ReturnToSequence
+            if state.view == View::Inspector
+                && state.sequence.is_some()
+                && !state.inspecting_bookmark =>
+        {
             let previous_preview = state.preview_code_point();
             state.view = View::Sequence;
             refresh_preview_for_change(state, previous_preview);
@@ -666,6 +791,87 @@ fn refresh_preview_for_change(state: &mut AppState, previous: Option<CodePoint>)
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn bookmarks_request_persistence_before_changing_state_and_keep_status_on_resize() {
+        let mut state = AppState::new();
+        update(&mut state, Action::ToggleBookmark);
+        assert!(!state.bookmarks().contains(state.selected()));
+        assert!(state.footer_status().is_none());
+        let request = state.take_bookmark_request().unwrap();
+        assert_eq!(
+            request,
+            BookmarkRequest {
+                code_point: CodePoint::from('A'),
+                bookmarked: true
+            }
+        );
+        update(
+            &mut state,
+            Action::CompleteBookmark {
+                entries: vec![Bookmark::new(
+                    request.code_point,
+                    jiff::Timestamp::UNIX_EPOCH,
+                )],
+                request,
+            },
+        );
+        assert!(state.bookmarks().contains(state.selected()));
+        assert_eq!(
+            state.footer_status().unwrap().message(),
+            "Bookmarked U+0041"
+        );
+        update(&mut state, Action::OpenBookmarks);
+        update(&mut state, Action::ToggleBookmark);
+        let request = state.take_bookmark_request().unwrap();
+        assert!(!request.bookmarked);
+        update(
+            &mut state,
+            Action::CompleteBookmark {
+                entries: Vec::new(),
+                request,
+            },
+        );
+        update(&mut state, Action::ResizeBookmarksViewport(10));
+        assert_eq!(
+            state.footer_status().unwrap().message(),
+            "Removed bookmark U+0041"
+        );
+        assert!(state.bookmarks().selected().is_none());
+        assert!(state.preview_code_point().is_none());
+        update(&mut state, Action::InspectBookmark);
+        assert_eq!(state.view(), View::Bookmarks);
+        update(&mut state, Action::ToggleBookmark);
+        assert!(state.take_bookmark_request().is_none());
+    }
+
+    #[test]
+    fn bookmark_navigation_restores_its_source_and_preserves_a_sequence_parent() {
+        let mut state = AppState::with_sequence("AB".to_owned());
+        update(&mut state, Action::InspectSequenceCodePoint);
+        state.set_bookmarks(vec![Bookmark::new(
+            CodePoint::from('→'),
+            jiff::Timestamp::UNIX_EPOCH,
+        )]);
+        update(&mut state, Action::OpenBookmarks);
+        assert_eq!(state.selected(), CodePoint::from('A'));
+        assert_eq!(state.preview_code_point(), Some(CodePoint::from('→')));
+        update(&mut state, Action::CloseBookmarks);
+        assert_eq!(state.selected(), CodePoint::from('A'));
+        update(&mut state, Action::OpenBookmarks);
+        update(&mut state, Action::InspectBookmark);
+        assert!(state.inspecting_bookmark());
+        assert_eq!(state.selected(), CodePoint::from('→'));
+        update(&mut state, Action::ReturnToBookmarks);
+        update(&mut state, Action::CloseBookmarks);
+        assert!(!state.inspecting_bookmark());
+        assert_eq!(state.selected(), CodePoint::from('A'));
+        update(&mut state, Action::ReturnToSequence);
+        assert_eq!(state.view(), View::Sequence);
+        assert_eq!(state.sequence().unwrap().selected_index(), 0);
+        update(&mut state, Action::ToggleBookmark);
+        assert!(state.take_bookmark_request().is_none());
+    }
 
     #[test]
     fn normalization_reference_follows_result_without_moving_the_input_cursor_or_viewport() {

@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use tui_input::backend::crossterm::to_input_request;
 use umbra::optional;
 
-const ALL_COMMANDS: [Command; 28] = [
+const ALL_COMMANDS: [Command; 30] = [
     Command::Quit,
     Command::Help,
     Command::Close,
@@ -25,6 +25,8 @@ const ALL_COMMANDS: [Command; 28] = [
     Command::CopyValue,
     Command::OpenCopyDialog,
     Command::OpenSearch,
+    Command::OpenBookmarks,
+    Command::ToggleBookmark,
     Command::BrowsePlanes,
     Command::BrowseRanges,
     Command::BrowseBlocks,
@@ -42,6 +44,7 @@ pub enum Context {
     Global,
     Inspector,
     Search,
+    Bookmarks,
     Sequence,
     Normalization,
     NormalizationResult,
@@ -59,6 +62,7 @@ impl Context {
             Self::Global => "global",
             Self::Inspector => "inspector",
             Self::Search => "search",
+            Self::Bookmarks => "bookmarks",
             Self::Sequence => "sequence",
             Self::Normalization => "normalization",
             Self::NormalizationResult => "normalization_result",
@@ -92,6 +96,8 @@ pub enum Command {
     CopyValue,
     OpenCopyDialog,
     OpenSearch,
+    OpenBookmarks,
+    ToggleBookmark,
     BrowsePlanes,
     BrowseRanges,
     BrowseBlocks,
@@ -145,6 +151,8 @@ impl Command {
             Self::CopyValue => "copy_value",
             Self::OpenCopyDialog => "open_copy_dialog",
             Self::OpenSearch => "search",
+            Self::OpenBookmarks => "bookmarks",
+            Self::ToggleBookmark => "toggle_bookmark",
             Self::BrowsePlanes => "browse_planes",
             Self::BrowseRanges => "browse_ranges",
             Self::BrowseBlocks => "browse_blocks",
@@ -303,6 +311,9 @@ pub struct Keybindings {
     search: SearchKeybindings,
     #[garde(dive)]
     #[nested]
+    bookmarks: BookmarkKeybindings,
+    #[garde(dive)]
+    #[nested]
     sequence: SequenceKeybindings,
     #[garde(dive)]
     #[nested]
@@ -336,6 +347,7 @@ impl Keybindings {
         self.global.append_bindings(&mut bindings);
         self.inspector.append_bindings(&mut bindings);
         self.search.append_bindings(&mut bindings);
+        self.bookmarks.append_bindings(&mut bindings);
         self.sequence.append_bindings(&mut bindings);
         self.normalization.append_bindings(&mut bindings);
         self.normalization_result.append_bindings(&mut bindings);
@@ -404,6 +416,8 @@ keybinding_context!(InspectorKeybindings, Context::Inspector, {
     last => (Command::Last, ["G"]),
     copy_value => (Command::CopyValue, ["y"]),
     search => (Command::OpenSearch, ["/"]),
+    bookmarks => (Command::OpenBookmarks, ["M"]),
+    toggle_bookmark => (Command::ToggleBookmark, ["m"]),
     browse_planes => (Command::BrowsePlanes, ["p"]),
     browse_ranges => (Command::BrowseRanges, ["r"]),
     browse_blocks => (Command::BrowseBlocks, ["b"]),
@@ -416,6 +430,19 @@ keybinding_context!(SearchKeybindings, Context::Search, {
     next_result => (Command::NextResult, ["down", "ctrl-n"]),
     inspect_result => (Command::InspectResult, ["enter"]),
     close => (Command::Close, ["esc"]),
+});
+
+keybinding_context!(BookmarkKeybindings, Context::Bookmarks, {
+    quit => (Command::Quit, ["q"]),
+    close => (Command::Close, ["esc"]),
+    move_up => (Command::MoveUp, ["k", "up"]),
+    move_down => (Command::MoveDown, ["j", "down"]),
+    page_up => (Command::PageUp, ["ctrl-u"]),
+    page_down => (Command::PageDown, ["ctrl-d"]),
+    first => (Command::First, ["g"]),
+    last => (Command::Last, ["G"]),
+    activate => (Command::Activate, ["enter"]),
+    toggle_bookmark => (Command::ToggleBookmark, ["m"]),
 });
 
 keybinding_context!(SequenceKeybindings, Context::Sequence, {
@@ -804,6 +831,7 @@ impl ResolvedKeymap {
         for context in [
             Context::Inspector,
             Context::Search,
+            Context::Bookmarks,
             Context::Sequence,
             Context::Normalization,
             Context::NormalizationResult,
@@ -909,6 +937,32 @@ mod tests {
     fn configured(toml: &str) -> Result<ResolvedKeymap, KeybindingError> {
         let config: OptionalKeybindings = toml::from_str(toml).unwrap();
         ResolvedKeymap::with_config(config.into())
+    }
+
+    #[test]
+    fn bookmark_bindings_are_customizable_and_checked_for_global_conflicts() {
+        let keymap = configured("[inspector]\nbookmarks = ['B']\ntoggle_bookmark = ['s']\n[bookmarks]\nactivate = ['l']").unwrap();
+        assert_eq!(
+            keymap.resolve(Context::Inspector, plain('B')),
+            Some(Command::OpenBookmarks)
+        );
+        assert_eq!(
+            keymap.resolve(Context::Inspector, plain('s')),
+            Some(Command::ToggleBookmark)
+        );
+        assert_eq!(keymap.resolve(Context::Inspector, plain('M')), None);
+        assert_eq!(keymap.resolve(Context::Inspector, plain('m')), None);
+        assert_eq!(
+            keymap.resolve(Context::Bookmarks, plain('l')),
+            Some(Command::Activate)
+        );
+        assert!(matches!(
+            configured("[bookmarks]\nmove_down = ['ctrl-c']"),
+            Err(KeybindingError::GlobalConflict {
+                context: Context::Bookmarks,
+                ..
+            })
+        ));
     }
 
     #[test]

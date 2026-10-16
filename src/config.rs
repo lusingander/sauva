@@ -318,6 +318,7 @@ mod tests {
             "[keybindings.global]",
             "[keybindings.inspector]",
             "[keybindings.search]",
+            "[keybindings.bookmarks]",
             "[keybindings.sequence]",
             "[keybindings.normalization]",
             "[keybindings.normalization_result]",
@@ -501,7 +502,7 @@ mod tests {
     }
 
     #[test]
-    fn text_input_cursor_is_loaded_from_config() {
+    fn ui_settings_are_loaded_from_config() {
         let directory = tempdir().unwrap();
         let path = directory.path().join("config.toml");
         fs::write(
@@ -509,6 +510,7 @@ mod tests {
             r#"
                 [ui]
                 input_cursor = { text = "|" }
+                bookmark_date_format = "%F %T"
             "#,
         )
         .unwrap();
@@ -518,6 +520,7 @@ mod tests {
             configured.ui().input_cursor,
             crate::ui::settings::InputCursor::Text("|".to_owned())
         );
+        assert_eq!(configured.ui().bookmark_date_format, "%F %T");
 
         fs::write(
             &path,
@@ -532,26 +535,22 @@ mod tests {
             configured.ui().input_cursor,
             crate::ui::settings::InputCursor::Native
         );
+        assert_eq!(configured.ui().bookmark_date_format, "%Y-%m-%d %H:%M %Z");
     }
 
-    #[test]
-    fn invalid_text_input_cursor_reports_its_setting() {
+    #[rstest::rstest]
+    #[case("input_cursor = { text = '界' }", "ui.input_cursor")]
+    #[case("bookmark_date_format = '%?'", "ui.bookmark_date_format")]
+    fn invalid_ui_setting_reports_its_path(#[case] setting: &str, #[case] name: &str) {
         let directory = tempdir().unwrap();
         let path = directory.path().join("config.toml");
-        fs::write(
-            &path,
-            r#"
-                [ui]
-                input_cursor = { text = "界" }
-            "#,
-        )
-        .unwrap();
+        fs::write(&path, format!("[ui]\n{setting}\n")).unwrap();
 
         let error = load_config(Some(&ConfigFile::Explicit(path.clone()))).unwrap_err();
         let message = error.to_string();
         assert!(matches!(error, ConfigError::Validate { .. }));
         assert!(message.contains(&path.display().to_string()));
-        assert!(message.contains("ui.input_cursor"));
+        assert!(message.contains(name));
     }
 
     #[test]

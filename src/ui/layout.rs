@@ -41,6 +41,13 @@ pub struct SearchLayout {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct BookmarkLayout {
+    pub list: Rect,
+    pub preview: Option<Rect>,
+    pub summary: Option<Rect>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct InspectorLayout {
     pub details: Rect,
     pub preview: Option<GlyphPreviewLayout>,
@@ -110,6 +117,31 @@ pub fn search(area: Rect) -> SearchLayout {
 
 pub fn sequence(area: Rect) -> BrowserLayout {
     flexible_primary_and_auxiliary(area)
+}
+
+pub fn bookmarks(area: Rect) -> BookmarkLayout {
+    let panes = flexible_primary_and_auxiliary(area);
+    if panes.context.is_some() {
+        BookmarkLayout {
+            list: panes.navigator,
+            preview: panes.context,
+            summary: None,
+        }
+    } else {
+        let [list, summary] =
+            Layout::vertical([Constraint::Min(1), Constraint::Length(5)]).areas(area);
+        BookmarkLayout {
+            list,
+            preview: None,
+            summary: Some(summary),
+        }
+    }
+}
+
+pub fn bookmarks_list_height(area: Rect) -> usize {
+    calculate(area).map_or(0, |layout| {
+        usize::from(bookmarks(layout.main).list.height.saturating_sub(2))
+    })
 }
 
 pub fn normalization_result(area: Rect, original_width: u16) -> NormalizationResultLayout {

@@ -11,7 +11,7 @@ use crate::{
     input::{context_for_state, view_context_for_state},
     keybindings::{Context, ResolvedKeymap},
     ui::{
-        browser, copy_dialog, glyph_preview, help, inspector,
+        bookmarks, browser, copy_dialog, glyph_preview, help, inspector,
         layout::{MINIMUM_SIZE, calculate},
         normalization, search, sequence,
         settings::UiSettings,
@@ -47,6 +47,7 @@ pub fn render(
             }
             View::Browser => browser::render(frame, layout.main, state, color_theme),
             View::Search => search::render(frame, layout.main, state, color_theme, ui),
+            View::Bookmarks => bookmarks::render(frame, layout.main, state, color_theme, ui),
             View::Sequence => sequence::render(frame, layout.main, state, color_theme),
             View::Normalization => normalization::render(frame, layout.main, state, color_theme),
         }
@@ -97,6 +98,7 @@ fn render_header(frame: &mut Frame, area: Rect, state: &AppState, color_theme: &
 
 fn header_location(state: &AppState, context: Context) -> String {
     match context {
+        Context::Inspector if state.inspecting_bookmark() => "Bookmarks / Inspector".to_owned(),
         Context::Inspector => state.sequence().map_or_else(
             || "Inspector".to_owned(),
             |sequence| {
@@ -160,7 +162,25 @@ fn compact_location(location: &str, width: usize) -> String {
 
 fn header_status(state: &AppState) -> String {
     match state.view() {
-        View::Inspector => state.selected().to_string(),
+        View::Inspector => format!(
+            "{}{}",
+            state.selected(),
+            if state.bookmarks().contains(state.selected()) {
+                "  * Bookmarked"
+            } else {
+                ""
+            }
+        ),
+        View::Bookmarks => {
+            let count = state.bookmarks().entries().len();
+            let label = format!(
+                "{count} {}",
+                if count == 1 { "bookmark" } else { "bookmarks" }
+            );
+            state.bookmarks().selected().map_or(label.clone(), |entry| {
+                format!("{label} · {}", entry.code_point())
+            })
+        }
         View::Normalization => state.normalization().unwrap().form().label().to_owned(),
         View::Browser => state
             .browse()
@@ -260,7 +280,7 @@ fn render_footer(
     };
     let content = help::footer(
         context,
-        state.sequence().is_some(),
+        state.has_inspector_parent(),
         area.width,
         keymap,
         color_theme,
@@ -294,6 +314,83 @@ mod tests {
         },
         ui::theme::{DifferenceColors, SelectionColors, StatusColors},
     };
+
+    #[rstest::rstest]
+    #[case(100, 30)]
+    #[case(60, 16)]
+    fn bookmark_details_show_the_configured_date_without_a_list_date_column(
+        #[case] width: u16,
+        #[case] height: u16,
+    ) {
+        let mut state = AppState::new();
+        state.set_bookmarks(vec![crate::bookmarks::Bookmark::new(
+            crate::unicode::CodePoint::from('→'),
+            jiff::Timestamp::UNIX_EPOCH,
+        )]);
+        update(&mut state, Action::OpenBookmarks);
+        update(
+            &mut state,
+            Action::ResizeBookmarksViewport(crate::ui::layout::bookmarks_list_height(Rect::new(
+                0, 0, width, height,
+            ))),
+        );
+        let backend = TestBackend::new(width, height);
+        let mut terminal = Terminal::new(backend).unwrap();
+        let ui = UiSettings {
+            bookmark_date_format: "2026-10-16 14:32 JST".to_owned(),
+            ..UiSettings::default()
+        };
+        terminal
+            .draw(|frame| {
+                render(
+                    frame,
+                    &state,
+                    &ColorTheme::default(),
+                    &ui,
+                    &ResolvedKeymap::default(),
+                )
+            })
+            .unwrap();
+        let text = buffer_to_text(terminal.backend().buffer());
+        assert_eq!(text.matches("2026-10-16 14:32 JST").count(), 1);
+        assert!(text.contains("Added at"));
+        assert!(text.contains("RIGHTWARDS ARROW"));
+        insta::assert_snapshot!(format!("bookmarks_{width}x{height}"), text);
+    }
+
+    #[test]
+    fn bookmarking_changes_the_inspector_header_without_moving_its_properties() {
+        let mut state = AppState::new();
+        let before = render_to_text(&state, 60, 16);
+        state.set_bookmarks(vec![crate::bookmarks::Bookmark::new(
+            state.selected(),
+            jiff::Timestamp::UNIX_EPOCH,
+        )]);
+        let after = render_to_text(&state, 60, 16);
+        assert!(
+            after
+                .lines()
+                .next()
+                .unwrap()
+                .contains("U+0041  * Bookmarked")
+        );
+        assert_eq!(
+            before.lines().skip(1).collect::<Vec<_>>(),
+            after.lines().skip(1).collect::<Vec<_>>()
+        );
+        update(&mut state, Action::OpenBookmarks);
+        state.set_bookmarks(Vec::new());
+        let empty = render_to_text(&state, 100, 30);
+        assert!(empty.contains("No bookmarks yet"));
+        assert!(
+            crate::ui::glyph_preview_request(
+                Rect::new(0, 0, 100, 30),
+                &state,
+                &UiSettings::default()
+            )
+            .is_none()
+        );
+    }
 
     #[test]
     fn copy_dialog_sequence_standard() {
@@ -438,6 +535,12 @@ mod tests {
         update(
             &mut state,
             Action::ResizeSearchViewport(search_result_height(Rect::new(0, 0, width, height))),
+        );
+        update(
+            &mut state,
+            Action::ResizeBookmarksViewport(crate::ui::layout::bookmarks_list_height(Rect::new(
+                0, 0, width, height,
+            ))),
         );
         update(
             &mut state,
@@ -1432,7 +1535,11 @@ mod tests {
         update(&mut state, Action::ToggleHelp);
 
         assert_eq!(
-            crate::ui::glyph_preview_request(Rect::new(0, 0, 100, 30), &state),
+            crate::ui::glyph_preview_request(
+                Rect::new(0, 0, 100, 30),
+                &state,
+                &UiSettings::default()
+            ),
             None
         );
     }
@@ -1467,6 +1574,7 @@ mod tests {
         let mut terminal = Terminal::new(backend).unwrap();
         let ui = UiSettings {
             input_cursor: crate::ui::settings::InputCursor::Text("|".to_owned()),
+            ..UiSettings::default()
         };
 
         terminal

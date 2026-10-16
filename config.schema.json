@@ -272,6 +272,12 @@
             }
           ],
           "default": "native"
+        },
+        "bookmark_date_format": {
+          "description": "strftime format for bookmark registration times, displayed in the local time zone. Must produce nonempty text without control characters.",
+          "type": "string",
+          "minLength": 1,
+          "default": "%Y-%m-%d %H:%M %Z"
         }
       },
       "additionalProperties": false
@@ -374,6 +380,12 @@
         "search": {
           "$ref": "#/definitions/keyArray"
         },
+        "bookmarks": {
+          "$ref": "#/definitions/keyArray"
+        },
+        "toggle_bookmark": {
+          "$ref": "#/definitions/keyArray"
+        },
         "browse_planes": {
           "$ref": "#/definitions/keyArray"
         },
@@ -389,6 +401,22 @@
         "back": {
           "$ref": "#/definitions/keyArray"
         }
+      },
+      "additionalProperties": false
+    },
+    "bookmarkKeybindings": {
+      "type": "object",
+      "properties": {
+        "quit": { "$ref": "#/definitions/keyArray" },
+        "close": { "$ref": "#/definitions/keyArray" },
+        "move_up": { "$ref": "#/definitions/keyArray" },
+        "move_down": { "$ref": "#/definitions/keyArray" },
+        "page_up": { "$ref": "#/definitions/keyArray" },
+        "page_down": { "$ref": "#/definitions/keyArray" },
+        "first": { "$ref": "#/definitions/keyArray" },
+        "last": { "$ref": "#/definitions/keyArray" },
+        "activate": { "$ref": "#/definitions/keyArray" },
+        "toggle_bookmark": { "$ref": "#/definitions/keyArray" }
       },
       "additionalProperties": false
     },
@@ -665,6 +693,9 @@
         },
         "search": {
           "$ref": "#/definitions/searchKeybindings"
+        },
+        "bookmarks": {
+          "$ref": "#/definitions/bookmarkKeybindings"
         },
         "sequence": {
           "$ref": "#/definitions/sequenceKeybindings"

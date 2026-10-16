@@ -1,3 +1,4 @@
+pub mod bookmarks;
 pub mod browser;
 mod copy_dialog;
 mod glyph_preview;
@@ -23,6 +24,7 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     app::{AppState, View},
+    ui::settings::UiSettings,
     ui::theme::SelectionColors,
     unicode::CodePoint,
 };
@@ -33,7 +35,11 @@ pub struct GlyphPreviewRequest {
     pub placeholder: Rect,
 }
 
-pub fn glyph_preview_request(area: Rect, state: &AppState) -> Option<GlyphPreviewRequest> {
+pub fn glyph_preview_request(
+    area: Rect,
+    state: &AppState,
+    ui: &UiSettings,
+) -> Option<GlyphPreviewRequest> {
     let shell = layout::calculate(area)?;
     let code_point = state.preview_code_point()?;
     let placeholder = match state.view() {
@@ -55,6 +61,9 @@ pub fn glyph_preview_request(area: Rect, state: &AppState) -> Option<GlyphPrevie
                 selection_preview::glyph_area(preview, code_point, matched_alias)
             })
         }
+        View::Bookmarks => layout::bookmarks(shell.main).preview.and_then(|preview| {
+            selection_preview::glyph_area_for_bookmark(preview, state.bookmarks().selected()?, ui)
+        }),
         View::Sequence if state.showing_normalization_result() => None,
         View::Sequence => {
             let sequence = state.sequence()?;
@@ -120,6 +129,10 @@ fn padded_line(mut line: Line<'static>, width: usize) -> Line<'static> {
 mod tests {
     use super::*;
     use crate::fixtures;
+
+    fn glyph_preview_request(area: Rect, state: &AppState) -> Option<GlyphPreviewRequest> {
+        super::glyph_preview_request(area, state, &UiSettings::default())
+    }
 
     #[test]
     fn copy_dialog_and_its_help_hide_preview_requests_until_returning_to_sequence() {
