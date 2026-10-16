@@ -14,6 +14,7 @@ Sauva is a terminal application for searching and browsing Unicode code points. 
 - Inspect Unicode properties, encodings, and decomposition mappings.
 - Search by character, code point, Unicode name, or formal name alias.
 - Browse planes, ranges, blocks, and code points.
+- Bookmark code points and revisit them across sessions.
 - Analyze strings by code point and grapheme cluster in Sequence mode.
 - Compare NFC, NFD, NFKC, and NFKD normalization forms.
 - Customize colors, glyph preview fonts, and keybindings.
@@ -95,9 +96,10 @@ For input interpretation, stdin handling, and graphics modes, see [Command Line 
 | <kbd>Ctrl-C</kbd> | Quit from any view |
 | <kbd>j</kbd> / <kbd>k</kbd> or arrow keys | Move the selection; use <kbd>Up</kbd> / <kbd>Down</kbd> in Search |
 | <kbd>/</kbd> | Open Search from the Inspector |
+| <kbd>m</kbd> / <kbd>M</kbd> | Toggle a bookmark / open Bookmarks from the Inspector |
 | <kbd>p</kbd>, <kbd>r</kbd>, <kbd>b</kbd>, <kbd>c</kbd> | Open Browse from the Inspector |
 | <kbd>Enter</kbd> | Open the selected item or inspect a code point |
-| <kbd>Backspace</kbd> | Go back in Browse or return from the Inspector to its Sequence |
+| <kbd>Backspace</kbd> | Go back in Browse or return from the Inspector to its Sequence or Bookmarks |
 | <kbd>y</kbd> | Copy the selected Inspector value or normalization result |
 | <kbd>n</kbd> | Compare normalization forms from Sequence |
 

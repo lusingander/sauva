@@ -16,6 +16,7 @@
   - [Inspector](./features/inspector.md)
   - [Search](./features/search.md)
   - [Browse](./features/browse.md)
+  - [Bookmarks](./features/bookmarks.md)
   - [Sequence](./features/sequence.md)
   - [Normalization](./features/normalization.md)
 - [FAQ](./faq/index.md)

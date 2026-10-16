@@ -32,11 +32,13 @@ Context: `inspector`.
 | `last` | <kbd>G</kbd> | Select the last property |
 | `copy_value` | <kbd>y</kbd> | Copy the selected property value |
 | `search` | <kbd>/</kbd> | Open search |
+| `toggle_bookmark` | <kbd>m</kbd> | Add or remove the current code point's bookmark |
+| `bookmarks` | <kbd>M</kbd> | Open Bookmarks |
 | `browse_planes` | <kbd>p</kbd> | Browse planes |
 | `browse_ranges` | <kbd>r</kbd> | Browse ranges in the current plane |
 | `browse_blocks` | <kbd>b</kbd> | Browse blocks |
 | `browse_code_points` | <kbd>c</kbd> | Browse code points in the current range |
-| `back` | <kbd>Backspace</kbd> | Return to the sequence, when one is open |
+| `back` | <kbd>Backspace</kbd> | Return to the bookmark list or sequence that opened the Inspector |
 
 ## Search
 
@@ -50,6 +52,25 @@ Context: `search`.
 | `close` | <kbd>Esc</kbd> | Close search |
 
 Character keys edit the query, including <kbd>j</kbd>, <kbd>k</kbd>, and <kbd>q</kbd>. Use the arrow keys or <kbd>Ctrl-P</kbd> / <kbd>Ctrl-N</kbd> to select results. Search input editing keys are reserved and cannot be assigned to commands.
+
+## Bookmarks
+
+Context: `bookmarks`.
+
+| Command | Keys | Action |
+| --- | --- | --- |
+| `quit` | <kbd>q</kbd> | Quit |
+| `close` | <kbd>Esc</kbd> | Close Bookmarks and restore the original Inspector |
+| `move_up` | <kbd>k</kbd>, <kbd>Up</kbd> | Select the previous bookmark |
+| `move_down` | <kbd>j</kbd>, <kbd>Down</kbd> | Select the next bookmark |
+| `page_up` | <kbd>Ctrl-U</kbd> | Move up one page |
+| `page_down` | <kbd>Ctrl-D</kbd> | Move down one page |
+| `first` | <kbd>g</kbd> | Select the first bookmark |
+| `last` | <kbd>G</kbd> | Select the last bookmark |
+| `activate` | <kbd>Enter</kbd> | Inspect the selected code point |
+| `toggle_bookmark` | <kbd>m</kbd> | Remove the selected bookmark |
+
+Use <kbd>Backspace</kbd> in the Inspector to return to the list. See [Bookmarks](../features/bookmarks.md) for registration times and storage.
 
 ## Sequence
 
