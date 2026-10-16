@@ -72,12 +72,10 @@ Type "m"
 Sleep 1s
 
 Screenshot "./img/bookmark-added.png"
-Sleep 2s
+Sleep 100ms
 
 Type "m"
 Sleep 1s
-
-Sleep 2s
 
 # The list contains only the entries with fixed registration times.
 
@@ -85,16 +83,16 @@ Type "M"
 Sleep 1s
 
 Screenshot "./img/bookmarks.png"
-Sleep 2s
+Sleep 100ms
 
 Type@400ms "jjjj"
-Sleep 1s
+Sleep 500ms
 
 Type "g"
-Sleep 1s
+Sleep 500ms
 
 Enter
-Sleep 2s
+Sleep 1s
 
 Backspace
 Sleep 2s
