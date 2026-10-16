@@ -59,7 +59,10 @@ Sleep 100ms
 Type@400ms "jjjj"
 Sleep 500ms
 
-Type "gj"
+Type "g"
+Sleep 500ms
+
+Type "j"
 Sleep 500ms
 
 Enter
