@@ -539,12 +539,24 @@ mod tests {
     }
 
     #[rstest::rstest]
-    #[case("input_cursor = { text = '界' }", "ui.input_cursor")]
-    #[case("bookmark_date_format = '%?'", "ui.bookmark_date_format")]
-    fn invalid_ui_setting_reports_its_path(#[case] setting: &str, #[case] name: &str) {
+    #[case(
+        r#"
+            [ui]
+            input_cursor = { text = "界" }
+        "#,
+        "ui.input_cursor"
+    )]
+    #[case(
+        r#"
+            [ui]
+            bookmark_date_format = "%?"
+        "#,
+        "ui.bookmark_date_format"
+    )]
+    fn invalid_ui_setting_reports_its_path(#[case] source: &str, #[case] name: &str) {
         let directory = tempdir().unwrap();
         let path = directory.path().join("config.toml");
-        fs::write(&path, format!("[ui]\n{setting}\n")).unwrap();
+        fs::write(&path, source).unwrap();
 
         let error = load_config(Some(&ConfigFile::Explicit(path.clone()))).unwrap_err();
         let message = error.to_string();
