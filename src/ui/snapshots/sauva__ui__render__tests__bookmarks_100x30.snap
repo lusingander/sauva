@@ -31,4 +31,4 @@ expression: text
                                                             │
                                                             │
 
- k/j Move  Enter Inspect  m Remove  Esc Close  q Quit                                       F1 Help
+ k/j Move  C-u/C-d Page  g/G Ends  Enter Inspect  m Remove  Esc Close  q Quit               F1 Help

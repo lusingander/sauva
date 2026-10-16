@@ -550,6 +550,8 @@ fn short_help_items(context: Context, has_inspector_parent: bool) -> Vec<ShortHe
         ],
         Context::Bookmarks => vec![
             short(&[C::MoveUp, C::MoveDown], "Move", 1),
+            short(&[C::PageUp, C::PageDown], "Page", 3),
+            short(&[C::First, C::Last], "Ends", 3),
             short(&[C::Activate], "Inspect", 0),
             short(&[C::ToggleBookmark], "Remove", 0),
             short(&[C::Close], "Close", 0),
