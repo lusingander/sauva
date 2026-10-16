@@ -543,7 +543,7 @@ fn short_help_items(context: Context, has_inspector_parent: bool) -> Vec<ShortHe
             short(&[C::First, C::Last], "Ends", 3),
             short(&[C::CopyValue], "Copy", 1),
             short(&[C::OpenSearch], "Search", 2),
-            short(&[C::ToggleBookmark, C::OpenBookmarks], "Bookmarks", 1),
+            short(&[C::ToggleBookmark, C::OpenBookmarks], "Bookmarks", 3),
             short(&[C::BrowsePlanes, C::BrowseRanges, C::BrowseBlocks, C::BrowseCodePoints], "Browse", 2),
             short(&[C::Back], "Back", 1),
             short(&[C::Quit], "Quit", 0),
