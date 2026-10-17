@@ -875,7 +875,10 @@ mod tests {
 
         update(&mut state, Action::MoveCodePoint(CodePointMove::Next));
         assert_eq!(state.selected().value(), 0xd800);
-        assert_eq!(state.inspector().selected_index(), 10);
+        assert_eq!(
+            selected_inspector_field(&state),
+            crate::inspector::InspectorFieldId::UnicodeVersion
+        );
         assert_eq!(state.inspector().offset(), 12);
 
         update(&mut state, Action::MoveCodePoint(CodePointMove::Previous));
@@ -959,21 +962,24 @@ mod tests {
         let mut state = AppState::default();
         resize_inspector(&mut state, 5);
         update(&mut state, Action::MoveInspector(InspectorMove::Last));
-        assert_eq!(state.inspector().offset(), 12);
+        let offset = state.inspector().offset();
 
         update(&mut state, Action::OpenSearch);
         edit_search_query(&mut state, "A");
         update(&mut state, Action::InspectSearchResult);
         assert_eq!(state.selected().value(), 0x0041);
-        assert_eq!(state.inspector().offset(), 12);
+        assert_eq!(state.inspector().offset(), offset);
 
         update(&mut state, Action::OpenSearch);
         update(&mut state, Action::EditSearch(InputRequest::DeleteLine));
         edit_search_query(&mut state, "U+2192");
         update(&mut state, Action::InspectSearchResult);
         assert_eq!(state.selected().value(), 0x2192);
-        assert_eq!(state.inspector().selected_index(), 16);
-        assert_eq!(state.inspector().offset(), 12);
+        assert_eq!(
+            selected_inspector_field(&state),
+            crate::inspector::InspectorFieldId::UnicodeVersion
+        );
+        assert_eq!(state.inspector().offset(), offset);
     }
 
     #[test]
@@ -1023,14 +1029,15 @@ mod tests {
         let mut state = AppState::default();
         resize_inspector(&mut state, 5);
         update(&mut state, Action::MoveInspector(InspectorMove::Last));
+        let offset = state.inspector().offset();
 
         update(&mut state, Action::OpenSearch);
         update(&mut state, Action::CloseSearch);
-        assert_eq!(state.inspector().offset(), 12);
+        assert_eq!(state.inspector().offset(), offset);
 
         update(&mut state, Action::OpenBrowser(BrowseLevel::Plane));
         update(&mut state, Action::CloseBrowser);
-        assert_eq!(state.inspector().offset(), 12);
+        assert_eq!(state.inspector().offset(), offset);
     }
 
     #[test]
@@ -1067,6 +1074,7 @@ mod tests {
         let mut state = AppState::with_selected(CodePoint::new(0x0041).unwrap());
         resize_inspector(&mut state, 5);
         update(&mut state, Action::MoveInspector(InspectorMove::Last));
+        let offset = state.inspector().offset();
         update(&mut state, Action::OpenBrowser(BrowseLevel::Plane));
         update(&mut state, Action::AdvanceBrowser);
         update(&mut state, Action::MoveBrowser(BrowseMove::Down));
@@ -1074,8 +1082,11 @@ mod tests {
         update(&mut state, Action::AdvanceBrowser);
         assert_eq!(state.selected().value(), 0x0041);
         assert_eq!(state.preview_code_point().unwrap().value(), 0x0141);
-        assert_eq!(state.inspector().selected_index(), 16);
-        assert_eq!(state.inspector().offset(), 12);
+        assert_eq!(
+            selected_inspector_field(&state),
+            crate::inspector::InspectorFieldId::UnicodeVersion
+        );
+        assert_eq!(state.inspector().offset(), offset);
 
         update(&mut state, Action::MoveBrowser(BrowseMove::Right));
         assert_eq!(state.browse().unwrap().cursor().value(), 0x0142);
@@ -1346,6 +1357,7 @@ mod tests {
         let mut state = AppState::default();
         resize_inspector(&mut state, 5);
         update(&mut state, Action::MoveInspector(InspectorMove::Last));
+        let offset = state.inspector().offset();
         update(&mut state, Action::OpenSearch);
         edit_search_query(&mut state, "→");
 
@@ -1353,8 +1365,11 @@ mod tests {
 
         assert_eq!(state.view(), View::Inspector);
         assert_eq!(state.selected().value(), 0x2192);
-        assert_eq!(state.inspector().selected_index(), 16);
-        assert_eq!(state.inspector().offset(), 12);
+        assert_eq!(
+            selected_inspector_field(&state),
+            crate::inspector::InspectorFieldId::UnicodeVersion
+        );
+        assert_eq!(state.inspector().offset(), offset);
         assert_eq!(state.search().unwrap().input().value(), "→");
     }
 
@@ -1424,6 +1439,14 @@ mod tests {
 
         update(&mut state, Action::MoveInspector(InspectorMove::NextField));
         assert_eq!(state.footer_status(), None);
+    }
+
+    fn selected_inspector_field(state: &AppState) -> crate::inspector::InspectorFieldId {
+        crate::inspector::InspectorField::for_code_point(
+            state.selected(),
+            state.inspector().display_mode(),
+        )[state.inspector().selected_index()]
+        .id()
     }
 
     fn resize_inspector(state: &mut AppState, viewport_height: usize) {

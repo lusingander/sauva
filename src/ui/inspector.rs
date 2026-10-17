@@ -235,13 +235,15 @@ mod tests {
         for (mode, expected) in [
             (
                 InspectorDisplayMode::Relevant,
-                vec!["Identity", "Classification", "Encoding", "Data"],
+                vec!["Identity", "Classification", "Case", "Encoding", "Data"],
             ),
             (
                 InspectorDisplayMode::All,
                 vec![
                     "Identity",
                     "Classification",
+                    "Case",
+                    "Numeric",
                     "Encoding",
                     "Normalization",
                     "Data",
@@ -258,7 +260,13 @@ mod tests {
                 text.iter()
                     .filter(|line| matches!(
                         line.as_str(),
-                        "Identity" | "Classification" | "Encoding" | "Normalization" | "Data"
+                        "Identity"
+                            | "Classification"
+                            | "Case"
+                            | "Numeric"
+                            | "Encoding"
+                            | "Normalization"
+                            | "Data"
                     ))
                     .map(String::as_str)
                     .collect::<Vec<_>>(),
@@ -467,8 +475,8 @@ mod tests {
     #[test]
     fn property_modes_keep_document_metrics_and_clamp_selection_after_resizing() {
         for (mode, document_height, field_count) in [
-            (InspectorDisplayMode::Relevant, 24, 17),
-            (InspectorDisplayMode::All, 31, 22),
+            (InspectorDisplayMode::Relevant, 28, 19),
+            (InspectorDisplayMode::All, 43, 28),
         ] {
             let mut state = fixtures::startup();
             if mode == InspectorDisplayMode::All {
@@ -489,7 +497,13 @@ mod tests {
             ] {
                 let metrics = viewport_metrics(area, &state);
                 assert_eq!(metrics.viewport_height, viewport_height);
-                assert_eq!(metrics.document_height, document_height, "area: {area:?}");
+                let expected =
+                    if mode == InspectorDisplayMode::All && matches!(area.width, 99 | 140) {
+                        41
+                    } else {
+                        document_height
+                    };
+                assert_eq!(metrics.document_height, expected, "area: {area:?}");
                 assert_eq!(metrics.field_ranges.len(), field_count);
             }
             let metrics = viewport_metrics(Rect::new(0, 0, 100, 16), &state);
@@ -507,7 +521,7 @@ mod tests {
                 Action::MoveInspector(crate::inspector::InspectorMove::Last),
             );
             assert_eq!(state.inspector().offset(), document_height - 11);
-            let metrics = viewport_metrics(Rect::new(0, 0, 140, 40), &state);
+            let metrics = viewport_metrics(Rect::new(0, 0, 140, 60), &state);
             update(
                 &mut state,
                 Action::ResizeInspectorViewport {

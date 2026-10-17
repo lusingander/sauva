@@ -214,6 +214,77 @@ fn starts_and_restores_the_terminal_on_quit() -> termlens::Result<()> {
 }
 
 #[test]
+fn inspector_shows_case_expansions_and_numeric_zero_and_follows_property_selection()
+-> termlens::Result<()> {
+    let directory = tempdir()?;
+    let config = directory.path().join("config.toml");
+    fs::write(&config, "")?;
+    let mut terminal = termlens::bin!(
+        "sauva",
+        size(100, 60),
+        env("SAUVA_CONFIG_FILE", &config),
+        env("XDG_DATA_HOME", directory.path()),
+        args(["ß0", "--graphics", "off"])
+    )?;
+    let selected_property = |screen: &termlens::Screen, label: &str| {
+        (0..screen.rows()).any(|row| {
+            screen.row_text(row).trim_start().starts_with(label)
+                && screen.cell(row, 3).unwrap().style().bg == Color::Indexed(6)
+        })
+    };
+    terminal.wait_until(|screen| screen.row_text(0).contains("1/2 · U+00DF"))?;
+    terminal.send(Key::Enter)?;
+    let case = terminal.snapshot_after(|screen| {
+        screen.contains("Case Folding") && screen.contains("Unicode Version")
+    })?;
+    for target in [
+        "U+0053 LATIN CAPITAL LETTER S",
+        "U+0073 LATIN SMALL LETTER S",
+    ] {
+        assert_eq!(
+            (0..case.rows())
+                .filter(|&row| case.row_text(row).contains(target))
+                .count(),
+            3,
+            "{case}"
+        );
+    }
+    assert!(!case.contains("Lowercase Mapping"), "{case}");
+    assert!(!case.contains("Numeric Type"), "{case}");
+
+    terminal.send(Key::Backspace)?;
+    terminal.wait_until(|screen| screen.row_text(0).contains("1/2 · U+00DF"))?;
+    terminal.send(Key::Char('j'))?;
+    terminal.send(Key::Enter)?;
+    let numeric = terminal.snapshot_after(|screen| {
+        screen.contains("Numeric Type               Decimal")
+            && screen.contains("Numeric Value              0")
+    })?;
+    assert!(!numeric.contains("Case"), "{numeric}");
+    terminal.send(Key::Char(']'))?;
+    terminal.send(Key::Char(']'))?;
+    terminal.send(Key::Char('j'))?;
+    terminal.wait_until(|screen| selected_property(screen, "Numeric Value"))?;
+    terminal.send(Key::Char('l'))?;
+    terminal.wait_until(|screen| {
+        screen.contains("Numeric Value              1")
+            && selected_property(screen, "Numeric Value")
+    })?;
+    terminal.send(Key::Char('h'))?;
+    terminal.send(Key::Char('h'))?;
+    let uncased = terminal.snapshot_after(|screen| {
+        screen.row_text(0).contains("U+002F")
+            && !screen.contains("Numeric Type")
+            && selected_property(screen, "UTF-8")
+    })?;
+    assert!(!uncased.contains("Numeric Value"), "{uncased}");
+    assert!(!uncased.contains("Case"), "{uncased}");
+    terminal.send(Key::Char('q'))?;
+    assert!(terminal.wait_exit()?.success());
+    Ok(())
+}
+
+#[test]
 fn inspector_property_modes_show_optional_fields_and_preserve_the_selected_property()
 -> termlens::Result<()> {
     let directory = tempdir()?;
@@ -221,13 +292,13 @@ fn inspector_property_modes_show_optional_fields_and_preserve_the_selected_prope
     fs::write(&config, "")?;
     let mut terminal = termlens::bin!(
         "sauva",
-        size(100, 40),
+        size(100, 60),
         env("SAUVA_CONFIG_FILE", &config),
         env("XDG_DATA_HOME", directory.path()),
         args(["U+00C5", "--graphics", "off"])
     )?;
     let selected_property = |screen: &termlens::Screen, label: &str| {
-        (0..40).any(|row| {
+        (0..screen.rows()).any(|row| {
             screen.row_text(row).trim_start().starts_with(label)
                 && screen.cell(row, 3).unwrap().style().bg == Color::Indexed(6)
         })
@@ -325,6 +396,8 @@ fn inspector_group_keys_show_section_headings_and_select_their_first_properties(
     assert!(screen.row_text(4).contains("Character"), "{screen}");
     assert_eq!(screen.cell(4, 3).unwrap().style().bg, Color::Indexed(6));
 
+    terminal.send(Key::Char(']'))?;
+    terminal.send(Key::Char(']'))?;
     terminal.send(Key::Char(']'))?;
     terminal.send(Key::Char(']'))?;
     let screen = terminal

@@ -955,7 +955,7 @@ mod tests {
                 Relevant,
                 F::UnicodeVersion,
             ),
-            (0xd800, All, F::Utf8, 0xd800, Relevant, F::BidiClass),
+            (0xd800, All, F::Utf8, 0xd800, Relevant, F::UnicodeVersion),
             (
                 0x0021,
                 Relevant,
@@ -980,7 +980,14 @@ mod tests {
                 Relevant,
                 F::UnicodeVersion,
             ),
-            (0xd7ff, Relevant, F::Utf8, 0xd800, Relevant, F::BidiClass),
+            (
+                0xd7ff,
+                Relevant,
+                F::Utf8,
+                0xd800,
+                Relevant,
+                F::UnicodeVersion,
+            ),
             (0x034f, Relevant, F::Aliases, 0x0350, Relevant, F::Plane),
         ];
         for (value, mode, selected, next, next_mode, expected) in cases {
@@ -1221,7 +1228,7 @@ mod tests {
         let fields =
             InspectorField::for_code_point(CodePoint::new(0).unwrap(), InspectorDisplayMode::All);
 
-        assert_eq!(fields.len(), 22);
+        assert_eq!(fields.len(), 28);
         assert_eq!(fields[0].id(), InspectorFieldId::Character);
         assert_eq!(fields[0].section(), InspectorSection::Identity);
         assert_eq!(fields[0].label(), "Character");
@@ -1238,7 +1245,7 @@ mod tests {
     fn relevant_properties_preserve_basic_values_for_all_scalar_categories() {
         use InspectorFieldId::*;
 
-        for value in [0x0041, 0x0378, 0xe000, 0x2fe0, 0x10ffff] {
+        for value in [0x3042, 0x0378, 0xe000, 0x2fe0, 0x10ffff] {
             let code_point = crate::unicode::CodePoint::new(value).unwrap();
             let fields = InspectorField::for_code_point(code_point, InspectorDisplayMode::Relevant);
             assert_eq!(
@@ -1319,8 +1326,11 @@ mod tests {
         assert_eq!(ordinary[3].values(), ["None"]);
         assert_eq!(ordinary[3].copy_value(), None);
         assert_eq!(surrogate[0].copy_value(), None);
-        assert_eq!(surrogate[13].id(), InspectorFieldId::Utf8);
-        assert_eq!(surrogate[13].copy_value(), None);
+        let utf8 = surrogate
+            .iter()
+            .find(|field| field.id() == InspectorFieldId::Utf8)
+            .unwrap();
+        assert_eq!(utf8.copy_value(), None);
 
         let relevant = InspectorField::for_code_point(
             CodePoint::new(0xd800).unwrap(),

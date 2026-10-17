@@ -503,16 +503,16 @@ mod tests {
 
     #[test]
     fn case_mappings_use_full_default_mappings_and_identity_fallbacks() {
-        let cases: &[(u32, &[u32], &[u32], &[u32])] = &[
-            (0x61, &[0x41], &[0x61], &[0x41]),
-            (0xdf, &[0x53, 0x53], &[0xdf], &[0x53, 0x73]),
-            (0x130, &[0x130], &[0x69, 0x307], &[0x130]),
-            (0x1f3, &[0x1f1], &[0x1f3], &[0x1f2]),
-            (0x3a3, &[0x3a3], &[0x3c3], &[0x3a3]),
-            (0x0378, &[0x0378], &[0x0378], &[0x0378]),
-            (0xd800, &[0xd800], &[0xd800], &[0xd800]),
+        let cases: &[(u32, [&[u32]; 3])] = &[
+            (0x61, [&[0x41], &[0x61], &[0x41]]),
+            (0xdf, [&[0x53, 0x53], &[0xdf], &[0x53, 0x73]]),
+            (0x130, [&[0x130], &[0x69, 0x307], &[0x130]]),
+            (0x1f3, [&[0x1f1], &[0x1f3], &[0x1f2]]),
+            (0x3a3, [&[0x3a3], &[0x3c3], &[0x3a3]]),
+            (0x0378, [&[0x0378], &[0x0378], &[0x0378]]),
+            (0xd800, [&[0xd800], &[0xd800], &[0xd800]]),
         ];
-        for &(value, uppercase, lowercase, titlecase) in cases {
+        for &(value, [uppercase, lowercase, titlecase]) in cases {
             let code_point = crate::unicode::CodePoint::new(value).unwrap();
             let record = crate::unicode::UnicodeDatabase::lookup(code_point);
             for (mapping, expected) in [

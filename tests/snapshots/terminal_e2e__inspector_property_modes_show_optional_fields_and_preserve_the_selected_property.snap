@@ -2,7 +2,7 @@
 source: tests/terminal_e2e.rs
 expression: all.with_styles()
 ---
-size: 100x40  cursor: hidden
+size: 100x60  cursor: hidden
  sauva / Inspector                                                                           U+00C5
 
  Properties                                            All  │ Glyph
@@ -23,8 +23,22 @@ size: 100x40  cursor: hidden
   Canonical Combining Class  0 — Not Reordered              │
   Bidi Class                 L — Left To Right              │
   Default Ignorable          No                             │
+ ─────────────────────────────────────────────────────────  │
+ Case                                                       │
+  Uppercase Mapping                                         │
+    U+00C5 LATIN CAPITAL LETTER A WITH RING ABOVE           │
+  Lowercase Mapping                                         │
+    U+00E5 LATIN SMALL LETTER A WITH RING ABOVE             │
+  Titlecase Mapping                                         │
+    U+00C5 LATIN CAPITAL LETTER A WITH RING ABOVE           │
+  Case Folding                                              │
+    U+00E5 LATIN SMALL LETTER A WITH RING ABOVE             │
  ─────────────────────────────────────────────────────────  │           Graphics disabled
- Encoding                                                   │  Enable with --graphics auto/force.
+ Numeric                                                    │  Enable with --graphics auto/force.
+  Numeric Type               None                           │
+  Numeric Value              NaN                            │
+ ─────────────────────────────────────────────────────────  │
+ Encoding                                                   │
   UTF-8                      C3 85                          │
   UTF-16                     00C5                           │
   HTML Decimal               &#197;                         │
@@ -40,6 +54,12 @@ size: 100x40  cursor: hidden
  ─────────────────────────────────────────────────────────  │
  Data                                                       │
   Unicode Version            17.0.0                         │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
+                                                            │
                                                             │
 
  h/l Point  k/j Field  [/] Section  C-u/C-d Page  y Copy  / Search  p/r/b/c Browse  q Quit  F1 Help
@@ -64,22 +84,42 @@ styles:
 17: 2-28 fg=8; 60 fg=8
 18: 2-28 fg=8; 60 fg=8
 19: 2-28 fg=8; 60 fg=8
-20: 1-57 fg=8; 60 fg=8; 72-88 fg=3 bold
-21: 1-8 fg=4 bold; 60 fg=8; 63-96 fg=8
-22: 2-28 fg=8; 60 fg=8
-23: 2-28 fg=8; 60 fg=8
-24: 2-28 fg=8; 60 fg=8
-25: 2-28 fg=8; 60 fg=8
-26: 2-28 fg=8; 60 fg=8
-27: 2-28 fg=8; 60 fg=8
-28: 1-57 fg=8; 60 fg=8
-29: 1-13 fg=4 bold; 60 fg=8
-30: 2-28 fg=8; 60 fg=8
-31: 2-14 fg=8; 60 fg=8
-32: 2-3 fg=8; 60 fg=8
-33: 2-3 fg=8; 60 fg=8
+20: 1-57 fg=8; 60 fg=8
+21: 1-4 fg=4 bold; 60 fg=8
+22: 2-18 fg=8; 60 fg=8
+23: 2-3 fg=8; 60 fg=8
+24: 2-18 fg=8; 60 fg=8
+25: 2-3 fg=8; 60 fg=8
+26: 2-18 fg=8; 60 fg=8
+27: 2-3 fg=8; 60 fg=8
+28: 2-13 fg=8; 60 fg=8
+29: 2-3 fg=8; 60 fg=8
+30: 1-57 fg=8; 60 fg=8; 72-88 fg=3 bold
+31: 1-7 fg=4 bold; 60 fg=8; 63-96 fg=8
+32: 2-28 fg=8; 60 fg=8
+33: 2-28 fg=8; 60 fg=8
 34: 1-57 fg=8; 60 fg=8
-35: 1-4 fg=4 bold; 60 fg=8
+35: 1-8 fg=4 bold; 60 fg=8
 36: 2-28 fg=8; 60 fg=8
-37: 60 fg=8
-39: 1-3 fg=3; 4-9 fg=8; 12-14 fg=3; 15-20 fg=8; 23-25 fg=3; 26-33 fg=8; 36-42 fg=3; 43-47 fg=8; 50 fg=3; 51-55 fg=8; 58 fg=3; 59-65 fg=8; 68-74 fg=3; 75-81 fg=8; 84 fg=3; 85-89 fg=8; 92-93 fg=3; 94-98 fg=8
+37: 2-28 fg=8; 60 fg=8
+38: 2-28 fg=8; 60 fg=8
+39: 2-28 fg=8; 60 fg=8
+40: 2-28 fg=8; 60 fg=8
+41: 2-28 fg=8; 60 fg=8
+42: 1-57 fg=8; 60 fg=8
+43: 1-13 fg=4 bold; 60 fg=8
+44: 2-28 fg=8; 60 fg=8
+45: 2-14 fg=8; 60 fg=8
+46: 2-3 fg=8; 60 fg=8
+47: 2-3 fg=8; 60 fg=8
+48: 1-57 fg=8; 60 fg=8
+49: 1-4 fg=4 bold; 60 fg=8
+50: 2-28 fg=8; 60 fg=8
+51: 60 fg=8
+52: 60 fg=8
+53: 60 fg=8
+54: 60 fg=8
+55: 60 fg=8
+56: 60 fg=8
+57: 60 fg=8
+59: 1-3 fg=3; 4-9 fg=8; 12-14 fg=3; 15-20 fg=8; 23-25 fg=3; 26-33 fg=8; 36-42 fg=3; 43-47 fg=8; 50 fg=3; 51-55 fg=8; 58 fg=3; 59-65 fg=8; 68-74 fg=3; 75-81 fg=8; 84 fg=3; 85-89 fg=8; 92-93 fg=3; 94-98 fg=8
