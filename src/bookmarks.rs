@@ -258,13 +258,13 @@ mod tests {
     #[test]
     fn resolves_data_home_and_falls_back_to_home() {
         assert_eq!(
-            resolve_path(Some("/data".into()), Some("/home/kyo".into())).unwrap(),
+            resolve_path(Some("/data".into()), Some("/home/user".into())).unwrap(),
             PathBuf::from("/data/sauva/bookmarks.toml")
         );
         for data in [None, Some("".into())] {
             assert_eq!(
-                resolve_path(data, Some("/home/kyo".into())).unwrap(),
-                PathBuf::from("/home/kyo/.local/share/sauva/bookmarks.toml")
+                resolve_path(data, Some("/home/user".into())).unwrap(),
+                PathBuf::from("/home/user/.local/share/sauva/bookmarks.toml")
             );
         }
         assert!(resolve_path(None, None).is_err());
