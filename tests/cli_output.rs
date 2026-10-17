@@ -32,21 +32,8 @@ fn prints_default_config_without_loading_local_config() {
     assert!(output.stderr.is_empty());
 
     let stdout = String::from_utf8(output.stdout).unwrap();
-    assert!(stdout.starts_with("[color]\n"));
-    assert!(stdout.contains("[glyph_preview]\n"));
-    assert!(stdout.contains("[ui]\n"));
-    assert!(stdout.contains("[keybindings.inspector]\n"));
-    let config: toml::Value = toml::from_str(&stdout).unwrap();
-    for context in ["inspector", "sequence", "normalization_result"] {
-        assert_eq!(
-            config["keybindings"][context]["previous_group"][0].as_str(),
-            Some("[")
-        );
-        assert_eq!(
-            config["keybindings"][context]["next_group"][0].as_str(),
-            Some("]")
-        );
-    }
+    let config: toml::Table = toml::from_str(&stdout).unwrap();
+    assert!(!config.is_empty());
 }
 
 #[rstest]

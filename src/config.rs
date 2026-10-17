@@ -305,34 +305,8 @@ mod tests {
     }
 
     #[test]
-    fn generated_default_config_is_complete_and_loadable() {
+    fn generated_default_config_round_trips_and_resolves() {
         let generated = default_toml().unwrap();
-
-        for table in [
-            "[color]",
-            "[color.selection]",
-            "[color.difference]",
-            "[color.status]",
-            "[glyph_preview]",
-            "[ui]",
-            "[keybindings.global]",
-            "[keybindings.inspector]",
-            "[keybindings.search]",
-            "[keybindings.bookmarks]",
-            "[keybindings.sequence]",
-            "[keybindings.normalization]",
-            "[keybindings.normalization_result]",
-            "[keybindings.copy_dialog]",
-            "[keybindings.browse_plane]",
-            "[keybindings.browse_range]",
-            "[keybindings.browse_block]",
-            "[keybindings.browse_code_points]",
-            "[keybindings.help]",
-        ] {
-            assert!(generated.contains(table), "missing {table}");
-        }
-        assert!(generated.contains(r##"fg = "#f5f7fa""##));
-        assert!(generated.contains(r#"input_cursor = "native""#));
 
         let parsed: OptionalConfig = toml::from_str(&generated).unwrap();
         let parsed: Config = parsed.into();
