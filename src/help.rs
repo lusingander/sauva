@@ -1,21 +1,12 @@
 use std::ops::Range;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum HelpMove {
-    LineBackward,
-    LineForward,
-    PageBackward,
-    PageForward,
-    First,
-    Last,
-}
+pub use crate::viewport::DocumentMove as HelpMove;
+use crate::viewport::DocumentViewport;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct HelpState {
     open: bool,
-    offset: usize,
-    viewport_height: usize,
-    document_height: usize,
+    viewport: DocumentViewport,
 }
 
 impl HelpState {
@@ -24,16 +15,12 @@ impl HelpState {
     }
 
     #[cfg(test)]
-    pub const fn offset(self) -> usize {
-        self.offset
+    pub fn offset(self) -> usize {
+        self.viewport.visible_range().start
     }
 
     pub fn visible_range(self) -> Range<usize> {
-        let end = self
-            .offset
-            .saturating_add(self.viewport_height)
-            .min(self.document_height);
-        self.offset..end
+        self.viewport.visible_range()
     }
 
     pub fn toggle(&mut self) {
@@ -46,43 +33,21 @@ impl HelpState {
 
     pub fn open(&mut self) {
         self.open = true;
-        self.offset = 0;
+        self.viewport.move_viewport(HelpMove::First);
     }
 
     pub fn close(&mut self) {
         self.open = false;
-        self.offset = 0;
+        self.viewport.move_viewport(HelpMove::First);
     }
 
     pub fn resize_viewport(&mut self, viewport_height: usize, document_height: usize) {
-        self.viewport_height = viewport_height;
-        self.document_height = document_height;
-        self.clamp();
+        self.viewport
+            .resize_viewport(viewport_height, document_height);
     }
 
     pub fn move_viewport(&mut self, movement: HelpMove) {
-        let page = self.viewport_height;
-        self.offset = match movement {
-            HelpMove::LineBackward => self.offset.saturating_sub(1),
-            HelpMove::LineForward => self.offset.saturating_add(1),
-            HelpMove::PageBackward => self.offset.saturating_sub(page),
-            HelpMove::PageForward => self.offset.saturating_add(page),
-            HelpMove::First => 0,
-            HelpMove::Last => self.maximum_offset(),
-        };
-        self.clamp();
-    }
-
-    const fn maximum_offset(self) -> usize {
-        if self.viewport_height == 0 {
-            0
-        } else {
-            self.document_height.saturating_sub(self.viewport_height)
-        }
-    }
-
-    fn clamp(&mut self) {
-        self.offset = self.offset.min(self.maximum_offset());
+        self.viewport.move_viewport(movement);
     }
 }
 
