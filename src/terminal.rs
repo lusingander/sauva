@@ -111,6 +111,7 @@ fn run_event_loop(
             let previous_screen = VisibleScreen::for_state(state);
             update(state, action);
             handle_clipboard_request(state, clipboard);
+            handle_reference_request(state, |url| open::that_detached(url));
             handle_bookmark_request(state);
             if previous_screen != VisibleScreen::for_state(state) {
                 // Some terminals retain parts of combining-character sequences after a differential redraw.
@@ -185,6 +186,20 @@ fn handle_clipboard_request(state: &mut AppState, clipboard: &mut impl Clipboard
     update(state, action);
 }
 
+fn handle_reference_request(
+    state: &mut AppState,
+    open_reference: impl FnOnce(&str) -> io::Result<()>,
+) {
+    let Some(url) = state.take_reference_request() else {
+        return;
+    };
+    let status = match open_reference(url) {
+        Ok(()) => FooterStatus::info("Opened reference in browser"),
+        Err(error) => FooterStatus::warning(format!("Could not open reference: {error}")),
+    };
+    update(state, Action::ShowFooterStatus(status));
+}
+
 fn handle_bookmark_request(state: &mut AppState) {
     let Some(request) = state.take_bookmark_request() else {
         return;
@@ -249,6 +264,57 @@ fn resize_active_view(state: &mut AppState, area: Rect, keymap: &ResolvedKeymap)
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn property_reference_actions_preserve_the_page_and_report_browser_failures() {
+        use crate::viewport::DocumentMove;
+        let mut state = crate::app::AppState::default();
+        crate::app::update(&mut state, crate::app::Action::OpenProperty);
+        crate::app::update(
+            &mut state,
+            crate::app::Action::ResizePropertyViewport {
+                viewport_height: 3,
+                document_height: 100,
+            },
+        );
+        crate::app::update(
+            &mut state,
+            crate::app::Action::MoveProperty(DocumentMove::Last),
+        );
+        let property = state.property().unwrap().clone();
+        crate::app::update(&mut state, crate::app::Action::CopyPropertyReference);
+        let mut clipboard = TestClipboard::succeeding();
+        super::handle_clipboard_request(&mut state, &mut clipboard);
+        assert_eq!(clipboard.writes, [property.reference().url]);
+        assert_eq!(state.property(), Some(&property));
+        for failed in [false, true] {
+            crate::app::update(&mut state, crate::app::Action::OpenPropertyReference);
+            super::handle_reference_request(&mut state, |url| {
+                assert_eq!(url, property.reference().url);
+                if failed {
+                    Err(std::io::Error::other("no browser"))
+                } else {
+                    Ok(())
+                }
+            });
+            assert_eq!(state.property(), Some(&property));
+            assert!(state.take_reference_request().is_none());
+            let status = state.footer_status().unwrap();
+            assert_eq!(
+                status.level(),
+                if failed {
+                    crate::app::FooterStatusLevel::Warning
+                } else {
+                    crate::app::FooterStatusLevel::Info
+                }
+            );
+            assert!(status.message().contains(if failed {
+                "no browser"
+            } else {
+                "Opened reference"
+            }));
+        }
+    }
+
     use super::*;
     use crate::{
         app::FooterStatusLevel,
