@@ -135,26 +135,19 @@ pub fn glyph_basic_iterm2() -> AppState {
 
 pub fn details_scrolled_minimum() -> AppState {
     let mut state = details_canonical_decomposition();
-    // At the supported minimum size (60x16), U+00E9 has 35 logical
-    // inspector lines and twelve visible content lines.
+    let metrics =
+        crate::ui::inspector::viewport_metrics(ratatui::layout::Rect::new(0, 0, 60, 16), &state);
     update(
         &mut state,
         Action::ResizeInspectorViewport {
-            viewport_height: 12,
-            document_height: 35,
-            field_ranges: inspector_field_ranges(),
-            groups: Vec::new(),
+            viewport_height: metrics.viewport_height,
+            document_height: metrics.document_height,
+            field_ranges: metrics.field_ranges,
+            groups: metrics.groups,
         },
     );
     update(&mut state, Action::MoveInspector(InspectorMove::Last));
     state
-}
-
-fn inspector_field_ranges() -> Vec<std::ops::Range<usize>> {
-    (0..21)
-        .map(|index| index..index + 1)
-        .chain(std::iter::once(34..35))
-        .collect()
 }
 
 pub fn search_empty() -> AppState {

@@ -128,6 +128,7 @@ fn action_for_command(context: Context, command: Command) -> Option<Action> {
         (X::Inspector, C::First) => Some(Action::MoveInspector(InspectorMove::First)),
         (X::Inspector, C::Last) => Some(Action::MoveInspector(InspectorMove::Last)),
         (X::Inspector, C::CopyValue) => Some(Action::CopyInspectorValue),
+        (X::Inspector, C::ToggleProperties) => Some(Action::ToggleInspectorProperties),
         (X::Inspector, C::OpenSearch) => Some(Action::OpenSearch),
         (X::Inspector, C::OpenBookmarks) => Some(Action::OpenBookmarks),
         (X::Inspector | X::Bookmarks, C::ToggleBookmark) => Some(Action::ToggleBookmark),
@@ -579,17 +580,16 @@ mod tests {
         assert_eq!(action_for_key(&state, released), None);
     }
 
-    #[test]
-    fn y_copies_the_inspector_value_but_does_not_repeat() {
+    #[rstest]
+    #[case('y', Action::CopyInspectorValue)]
+    #[case('a', Action::ToggleInspectorProperties)]
+    fn inspector_commands_do_not_repeat(#[case] key: char, #[case] action: Action) {
         let state = AppState::default();
-        let pressed = KeyEvent::new(KeyCode::Char('y'), KeyModifiers::NONE);
+        let pressed = KeyEvent::new(KeyCode::Char(key), KeyModifiers::NONE);
         let repeated =
-            KeyEvent::new_with_kind(KeyCode::Char('y'), KeyModifiers::NONE, KeyEventKind::Repeat);
+            KeyEvent::new_with_kind(KeyCode::Char(key), KeyModifiers::NONE, KeyEventKind::Repeat);
 
-        assert_eq!(
-            action_for_key(&state, pressed),
-            Some(Action::CopyInspectorValue)
-        );
+        assert_eq!(action_for_key(&state, pressed), Some(action));
         assert_eq!(action_for_key(&state, repeated), None);
     }
 

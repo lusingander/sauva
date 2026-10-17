@@ -94,6 +94,7 @@ pub enum Command {
     First,
     Last,
     CopyValue,
+    ToggleProperties,
     OpenCopyDialog,
     OpenSearch,
     OpenBookmarks,
@@ -149,6 +150,7 @@ impl Command {
             Self::First => "first",
             Self::Last => "last",
             Self::CopyValue => "copy_value",
+            Self::ToggleProperties => "toggle_properties",
             Self::OpenCopyDialog => "open_copy_dialog",
             Self::OpenSearch => "search",
             Self::OpenBookmarks => "bookmarks",
@@ -415,6 +417,7 @@ keybinding_context!(InspectorKeybindings, Context::Inspector, {
     first => (Command::First, ["g"]),
     last => (Command::Last, ["G"]),
     copy_value => (Command::CopyValue, ["y"]),
+    toggle_properties => (Command::ToggleProperties, ["a"]),
     search => (Command::OpenSearch, ["/"]),
     bookmarks => (Command::OpenBookmarks, ["M"]),
     toggle_bookmark => (Command::ToggleBookmark, ["m"]),
@@ -1209,7 +1212,7 @@ mod tests {
         let keymap = configured(&format!(
             r#"
                 [{}]
-                previous_group = ['a']
+                previous_group = ['t']
                 next_group = []
                 move_down = [']']
             "#,
@@ -1217,7 +1220,7 @@ mod tests {
         ))
         .unwrap();
         assert_eq!(
-            keymap.resolve(context, plain('a')),
+            keymap.resolve(context, plain('t')),
             Some(Command::PreviousGroup)
         );
         assert_eq!(keymap.resolve(context, plain('[')), None);

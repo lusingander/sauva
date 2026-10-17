@@ -4,10 +4,10 @@ expression: "render_after_inspector_move(&state, width, height,\nInspectorMove::
 ---
  sauva / Inspector                                   U+00E9
 
+ Properties                                       Relevant
   Code Point                 U+00E9                       ┃
   Primary Name                                            ┃
     LATIN SMALL LETTER E WITH ACUTE                       ┃
-  Aliases                    None                         ┃
   Plane                      0 — Basic Multilingual Plane
   Block                      Latin-1 Supplement
  ─────────────────────────────────────────────────────────

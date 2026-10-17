@@ -647,7 +647,8 @@ mod tests {
 
     #[test]
     fn applies_the_color_theme_to_the_screen_and_colored_elements() {
-        let state = fixtures::glyph_disabled();
+        let mut state = fixtures::glyph_disabled();
+        update(&mut state, Action::ToggleInspectorProperties);
         let color_theme = test_color_theme();
         let (width, height) = STANDARD_SIZE;
         let buffer = render_to_buffer(&state, width, height, &color_theme);
@@ -668,9 +669,9 @@ mod tests {
         );
         assert_eq!(buffer.cell((2, 0)).unwrap().fg, color_theme.accent);
         assert_eq!(buffer.cell((1, 2)).unwrap().fg, color_theme.heading);
-        assert_eq!(buffer.cell((3, 4)).unwrap().fg, color_theme.muted);
-        assert_eq!(buffer.cell((60, 2)).unwrap().symbol(), "┃");
-        assert_eq!(buffer.cell((60, 2)).unwrap().fg, color_theme.border);
+        assert_eq!(buffer.cell((3, 5)).unwrap().fg, color_theme.muted);
+        assert_eq!(buffer.cell((60, 3)).unwrap().symbol(), "┃");
+        assert_eq!(buffer.cell((60, 3)).unwrap().fg, color_theme.border);
         assert!(
             buffer
                 .content
@@ -739,30 +740,52 @@ mod tests {
     }
 
     #[test]
+    fn property_mode_heading_stays_fixed_when_scrolling_and_leaves_shell_labels_unchanged() {
+        for (width, height) in [MINIMUM_SIZE, STANDARD_SIZE, WIDE_SIZE] {
+            let mut state = fixtures::startup();
+            let original = render_to_text(&state, width, height);
+            for mode in ["Relevant", "All"] {
+                let text = render_to_text(&state, width, height);
+                let lines = text.lines().collect::<Vec<_>>();
+                assert!(lines[2].contains("Properties"));
+                assert!(lines[2].contains(mode));
+                assert_eq!(lines[0], original.lines().next().unwrap());
+                assert_eq!(lines.last().unwrap(), &original.lines().last().unwrap());
+
+                let scrolled =
+                    render_after_inspector_move(&state, width, height, InspectorMove::Last);
+                assert_eq!(scrolled.lines().nth(2), Some(lines[2]));
+                synchronize_inspector(&mut state, width, height);
+                update(&mut state, Action::ToggleInspectorProperties);
+            }
+        }
+    }
+
+    #[test]
     fn inspector_selection_keeps_inner_padding_and_leaves_outer_padding_uncolored() {
         let color_theme = test_color_theme();
         let (width, height) = STANDARD_SIZE;
         let buffer = render_to_buffer(&fixtures::startup(), width, height, &color_theme);
 
         for x in 1..58 {
-            let cell = buffer.cell((x, 3)).unwrap();
+            let cell = buffer.cell((x, 4)).unwrap();
             assert_eq!(cell.bg, color_theme.selection.bg);
         }
-        assert_eq!(buffer.cell((1, 3)).unwrap().fg, color_theme.selection.fg);
-        assert_eq!(buffer.cell((1, 3)).unwrap().symbol(), " ");
-        assert_eq!(buffer.cell((2, 3)).unwrap().symbol(), "C");
-        assert_eq!(buffer.cell((57, 3)).unwrap().symbol(), " ");
+        assert_eq!(buffer.cell((1, 4)).unwrap().fg, color_theme.selection.fg);
         assert_eq!(buffer.cell((1, 4)).unwrap().symbol(), " ");
         assert_eq!(buffer.cell((2, 4)).unwrap().symbol(), "C");
-        assert_eq!(buffer.cell((0, 3)).unwrap().bg, color_theme.bg);
-        assert_eq!(buffer.cell((58, 3)).unwrap().bg, color_theme.bg);
+        assert_eq!(buffer.cell((57, 4)).unwrap().symbol(), " ");
+        assert_eq!(buffer.cell((1, 5)).unwrap().symbol(), " ");
+        assert_eq!(buffer.cell((2, 5)).unwrap().symbol(), "C");
+        assert_eq!(buffer.cell((0, 4)).unwrap().bg, color_theme.bg);
+        assert_eq!(buffer.cell((58, 4)).unwrap().bg, color_theme.bg);
 
         let mut state = fixtures::startup();
         synchronize_inspector(&mut state, width, height);
         update(&mut state, Action::MoveInspector(InspectorMove::NextField));
         let moved = render_to_buffer(&state, width, height, &color_theme);
-        assert_eq!(moved.cell((1, 3)).unwrap().bg, color_theme.bg);
-        assert_eq!(moved.cell((1, 4)).unwrap().bg, color_theme.selection.bg);
+        assert_eq!(moved.cell((1, 4)).unwrap().bg, color_theme.bg);
+        assert_eq!(moved.cell((1, 5)).unwrap().bg, color_theme.selection.bg);
     }
 
     #[test]

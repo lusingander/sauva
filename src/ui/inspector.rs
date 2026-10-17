@@ -8,7 +8,10 @@ use ratatui::{
 
 use crate::{
     app::AppState,
-    inspector::{InspectorField, InspectorGroup},
+    inspector::{
+        InspectorDisplayMode, InspectorField, InspectorGroup, InspectorSection,
+        UNAVAILABLE_ENCODING,
+    },
     ui::{
         key_value, layout, padded_line, padded_line_content_width,
         scrollbar::{self, ViewportScrollbar},
@@ -34,7 +37,11 @@ pub fn viewport_metrics(area: Rect, state: &AppState) -> ViewportMetrics {
     };
     let details = layout::inspector(layout.main).details;
     let content = content_area(details);
-    let document = InspectorDocument::for_code_point(state.selected(), usize::from(content.width));
+    let document = InspectorDocument::for_code_point(
+        state.selected(),
+        usize::from(content.width),
+        state.inspector().display_mode(),
+    );
     ViewportMetrics {
         viewport_height: usize::from(content.height),
         document_height: document.lines.len(),
@@ -44,10 +51,19 @@ pub fn viewport_metrics(area: Rect, state: &AppState) -> ViewportMetrics {
 }
 
 pub fn render(frame: &mut Frame, area: Rect, state: &AppState, color_theme: &ColorTheme) {
+    let canvas = workspace::primary_canvas(area);
+    workspace::render_heading(
+        frame,
+        Rect::new(canvas.x, canvas.y, canvas.width, canvas.height.min(1)),
+        "Properties",
+        Some(state.inspector().display_mode().label()),
+        color_theme,
+    );
     let content = content_area(area);
     let document = InspectorDocument::with_color_theme(
         state.selected(),
         usize::from(content.width),
+        state.inspector().display_mode(),
         state.inspector().selected_index(),
         color_theme,
     );
@@ -64,7 +80,13 @@ pub fn render(frame: &mut Frame, area: Rect, state: &AppState, color_theme: &Col
 }
 
 fn content_area(area: Rect) -> Rect {
-    workspace::primary_canvas(area)
+    let canvas = workspace::primary_canvas(area);
+    Rect::new(
+        canvas.x,
+        canvas.y.saturating_add(1),
+        canvas.width,
+        canvas.height.saturating_sub(1),
+    )
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -75,36 +97,49 @@ struct InspectorDocument {
 }
 
 impl InspectorDocument {
-    fn for_code_point(code_point: CodePoint, width: usize) -> Self {
-        Self::with_color_theme(code_point, width, 0, &ColorTheme::default())
+    fn for_code_point(code_point: CodePoint, width: usize, mode: InspectorDisplayMode) -> Self {
+        Self::with_color_theme(code_point, width, mode, 0, &ColorTheme::default())
     }
 
     fn with_color_theme(
         code_point: CodePoint,
         width: usize,
+        mode: InspectorDisplayMode,
         selected_index: usize,
         color_theme: &ColorTheme,
     ) -> Self {
         let mut builder = DocumentBuilder::new(width, color_theme);
         let mut field_ranges = Vec::new();
         let mut groups = Vec::new();
-        let mut previous_section = None;
-        for (index, field) in InspectorField::for_code_point(code_point)
-            .into_iter()
-            .enumerate()
-        {
-            if previous_section != Some(field.section()) {
-                builder.section(field.section().label());
+        let fields = InspectorField::for_code_point(code_point, mode);
+        for section in [
+            InspectorSection::Identity,
+            InspectorSection::Classification,
+            InspectorSection::Encoding,
+            InspectorSection::Normalization,
+            InspectorSection::Data,
+        ] {
+            let mut section_fields = fields
+                .iter()
+                .enumerate()
+                .filter(|(_, field)| field.section() == section)
+                .peekable();
+            if let Some(&(index, _)) = section_fields.peek() {
+                builder.section(section.label());
                 groups.push(InspectorGroup {
                     first_field: index,
                     heading_line: builder.lines.len() - 1,
                 });
-                previous_section = Some(field.section());
+            } else if section == InspectorSection::Encoding && code_point.to_char().is_none() {
+                builder.section(section.label());
+                builder.note(UNAVAILABLE_ENCODING);
             }
-            let start = builder.lines.len();
-            let selected = index == selected_index;
-            builder.fields(field.label(), field.values().iter().cloned(), selected);
-            field_ranges.push(start..builder.lines.len());
+            for (index, field) in section_fields {
+                let start = builder.lines.len();
+                let selected = index == selected_index;
+                builder.fields(field.label(), field.values().iter().cloned(), selected);
+                field_ranges.push(start..builder.lines.len());
+            }
         }
 
         Self {
@@ -166,6 +201,19 @@ impl DocumentBuilder {
             }
         }));
     }
+
+    fn note(&mut self, text: &str) {
+        self.lines.extend(
+            key_value::wrap_value(text, padded_line_content_width(self.width))
+                .into_iter()
+                .map(|line| {
+                    padded_line(
+                        Line::styled(line, Style::new().fg(self.color_theme.muted)),
+                        self.width,
+                    )
+                }),
+        );
+    }
 }
 
 #[cfg(test)]
@@ -181,47 +229,69 @@ mod tests {
     };
 
     #[test]
-    fn builds_grouped_basic_details_in_the_agreed_order() {
-        let document = InspectorDocument::for_code_point(CodePoint::from('A'), 96);
-        let text = document
-            .lines
-            .iter()
-            .map(Line::to_string)
-            .collect::<Vec<_>>();
-
-        assert_eq!(
-            text.iter()
-                .filter(|line| matches!(
-                    line.as_str(),
-                    "Identity" | "Classification" | "Encoding" | "Normalization" | "Data"
-                ))
-                .collect::<Vec<_>>(),
-            [
-                "Identity",
-                "Classification",
-                "Encoding",
-                "Normalization",
-                "Data"
-            ]
-        );
-        assert!(text.iter().any(|line| line.contains("Na — Narrow")));
-        assert!(text.iter().any(|line| line.contains("L — Left To Right")));
-        assert!(text.iter().any(|line| line.contains("\\u0041")));
-        assert!(text.iter().any(|line| line.trim_end().ends_with("None")));
+    fn property_modes_keep_section_order_and_omit_empty_normalization() {
+        for (mode, expected) in [
+            (
+                InspectorDisplayMode::Relevant,
+                vec!["Identity", "Classification", "Encoding", "Data"],
+            ),
+            (
+                InspectorDisplayMode::All,
+                vec![
+                    "Identity",
+                    "Classification",
+                    "Encoding",
+                    "Normalization",
+                    "Data",
+                ],
+            ),
+        ] {
+            let document = InspectorDocument::for_code_point(CodePoint::from('A'), 96, mode);
+            let text = document
+                .lines
+                .iter()
+                .map(Line::to_string)
+                .collect::<Vec<_>>();
+            assert_eq!(
+                text.iter()
+                    .filter(|line| matches!(
+                        line.as_str(),
+                        "Identity" | "Classification" | "Encoding" | "Normalization" | "Data"
+                    ))
+                    .map(String::as_str)
+                    .collect::<Vec<_>>(),
+                expected,
+            );
+            assert!(text.iter().any(|line| line.contains("Na — Narrow")));
+            assert!(text.iter().any(|line| line.contains("L — Left To Right")));
+            assert!(text.iter().any(|line| line.contains("\\u0041")));
+            assert_eq!(
+                text.iter().any(|line| line.trim_end().ends_with("None")),
+                mode == InspectorDisplayMode::All
+            );
+        }
     }
 
     #[test]
     fn expands_aliases_and_decomposition_mappings_into_independent_lines() {
-        let aliases = InspectorDocument::for_code_point(CodePoint::new(0).unwrap(), 96)
-            .lines
-            .into_iter()
-            .map(|line| line.to_string())
-            .collect::<Vec<_>>();
-        let decomposition = InspectorDocument::for_code_point(CodePoint::new(0x00e9).unwrap(), 96)
-            .lines
-            .into_iter()
-            .map(|line| line.to_string())
-            .collect::<Vec<_>>();
+        let aliases = InspectorDocument::for_code_point(
+            CodePoint::new(0).unwrap(),
+            96,
+            InspectorDisplayMode::All,
+        )
+        .lines
+        .into_iter()
+        .map(|line| line.to_string())
+        .collect::<Vec<_>>();
+        let decomposition = InspectorDocument::for_code_point(
+            CodePoint::new(0x00e9).unwrap(),
+            96,
+            InspectorDisplayMode::All,
+        )
+        .lines
+        .into_iter()
+        .map(|line| line.to_string())
+        .collect::<Vec<_>>();
 
         assert!(aliases.iter().any(|line| line.contains("NULL — control")));
         assert!(
@@ -242,27 +312,29 @@ mod tests {
 
     #[test]
     fn group_layout_tracks_headings_and_first_fields_after_wrapping() {
-        for (code_point, width) in [(0, 96), (0xe9, 56), (0xd800, 32)] {
-            let code_point = CodePoint::new(code_point).unwrap();
-            let document = InspectorDocument::for_code_point(code_point, width);
-            let fields = InspectorField::for_code_point(code_point);
-            let expected = fields
-                .iter()
-                .enumerate()
-                .filter(|(index, field)| {
-                    *index == 0 || fields[index - 1].section() != field.section()
-                })
-                .map(|(index, field)| (index, field.section().label()))
-                .collect::<Vec<_>>();
+        for mode in [InspectorDisplayMode::Relevant, InspectorDisplayMode::All] {
+            for (code_point, width) in [(0, 96), (0xe9, 56), (0xd800, 32)] {
+                let code_point = CodePoint::new(code_point).unwrap();
+                let document = InspectorDocument::for_code_point(code_point, width, mode);
+                let fields = InspectorField::for_code_point(code_point, mode);
+                let expected = fields
+                    .iter()
+                    .enumerate()
+                    .filter(|(index, field)| {
+                        *index == 0 || fields[index - 1].section() != field.section()
+                    })
+                    .map(|(index, field)| (index, field.section().label()))
+                    .collect::<Vec<_>>();
 
-            assert_eq!(document.groups.len(), expected.len());
-            for (group, (first_field, label)) in document.groups.iter().zip(expected) {
-                assert_eq!(group.first_field, first_field);
-                assert_eq!(document.lines[group.heading_line].to_string(), label);
-                assert_eq!(
-                    document.field_ranges[first_field].start,
-                    group.heading_line + 1
-                );
+                assert_eq!(document.groups.len(), expected.len());
+                for (group, (first_field, label)) in document.groups.iter().zip(expected) {
+                    assert_eq!(group.first_field, first_field);
+                    assert_eq!(document.lines[group.heading_line].to_string(), label);
+                    assert_eq!(
+                        document.field_ranges[first_field].start,
+                        group.heading_line + 1
+                    );
+                }
             }
         }
     }
@@ -271,44 +343,49 @@ mod tests {
     fn section_jumps_select_properties_and_keep_headings_visible_after_redrawing() {
         use crate::inspector::InspectorMove;
 
-        for code_point in [CodePoint::from('A'), CodePoint::new(0xd800).unwrap()] {
-            let mut state = AppState::with_selected(code_point);
-            let area = Rect::new(0, 0, 60, 16);
-            let fields = InspectorField::for_code_point(code_point);
-            let groups = viewport_metrics(area, &state).groups;
-            for group in &groups[1..] {
-                let metrics = viewport_metrics(area, &state);
-                update(
-                    &mut state,
-                    Action::ResizeInspectorViewport {
-                        viewport_height: metrics.viewport_height,
-                        document_height: metrics.document_height,
-                        field_ranges: metrics.field_ranges,
-                        groups: metrics.groups,
-                    },
-                );
-                update(&mut state, Action::MoveInspector(InspectorMove::NextGroup));
-                let metrics = viewport_metrics(area, &state);
-                update(
-                    &mut state,
-                    Action::ResizeInspectorViewport {
-                        viewport_height: metrics.viewport_height,
-                        document_height: metrics.document_height,
-                        field_ranges: metrics.field_ranges,
-                        groups: metrics.groups,
-                    },
-                );
-                assert_eq!(state.inspector().selected_index(), group.first_field);
-                assert!(
-                    state
-                        .inspector()
-                        .visible_range()
-                        .contains(&group.heading_line)
-                );
-                update(&mut state, Action::CopyInspectorValue);
-                let request = state.take_clipboard_request().unwrap();
-                assert_eq!(request.label(), fields[group.first_field].label());
-                assert_eq!(request.value(), fields[group.first_field].copy_value());
+        for mode in [InspectorDisplayMode::Relevant, InspectorDisplayMode::All] {
+            for code_point in [CodePoint::from('A'), CodePoint::new(0xd800).unwrap()] {
+                let mut state = AppState::with_selected(code_point);
+                if mode == InspectorDisplayMode::All {
+                    update(&mut state, Action::ToggleInspectorProperties);
+                }
+                let area = Rect::new(0, 0, 60, 16);
+                let fields = InspectorField::for_code_point(code_point, mode);
+                let groups = viewport_metrics(area, &state).groups;
+                for group in &groups[1..] {
+                    let metrics = viewport_metrics(area, &state);
+                    update(
+                        &mut state,
+                        Action::ResizeInspectorViewport {
+                            viewport_height: metrics.viewport_height,
+                            document_height: metrics.document_height,
+                            field_ranges: metrics.field_ranges,
+                            groups: metrics.groups,
+                        },
+                    );
+                    update(&mut state, Action::MoveInspector(InspectorMove::NextGroup));
+                    let metrics = viewport_metrics(area, &state);
+                    update(
+                        &mut state,
+                        Action::ResizeInspectorViewport {
+                            viewport_height: metrics.viewport_height,
+                            document_height: metrics.document_height,
+                            field_ranges: metrics.field_ranges,
+                            groups: metrics.groups,
+                        },
+                    );
+                    assert_eq!(state.inspector().selected_index(), group.first_field);
+                    assert!(
+                        state
+                            .inspector()
+                            .visible_range()
+                            .contains(&group.heading_line)
+                    );
+                    update(&mut state, Action::CopyInspectorValue);
+                    let request = state.take_clipboard_request().unwrap();
+                    assert_eq!(request.label(), fields[group.first_field].label());
+                    assert_eq!(request.value(), fields[group.first_field].copy_value());
+                }
             }
         }
     }
@@ -344,8 +421,16 @@ mod tests {
 
     #[test]
     fn wraps_values_before_the_viewport_is_applied() {
-        let wide = InspectorDocument::for_code_point(CodePoint::new(0xd800).unwrap(), 96);
-        let narrow = InspectorDocument::for_code_point(CodePoint::new(0xd800).unwrap(), 56);
+        let wide = InspectorDocument::for_code_point(
+            CodePoint::new(0xd800).unwrap(),
+            96,
+            InspectorDisplayMode::All,
+        );
+        let narrow = InspectorDocument::for_code_point(
+            CodePoint::new(0xd800).unwrap(),
+            56,
+            InspectorDisplayMode::All,
+        );
 
         assert!(narrow.lines.len() > wide.lines.len());
         assert_eq!(
@@ -356,68 +441,81 @@ mod tests {
                 .count(),
             6
         );
+        let relevant = InspectorDocument::for_code_point(
+            CodePoint::new(0xd800).unwrap(),
+            56,
+            InspectorDisplayMode::Relevant,
+        );
+        assert_eq!(
+            relevant
+                .lines
+                .iter()
+                .filter(|line| line.to_string().contains("Not available"))
+                .count(),
+            1
+        );
+        assert!(
+            !relevant
+                .lines
+                .iter()
+                .any(|line| line.to_string() == "Normalization")
+        );
     }
 
     #[test]
-    fn preview_layout_uses_fixed_details_width_for_viewport_metrics() {
-        let mut state = fixtures::startup();
-        update(
-            &mut state,
-            Action::UpdateGlyphPreview(GlyphPreviewUpdate::Configure {
-                availability: GraphicsAvailability::Available(GraphicsProtocol::Kitty),
-                image_id: None,
-            }),
-        );
-
-        for (area, viewport_height, document_height) in [
-            (Rect::new(0, 0, 60, 16), 12, 31),
-            (Rect::new(0, 0, 99, 16), 12, 31),
-            (Rect::new(0, 0, 100, 30), 26, 31),
-            (Rect::new(0, 0, 140, 40), 36, 31),
+    fn property_modes_keep_document_metrics_and_clamp_selection_after_resizing() {
+        for (mode, document_height, field_count) in [
+            (InspectorDisplayMode::Relevant, 24, 17),
+            (InspectorDisplayMode::All, 31, 22),
         ] {
-            let metrics = viewport_metrics(area, &state);
-            assert_eq!(metrics.viewport_height, viewport_height);
-            assert_eq!(metrics.document_height, document_height, "area: {area:?}");
-            assert_eq!(metrics.field_ranges.len(), 22);
+            let mut state = fixtures::startup();
+            if mode == InspectorDisplayMode::All {
+                update(&mut state, Action::ToggleInspectorProperties);
+            }
+            update(
+                &mut state,
+                Action::UpdateGlyphPreview(GlyphPreviewUpdate::Configure {
+                    availability: GraphicsAvailability::Available(GraphicsProtocol::Kitty),
+                    image_id: None,
+                }),
+            );
+            for (area, viewport_height) in [
+                (Rect::new(0, 0, 60, 16), 11),
+                (Rect::new(0, 0, 99, 16), 11),
+                (Rect::new(0, 0, 100, 30), 25),
+                (Rect::new(0, 0, 140, 40), 35),
+            ] {
+                let metrics = viewport_metrics(area, &state);
+                assert_eq!(metrics.viewport_height, viewport_height);
+                assert_eq!(metrics.document_height, document_height, "area: {area:?}");
+                assert_eq!(metrics.field_ranges.len(), field_count);
+            }
+            let metrics = viewport_metrics(Rect::new(0, 0, 100, 16), &state);
+            update(
+                &mut state,
+                Action::ResizeInspectorViewport {
+                    viewport_height: metrics.viewport_height,
+                    document_height: metrics.document_height,
+                    field_ranges: metrics.field_ranges,
+                    groups: metrics.groups,
+                },
+            );
+            update(
+                &mut state,
+                Action::MoveInspector(crate::inspector::InspectorMove::Last),
+            );
+            assert_eq!(state.inspector().offset(), document_height - 11);
+            let metrics = viewport_metrics(Rect::new(0, 0, 140, 40), &state);
+            update(
+                &mut state,
+                Action::ResizeInspectorViewport {
+                    viewport_height: metrics.viewport_height,
+                    document_height: metrics.document_height,
+                    field_ranges: metrics.field_ranges,
+                    groups: metrics.groups,
+                },
+            );
+            assert_eq!(state.inspector().offset(), 0);
         }
-    }
-
-    #[test]
-    fn widening_the_preview_layout_clamps_the_inspector_offset() {
-        let mut state = fixtures::startup();
-        update(
-            &mut state,
-            Action::UpdateGlyphPreview(GlyphPreviewUpdate::Configure {
-                availability: GraphicsAvailability::Available(GraphicsProtocol::Kitty),
-                image_id: None,
-            }),
-        );
-        let narrow = viewport_metrics(Rect::new(0, 0, 100, 16), &state);
-        update(
-            &mut state,
-            Action::ResizeInspectorViewport {
-                viewport_height: narrow.viewport_height,
-                document_height: narrow.document_height,
-                field_ranges: narrow.field_ranges,
-                groups: narrow.groups,
-            },
-        );
-        update(
-            &mut state,
-            Action::MoveInspector(crate::inspector::InspectorMove::Last),
-        );
-        assert_eq!(state.inspector().offset(), 19);
-
-        let wide = viewport_metrics(Rect::new(0, 0, 140, 40), &state);
-        update(
-            &mut state,
-            Action::ResizeInspectorViewport {
-                viewport_height: wide.viewport_height,
-                document_height: wide.document_height,
-                field_ranges: wide.field_ranges,
-                groups: wide.groups,
-            },
-        );
-        assert_eq!(state.inspector().offset(), 0);
     }
 }

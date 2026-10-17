@@ -31,6 +31,7 @@ Context: `inspector`.
 | `first` | <kbd>g</kbd> | Select the first property |
 | `last` | <kbd>G</kbd> | Select the last property |
 | `copy_value` | <kbd>y</kbd> | Copy the selected property value |
+| `toggle_properties` | <kbd>a</kbd> | Toggle Relevant / All properties |
 | `search` | <kbd>/</kbd> | Open search |
 | `toggle_bookmark` | <kbd>m</kbd> | Add or remove the current code point's bookmark |
 | `bookmarks` | <kbd>M</kbd> | Open Bookmarks |

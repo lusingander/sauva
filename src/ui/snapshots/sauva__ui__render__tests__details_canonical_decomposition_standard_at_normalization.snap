@@ -4,15 +4,15 @@ expression: "render_after_inspector_move(&state, width, height, InspectorMove::L
 ---
  sauva / Inspector                                                                           U+00E9
 
- ─────────────────────────────────────────────────────────  │ Glyph
- Classification                                             │  Font     —
-  General Category           Ll — Lowercase Letter          │  Version  —
+ Properties                                       Relevant  │ Glyph
+  Block                      Latin-1 Supplement             │  Font     —
+ ─────────────────────────────────────────────────────────  │  Version  —
+ Classification                                             │
+  General Category           Ll — Lowercase Letter          │
   Script                     Latin                          │
-  Age                        1.1                            │
-  East Asian Width           A — Ambiguous                  │
-  Canonical Combining Class  0 — Not Reordered              │
+  Age                        1.1                            ┃
+  East Asian Width           A — Ambiguous                  ┃
   Bidi Class                 L — Left To Right              ┃
-  Default Ignorable          No                             ┃
  ─────────────────────────────────────────────────────────  ┃
  Encoding                                                   ┃
   UTF-8                      C3 A9                          ┃
