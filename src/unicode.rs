@@ -1,3 +1,4 @@
+mod case;
 mod code_point;
 mod database;
 mod decomposition;
@@ -11,6 +12,7 @@ mod properties;
 pub mod text;
 
 pub use crate::unicode::{
+    case::CaseMapping,
     code_point::{CodePoint, CodePointStructure, InvalidCodePoint},
     database::{GeneralCategory, UnicodeBlock, UnicodeDatabase, UnicodeRecord},
     decomposition::{Decomposition, DecompositionType},

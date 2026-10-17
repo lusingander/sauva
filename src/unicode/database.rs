@@ -1,10 +1,11 @@
 use crate::unicode::{
-    BidiClass, CanonicalCombiningClass, CodePoint, Decomposition, DisplayKind,
+    BidiClass, CanonicalCombiningClass, CaseMapping, CodePoint, Decomposition, DisplayKind,
     DisplayRepresentation, EastAsianWidth, NameAlias, NumericType, UnicodeScalarEncoding,
     generated::{
         AGES, BIDI_CLASSES, BLOCKS, CANONICAL_COMBINING_CLASS_VALUES, CANONICAL_COMBINING_CLASSES,
-        DECOMPOSITIONS, DEFAULT_IGNORABLES, EAST_ASIAN_WIDTHS, GENERAL_CATEGORIES, NAME_ALIASES,
-        NUMERIC_TYPES, NUMERIC_VALUES, PRIMARY_NAMES, SCRIPTS, UNICODE_VERSION,
+        DECOMPOSITIONS, DEFAULT_IGNORABLES, EAST_ASIAN_WIDTHS, GENERAL_CATEGORIES,
+        LOWERCASE_MAPPINGS, NAME_ALIASES, NUMERIC_TYPES, NUMERIC_VALUES, PRIMARY_NAMES, SCRIPTS,
+        TITLECASE_MAPPINGS, UNICODE_VERSION, UPPERCASE_MAPPINGS,
     },
 };
 
@@ -198,6 +199,18 @@ impl UnicodeRecord {
         self.decomposition
     }
 
+    pub fn uppercase_mapping(self) -> CaseMapping {
+        case_mapping(UPPERCASE_MAPPINGS, self.code_point)
+    }
+
+    pub fn lowercase_mapping(self) -> CaseMapping {
+        case_mapping(LOWERCASE_MAPPINGS, self.code_point)
+    }
+
+    pub fn titlecase_mapping(self) -> CaseMapping {
+        case_mapping(TITLECASE_MAPPINGS, self.code_point)
+    }
+
     pub const fn numeric_type(self) -> NumericType {
         self.numeric_type
     }
@@ -217,6 +230,13 @@ impl UnicodeRecord {
             self.default_ignorable,
         )
     }
+}
+
+fn case_mapping(table: &'static [(u32, &'static [u32])], code_point: CodePoint) -> CaseMapping {
+    let values = table
+        .binary_search_by_key(&code_point.value(), |&(value, _)| value)
+        .map_or(&[][..], |index| table[index].1);
+    CaseMapping::new(code_point, values)
 }
 
 fn primary_name_or_fallback(
@@ -451,6 +471,38 @@ fn decomposition(code_point: CodePoint) -> Option<Decomposition> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn case_mappings_use_full_default_mappings_and_identity_fallbacks() {
+        let cases: &[(u32, &[u32], &[u32], &[u32])] = &[
+            (0x61, &[0x41], &[0x61], &[0x41]),
+            (0xdf, &[0x53, 0x53], &[0xdf], &[0x53, 0x73]),
+            (0x130, &[0x130], &[0x69, 0x307], &[0x130]),
+            (0x1f3, &[0x1f1], &[0x1f3], &[0x1f2]),
+            (0x3a3, &[0x3a3], &[0x3c3], &[0x3a3]),
+            (0x0378, &[0x0378], &[0x0378], &[0x0378]),
+            (0xd800, &[0xd800], &[0xd800], &[0xd800]),
+        ];
+        for &(value, uppercase, lowercase, titlecase) in cases {
+            let code_point = crate::unicode::CodePoint::new(value).unwrap();
+            let record = crate::unicode::UnicodeDatabase::lookup(code_point);
+            for (mapping, expected) in [
+                (record.uppercase_mapping(), uppercase),
+                (record.lowercase_mapping(), lowercase),
+                (record.titlecase_mapping(), titlecase),
+            ] {
+                assert_eq!(
+                    mapping
+                        .mapping()
+                        .map(crate::unicode::CodePoint::value)
+                        .collect::<Vec<_>>(),
+                    expected,
+                    "{code_point}"
+                );
+                assert_eq!(mapping.is_identity(), expected == [value]);
+            }
+        }
+    }
+
     #[test]
     fn numeric_properties_include_zero_exact_fractions_and_han_values() {
         use crate::unicode::NumericType;
@@ -923,6 +975,10 @@ mod tests {
             assert!(!record.east_asian_width().name().is_empty());
             assert!(!record.canonical_combining_class().name().is_empty());
             assert!(!record.bidi_class().name().is_empty());
+            assert_eq!(
+                record.numeric_value().is_some(),
+                record.numeric_type() != NumericType::None
+            );
         }
     }
 }

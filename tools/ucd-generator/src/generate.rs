@@ -1,9 +1,12 @@
 use std::{error::Error, fmt, fs, path::Path};
 
 use crate::{
+    case_mapping::{CaseMappings, full_mappings},
     property_value_aliases::{PropertyValueAlias, parse as parse_property_value_aliases},
     ucd::{UcdEntry, parse},
-    unicode_data::{DecompositionEntry, DecompositionKind, parse_decomposition_entries},
+    unicode_data::{
+        DecompositionEntry, DecompositionKind, UnicodeData, parse as parse_unicode_data,
+    },
 };
 
 const UNICODE_VERSION: &str = "17.0.0";
@@ -22,6 +25,7 @@ pub struct GenerationSummary {
     pub canonical_combining_class_range_count: usize,
     pub decomposition_mapping_count: usize,
     pub bidi_class_range_count: usize,
+    pub case_mapping_count: usize,
     pub numeric_type_range_count: usize,
     pub numeric_value_range_count: usize,
 }
@@ -71,7 +75,14 @@ pub fn generate(
             &parse_file(input_directory.join("DerivedCombiningClass.txt"))?,
             &property_value_aliases,
         )?;
-    let decompositions = parse_unicode_data_file(input_directory.join("UnicodeData.txt"))?;
+    let unicode_data = parse_unicode_data_file(input_directory.join("UnicodeData.txt"))?;
+    let decompositions = unicode_data.decompositions;
+    let special_casing = input_directory.join("SpecialCasing.txt");
+    let case_mappings = full_mappings(unicode_data.case_mappings, &read(&special_casing)?)
+        .map_err(|source| GenerationError::Parse {
+            path: special_casing,
+            source,
+        })?;
     validate_decomposition_entries(&decompositions)?;
     let bidi_classes = build_enum_property(
         &parse_file(input_directory.join("DerivedBidiClass.txt"))?,
@@ -102,6 +113,7 @@ pub fn generate(
         canonical_combining_class_values: &canonical_combining_class_values,
         decompositions: &decompositions,
         bidi_classes: &bidi_classes,
+        case_mappings: &case_mappings,
         numeric_types: &numeric_types,
         numeric_values: &numeric_values,
     });
@@ -124,6 +136,7 @@ pub fn generate(
         canonical_combining_class_range_count: canonical_combining_classes.len(),
         decomposition_mapping_count: decompositions.len(),
         bidi_class_range_count: bidi_classes.len(),
+        case_mapping_count: case_mappings.len(),
         numeric_type_range_count: numeric_types.len(),
         numeric_value_range_count: numeric_values.len(),
     })
@@ -138,12 +151,10 @@ fn parse_file(path: impl AsRef<Path>) -> Result<Vec<UcdEntry>, GenerationError> 
     })
 }
 
-fn parse_unicode_data_file(
-    path: impl AsRef<Path>,
-) -> Result<Vec<DecompositionEntry>, GenerationError> {
+fn parse_unicode_data_file(path: impl AsRef<Path>) -> Result<UnicodeData, GenerationError> {
     let path = path.as_ref();
     let source = read(path)?;
-    parse_decomposition_entries(&source).map_err(|source| GenerationError::UnicodeDataParse {
+    parse_unicode_data(&source).map_err(|source| GenerationError::UnicodeDataParse {
         path: path.to_owned(),
         source,
     })
@@ -905,6 +916,7 @@ struct RenderData<'a> {
     canonical_combining_class_values: &'a [CanonicalCombiningClassValue],
     decompositions: &'a [DecompositionEntry],
     bidi_classes: &'a [EnumRange],
+    case_mappings: &'a CaseMappings,
     numeric_types: &'a [EnumRange],
     numeric_values: &'a [StringRange],
 }
@@ -931,7 +943,7 @@ fn render(data: &RenderData<'_>) -> String {
     );
     render_header(&mut output);
     output.push_str(
-        "use crate::unicode::{\n    BidiClass, Decomposition, EastAsianWidth, GeneralCategory, NameAlias, NameAliasType, NumericType,\n};\n\n",
+        "use crate::unicode::{\n    BidiClass, Decomposition, EastAsianWidth, GeneralCategory, NameAlias, NameAliasType,\n    NumericType,\n};\n\n",
     );
     output.push_str(&format!(
         "pub const UNICODE_VERSION: &str = {UNICODE_VERSION:?};\n\n"
@@ -1013,6 +1025,24 @@ fn render(data: &RenderData<'_>) -> String {
     );
     output.push('\n');
     render_string_ranges(&mut output, "NUMERIC_VALUES", data.numeric_values);
+    for (index, name) in [
+        "UPPERCASE_MAPPINGS",
+        "LOWERCASE_MAPPINGS",
+        "TITLECASE_MAPPINGS",
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        output.push('\n');
+        render_mappings(
+            &mut output,
+            name,
+            data.case_mappings
+                .iter()
+                .filter(|(code_point, mappings)| mappings[index] != [**code_point])
+                .map(|(&code_point, mappings)| (code_point, mappings[index].as_slice())),
+        );
+    }
     output
 }
 
@@ -1029,10 +1059,28 @@ fn render_header(output: &mut String) {
     output.push_str("// Blocks.txt, Scripts.txt, DerivedAge.txt, DerivedCoreProperties.txt,\n");
     output.push_str("// NameAliases.txt, EastAsianWidth.txt, DerivedCombiningClass.txt,\n");
     output.push_str("// DerivedBidiClass.txt, PropertyValueAliases.txt, UnicodeData.txt,\n");
-    output.push_str("// DerivedNumericType.txt, and DerivedNumericValues.txt\n");
+    output.push_str("// DerivedNumericType.txt, DerivedNumericValues.txt, and SpecialCasing.txt\n");
     output.push_str(&format!(
         "// Regenerate: cargo run --manifest-path tools/ucd-generator/Cargo.toml -- data/ucd/{UNICODE_VERSION} src/unicode/generated.rs\n\n"
     ));
+}
+
+fn render_mappings<'a>(
+    output: &mut String,
+    name: &str,
+    mappings: impl Iterator<Item = (u32, &'a [u32])>,
+) {
+    output.push_str("#[rustfmt::skip]\n");
+    output.push_str(&format!("pub const {name}: &[(u32, &[u32])] = &[\n"));
+    for (code_point, mapping) in mappings {
+        let targets = mapping
+            .iter()
+            .map(|value| format!("0x{value:06X}"))
+            .collect::<Vec<_>>()
+            .join(", ");
+        output.push_str(&format!("    (0x{code_point:06X}, &[{targets}]),\n"));
+    }
+    output.push_str("];\n");
 }
 
 fn render_decompositions(output: &mut String, decompositions: &[DecompositionEntry]) {
@@ -1245,9 +1293,9 @@ mod tests {
 
     #[test]
     fn renders_canonical_and_compatibility_decompositions() {
-        let entries =
-            parse_decomposition_entries(include_str!("../tests/fixtures/unicode-data-valid.txt"))
-                .unwrap();
+        let entries = parse_unicode_data(include_str!("../tests/fixtures/unicode-data-valid.txt"))
+            .unwrap()
+            .decompositions;
         let mut output = String::new();
 
         render_decompositions(&mut output, &entries);

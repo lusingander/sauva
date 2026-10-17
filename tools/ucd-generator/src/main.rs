@@ -1,3 +1,4 @@
+mod case_mapping;
 mod generate;
 mod property_value_aliases;
 mod ucd;
@@ -55,6 +56,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         "Numeric Value ranges: {}",
         summary.numeric_value_range_count
     );
+    println!("case mappings: {}", summary.case_mapping_count);
     Ok(())
 }
 
