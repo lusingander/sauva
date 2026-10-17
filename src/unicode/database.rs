@@ -3,7 +3,7 @@ use crate::unicode::{
     DisplayRepresentation, EastAsianWidth, NameAlias, NumericType, UnicodeScalarEncoding,
     generated::{
         AGES, BIDI_CLASSES, BLOCKS, CANONICAL_COMBINING_CLASS_VALUES, CANONICAL_COMBINING_CLASSES,
-        DECOMPOSITIONS, DEFAULT_IGNORABLES, EAST_ASIAN_WIDTHS, GENERAL_CATEGORIES,
+        CASE_FOLDINGS, DECOMPOSITIONS, DEFAULT_IGNORABLES, EAST_ASIAN_WIDTHS, GENERAL_CATEGORIES,
         LOWERCASE_MAPPINGS, NAME_ALIASES, NUMERIC_TYPES, NUMERIC_VALUES, PRIMARY_NAMES, SCRIPTS,
         TITLECASE_MAPPINGS, UNICODE_VERSION, UPPERCASE_MAPPINGS,
     },
@@ -197,6 +197,10 @@ impl UnicodeRecord {
 
     pub const fn decomposition(self) -> Option<Decomposition> {
         self.decomposition
+    }
+
+    pub fn case_folding(self) -> CaseMapping {
+        case_mapping(CASE_FOLDINGS, self.code_point)
     }
 
     pub fn uppercase_mapping(self) -> CaseMapping {
@@ -471,6 +475,32 @@ fn decomposition(code_point: CodePoint) -> Option<Decomposition> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn case_folding_is_full_default_folding_instead_of_lowercasing() {
+        let cases: &[(u32, &[u32])] = &[
+            (0xdf, &[0x73, 0x73]),
+            (0x1e9e, &[0x73, 0x73]),
+            (0x3c2, &[0x3c3]),
+            (0x49, &[0x69]),
+            (0x130, &[0x69, 0x307]),
+            (0xab70, &[0x13a0]),
+            (0x61, &[0x61]),
+        ];
+        for &(value, expected) in cases {
+            let record = crate::unicode::UnicodeDatabase::lookup(
+                crate::unicode::CodePoint::new(value).unwrap(),
+            );
+            let mapping = record.case_folding();
+            assert_eq!(
+                mapping
+                    .mapping()
+                    .map(crate::unicode::CodePoint::value)
+                    .collect::<Vec<_>>(),
+                expected
+            );
+        }
+    }
+
     #[test]
     fn case_mappings_use_full_default_mappings_and_identity_fallbacks() {
         let cases: &[(u32, &[u32], &[u32], &[u32])] = &[

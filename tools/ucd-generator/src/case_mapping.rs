@@ -5,6 +5,45 @@ use crate::ucd::{ParseError, parse_code_point};
 // Uppercase, lowercase, and titlecase, in the order shown by the Inspector.
 pub type CaseMappings = BTreeMap<u32, [Vec<u32>; 3]>;
 
+pub fn full_folding(source: &str) -> Result<BTreeMap<u32, Vec<u32>>, ParseError> {
+    let mut mappings = BTreeMap::new();
+    for (index, line) in source.lines().enumerate() {
+        let line_number = index + 1;
+        let content = line.split('#').next().unwrap().trim();
+        if content.is_empty() {
+            continue;
+        }
+        let fields = content
+            .strip_suffix(';')
+            .unwrap_or(content)
+            .split(';')
+            .map(str::trim)
+            .collect::<Vec<_>>();
+        let [code_point, status, mapping] = fields.as_slice() else {
+            return Err(ParseError::new(
+                line_number,
+                "expected code point, folding status, and mapping",
+            ));
+        };
+        let code_point = parse_code_point(line_number, code_point)?;
+        match *status {
+            "C" | "F" => {
+                let mapping = parse_mapping(line_number, mapping)?;
+                if mappings.insert(code_point, mapping).is_some() {
+                    return Err(ParseError::new(
+                        line_number,
+                        "duplicate default full case folding",
+                    ));
+                }
+            }
+            "S" | "T" => {}
+            _ => return Err(ParseError::new(line_number, "unknown case folding status")),
+        }
+    }
+    mappings.retain(|&code_point, mapping| mapping != &[code_point]);
+    Ok(mappings)
+}
+
 pub fn full_mappings(mut simple: CaseMappings, source: &str) -> Result<CaseMappings, ParseError> {
     let mut seen = BTreeSet::new();
     for (index, line) in source.lines().enumerate() {
@@ -73,6 +112,21 @@ pub fn parse_mapping(line: usize, source: &str) -> Result<Vec<u32>, ParseError> 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn default_full_folding_uses_common_and_full_entries_only() {
+        let mappings = full_folding("0049; C; 0069;\n0049; T; 0131;\n00DF; F; 0073 0073;\n1E9E; S; 00DF;\n1E9E; F; 0073 0073;").unwrap();
+        assert_eq!(mappings[&0x49], [0x69]);
+        assert_eq!(mappings[&0xdf], [0x73, 0x73]);
+        assert_eq!(mappings[&0x1e9e], [0x73, 0x73]);
+        for source in [
+            "0041; X; 0061;",
+            "0041; C; D800;",
+            "0041; C; 0061;\n0041; C; 0062;",
+        ] {
+            assert!(full_folding(source).is_err());
+        }
+    }
 
     #[test]
     fn full_mappings_override_simple_values_and_skip_language_and_context_rules() {

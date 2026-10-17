@@ -339,6 +339,10 @@ impl InspectorDetails {
         self.record.numeric_type()
     }
 
+    pub fn case_folding(&self) -> CaseMapping {
+        self.record.case_folding()
+    }
+
     pub fn uppercase_mapping(&self) -> CaseMapping {
         self.record.uppercase_mapping()
     }
@@ -403,6 +407,7 @@ pub enum InspectorFieldId {
     UppercaseMapping,
     LowercaseMapping,
     TitlecaseMapping,
+    CaseFolding,
     NumericType,
     NumericValue,
     Utf8,
@@ -569,6 +574,11 @@ impl InspectorField {
                 "Titlecase Mapping",
                 details.titlecase_mapping(),
             ),
+            (
+                InspectorFieldId::CaseFolding,
+                "Case Folding",
+                details.case_folding(),
+            ),
         ] {
             fields.push(Self::code_point_mapping(
                 id,
@@ -721,6 +731,7 @@ impl InspectorField {
             InspectorFieldId::UppercaseMapping => !details.uppercase_mapping().is_identity(),
             InspectorFieldId::LowercaseMapping => !details.lowercase_mapping().is_identity(),
             InspectorFieldId::TitlecaseMapping => !details.titlecase_mapping().is_identity(),
+            InspectorFieldId::CaseFolding => !details.case_folding().is_identity(),
             InspectorFieldId::NumericType | InspectorFieldId::NumericValue => {
                 details.numeric_type() != NumericType::None
             }
@@ -828,6 +839,10 @@ mod tests {
             (
                 InspectorFieldId::TitlecaseMapping,
                 "U+0053 LATIN CAPITAL LETTER S\nU+0073 LATIN SMALL LETTER S",
+            ),
+            (
+                InspectorFieldId::CaseFolding,
+                "U+0073 LATIN SMALL LETTER S\nU+0073 LATIN SMALL LETTER S",
             ),
         ] {
             let field = fields.iter().find(|field| field.id() == id).unwrap();

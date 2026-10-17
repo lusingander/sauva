@@ -1,7 +1,7 @@
-use std::{error::Error, fmt, fs, path::Path};
+use std::{collections::BTreeMap, error::Error, fmt, fs, path::Path};
 
 use crate::{
-    case_mapping::{CaseMappings, full_mappings},
+    case_mapping::{CaseMappings, full_folding, full_mappings},
     property_value_aliases::{PropertyValueAlias, parse as parse_property_value_aliases},
     ucd::{UcdEntry, parse},
     unicode_data::{
@@ -26,6 +26,7 @@ pub struct GenerationSummary {
     pub decomposition_mapping_count: usize,
     pub bidi_class_range_count: usize,
     pub case_mapping_count: usize,
+    pub case_folding_count: usize,
     pub numeric_type_range_count: usize,
     pub numeric_value_range_count: usize,
 }
@@ -100,6 +101,12 @@ pub fn generate(
     )?;
     let numeric_values =
         build_numeric_values(&read(input_directory.join("DerivedNumericValues.txt"))?)?;
+    let folding_path = input_directory.join("CaseFolding.txt");
+    let case_folding =
+        full_folding(&read(&folding_path)?).map_err(|source| GenerationError::Parse {
+            path: folding_path,
+            source,
+        })?;
     let generated = render(&RenderData {
         names: &names,
         categories: &categories,
@@ -114,6 +121,7 @@ pub fn generate(
         decompositions: &decompositions,
         bidi_classes: &bidi_classes,
         case_mappings: &case_mappings,
+        case_folding: &case_folding,
         numeric_types: &numeric_types,
         numeric_values: &numeric_values,
     });
@@ -137,6 +145,7 @@ pub fn generate(
         decomposition_mapping_count: decompositions.len(),
         bidi_class_range_count: bidi_classes.len(),
         case_mapping_count: case_mappings.len(),
+        case_folding_count: case_folding.len(),
         numeric_type_range_count: numeric_types.len(),
         numeric_value_range_count: numeric_values.len(),
     })
@@ -917,6 +926,7 @@ struct RenderData<'a> {
     decompositions: &'a [DecompositionEntry],
     bidi_classes: &'a [EnumRange],
     case_mappings: &'a CaseMappings,
+    case_folding: &'a BTreeMap<u32, Vec<u32>>,
     numeric_types: &'a [EnumRange],
     numeric_values: &'a [StringRange],
 }
@@ -1043,6 +1053,14 @@ fn render(data: &RenderData<'_>) -> String {
                 .map(|(&code_point, mappings)| (code_point, mappings[index].as_slice())),
         );
     }
+    output.push('\n');
+    render_mappings(
+        &mut output,
+        "CASE_FOLDINGS",
+        data.case_folding
+            .iter()
+            .map(|(&code_point, mapping)| (code_point, mapping.as_slice())),
+    );
     output
 }
 
@@ -1059,7 +1077,7 @@ fn render_header(output: &mut String) {
     output.push_str("// Blocks.txt, Scripts.txt, DerivedAge.txt, DerivedCoreProperties.txt,\n");
     output.push_str("// NameAliases.txt, EastAsianWidth.txt, DerivedCombiningClass.txt,\n");
     output.push_str("// DerivedBidiClass.txt, PropertyValueAliases.txt, UnicodeData.txt,\n");
-    output.push_str("// DerivedNumericType.txt, DerivedNumericValues.txt, and SpecialCasing.txt\n");
+    output.push_str("// DerivedNumericType.txt, DerivedNumericValues.txt, SpecialCasing.txt, and CaseFolding.txt\n");
     output.push_str(&format!(
         "// Regenerate: cargo run --manifest-path tools/ucd-generator/Cargo.toml -- data/ucd/{UNICODE_VERSION} src/unicode/generated.rs\n\n"
     ));

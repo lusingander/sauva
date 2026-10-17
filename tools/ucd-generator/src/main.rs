@@ -57,6 +57,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         summary.numeric_value_range_count
     );
     println!("case mappings: {}", summary.case_mapping_count);
+    println!("case foldings: {}", summary.case_folding_count);
     Ok(())
 }
 

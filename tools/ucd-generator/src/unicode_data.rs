@@ -197,6 +197,17 @@ mod tests {
     use crate::unicode_data::{DecompositionEntry, DecompositionKind, parse};
 
     #[test]
+    fn simple_titlecase_defaults_to_uppercase_and_targets_must_be_scalars() {
+        let source = "0061;LATIN SMALL LETTER A;Ll;0;L;;;;;N;;;0041;;";
+        let data = parse(source).unwrap();
+        assert_eq!(
+            data.case_mappings[&0x61],
+            [vec![0x41], vec![0x61], vec![0x41]]
+        );
+        assert!(parse(&source.replace("0041", "D800")).is_err());
+    }
+
+    #[test]
     fn parses_only_canonical_and_compatibility_decompositions() {
         let entries = parse(include_str!("../tests/fixtures/unicode-data-valid.txt"))
             .unwrap()
