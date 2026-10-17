@@ -50,6 +50,11 @@ fn run() -> Result<(), Box<dyn Error>> {
     );
     println!("Bidi Class ranges: {}", summary.bidi_class_range_count);
 
+    println!("Numeric Type ranges: {}", summary.numeric_type_range_count);
+    println!(
+        "Numeric Value ranges: {}",
+        summary.numeric_value_range_count
+    );
     Ok(())
 }
 

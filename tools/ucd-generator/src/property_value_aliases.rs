@@ -1,6 +1,6 @@
 use std::{error::Error, fmt};
 
-const SUPPORTED_PROPERTIES: [&str; 3] = ["bc", "ccc", "ea"];
+const SUPPORTED_PROPERTIES: [&str; 4] = ["bc", "ccc", "ea", "nt"];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PropertyValueAlias {
@@ -144,13 +144,14 @@ mod tests {
     const VALID: &str = r#"bc ; L ; Left_To_Right
 ccc; 0 ; NR ; Not_Reordered
 ea ; Na ; Narrow
+nt ; De ; Decimal
 "#;
 
     #[test]
     fn parses_the_supported_property_shapes() {
         let aliases = parse(VALID).unwrap();
 
-        assert_eq!(aliases.len(), 3);
+        assert_eq!(aliases.len(), 4);
         assert_eq!(aliases[0].canonical(), "L");
         assert_eq!(aliases[0].abbreviation(), "L");
         assert_eq!(aliases[0].long_name(), "Left_To_Right");

@@ -1,10 +1,10 @@
 use crate::unicode::{
     BidiClass, CanonicalCombiningClass, CodePoint, Decomposition, DisplayKind,
-    DisplayRepresentation, EastAsianWidth, NameAlias, UnicodeScalarEncoding,
+    DisplayRepresentation, EastAsianWidth, NameAlias, NumericType, UnicodeScalarEncoding,
     generated::{
         AGES, BIDI_CLASSES, BLOCKS, CANONICAL_COMBINING_CLASS_VALUES, CANONICAL_COMBINING_CLASSES,
         DECOMPOSITIONS, DEFAULT_IGNORABLES, EAST_ASIAN_WIDTHS, GENERAL_CATEGORIES, NAME_ALIASES,
-        PRIMARY_NAMES, SCRIPTS, UNICODE_VERSION,
+        NUMERIC_TYPES, NUMERIC_VALUES, PRIMARY_NAMES, SCRIPTS, UNICODE_VERSION,
     },
 };
 
@@ -57,6 +57,8 @@ impl UnicodeDatabase {
             canonical_combining_class: canonical_combining_class(code_point.value()),
             bidi_class: complete_range_value(BIDI_CLASSES, code_point.value()),
             decomposition: decomposition(code_point),
+            numeric_type: complete_range_value(NUMERIC_TYPES, code_point.value()),
+            numeric_value: range_value(NUMERIC_VALUES, code_point.value()),
         }
     }
 
@@ -143,6 +145,8 @@ pub struct UnicodeRecord {
     canonical_combining_class: CanonicalCombiningClass,
     bidi_class: BidiClass,
     decomposition: Option<Decomposition>,
+    numeric_type: NumericType,
+    numeric_value: Option<&'static str>,
 }
 
 impl UnicodeRecord {
@@ -192,6 +196,14 @@ impl UnicodeRecord {
 
     pub const fn decomposition(self) -> Option<Decomposition> {
         self.decomposition
+    }
+
+    pub const fn numeric_type(self) -> NumericType {
+        self.numeric_type
+    }
+
+    pub const fn numeric_value(self) -> Option<&'static str> {
+        self.numeric_value
     }
 
     pub const fn encoding(self) -> Option<UnicodeScalarEncoding> {
@@ -439,6 +451,26 @@ fn decomposition(code_point: CodePoint) -> Option<Decomposition> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn numeric_properties_include_zero_exact_fractions_and_han_values() {
+        use crate::unicode::NumericType;
+        for (value, kind, numeric) in [
+            (0x0030, NumericType::Decimal, Some("0")),
+            (0x00b2, NumericType::Digit, Some("2")),
+            (0x2163, NumericType::Numeric, Some("4")),
+            (0x00bd, NumericType::Numeric, Some("1/2")),
+            (0x0f33, NumericType::Numeric, Some("-1/2")),
+            (0x56db, NumericType::Numeric, Some("4")),
+            (0x0041, NumericType::None, None),
+            (0xd800, NumericType::None, None),
+        ] {
+            let code_point = crate::unicode::CodePoint::new(value).unwrap();
+            let record = crate::unicode::UnicodeDatabase::lookup(code_point);
+            assert_eq!(record.numeric_type(), kind, "{code_point}");
+            assert_eq!(record.numeric_value(), numeric, "{code_point}");
+        }
+    }
+
     use rstest::rstest;
 
     use super::*;

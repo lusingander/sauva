@@ -18,5 +18,7 @@ pub use crate::unicode::{
     encoding::UnicodeScalarEncoding,
     notation::{CodePointNotationError, parse_code_point_notation},
     plane::Plane,
-    properties::{BidiClass, CanonicalCombiningClass, EastAsianWidth, NameAlias, NameAliasType},
+    properties::{
+        BidiClass, CanonicalCombiningClass, EastAsianWidth, NameAlias, NameAliasType, NumericType,
+    },
 };
