@@ -2,8 +2,8 @@ use std::ops::Range;
 
 use crate::unicode::{
     BidiClass, CanonicalCombiningClass, CodePoint, Decomposition, DecompositionType,
-    DisplayRepresentation, EastAsianWidth, GeneralCategory, NameAlias, Plane, UnicodeDatabase,
-    UnicodeRecord, UnicodeScalarEncoding,
+    DisplayRepresentation, EastAsianWidth, GeneralCategory, NameAlias, NumericType, Plane,
+    UnicodeDatabase, UnicodeRecord, UnicodeScalarEncoding,
 };
 
 const UNASSIGNED: &str = "Unassigned";
@@ -335,6 +335,14 @@ impl InspectorDetails {
         self.record.decomposition()
     }
 
+    pub const fn numeric_type(&self) -> NumericType {
+        self.record.numeric_type()
+    }
+
+    pub const fn numeric_value(&self) -> Option<&'static str> {
+        self.record.numeric_value()
+    }
+
     pub const fn unicode_version(&self) -> &'static str {
         UnicodeDatabase::version()
     }
@@ -344,6 +352,7 @@ impl InspectorDetails {
 pub enum InspectorSection {
     Identity,
     Classification,
+    Numeric,
     Encoding,
     Normalization,
     Data,
@@ -354,6 +363,7 @@ impl InspectorSection {
         match self {
             Self::Identity => "Identity",
             Self::Classification => "Classification",
+            Self::Numeric => "Numeric",
             Self::Encoding => "Encoding",
             Self::Normalization => "Normalization",
             Self::Data => "Data",
@@ -376,6 +386,8 @@ pub enum InspectorFieldId {
     CanonicalCombiningClass,
     BidiClass,
     DefaultIgnorable,
+    NumericType,
+    NumericValue,
     Utf8,
     Utf16,
     HtmlDecimal,
@@ -524,6 +536,28 @@ impl InspectorField {
             ),
         ]);
 
+        fields.push(Self::copyable(
+            InspectorFieldId::NumericType,
+            InspectorSection::Numeric,
+            "Numeric Type",
+            [details.numeric_type().name().to_owned()],
+        ));
+        fields.push(if let Some(value) = details.numeric_value() {
+            Self::copyable(
+                InspectorFieldId::NumericValue,
+                InspectorSection::Numeric,
+                "Numeric Value",
+                [value.to_owned()],
+            )
+        } else {
+            Self::unavailable(
+                InspectorFieldId::NumericValue,
+                InspectorSection::Numeric,
+                "Numeric Value",
+                "NaN",
+            )
+        });
+
         if let Some(encoding) = details.encoding() {
             fields.extend([
                 Self::copyable(
@@ -645,6 +679,9 @@ impl InspectorField {
                     )
             }
             InspectorFieldId::DefaultIgnorable => details.is_default_ignorable(),
+            InspectorFieldId::NumericType | InspectorFieldId::NumericValue => {
+                details.numeric_type() != NumericType::None
+            }
             InspectorFieldId::Utf8
             | InspectorFieldId::Utf16
             | InspectorFieldId::HtmlDecimal
@@ -719,6 +756,42 @@ impl InspectorField {
 mod tests {
     use super::*;
     use crate::fixtures;
+
+    #[test]
+    fn numeric_fields_show_exact_values_and_hide_only_when_absent() {
+        for (character, kind, value) in [
+            ('0', "Decimal", "0"),
+            ('½', "Numeric", "1/2"),
+            ('四', "Numeric", "4"),
+        ] {
+            for mode in [InspectorDisplayMode::Relevant, InspectorDisplayMode::All] {
+                let fields = InspectorField::for_code_point(CodePoint::from(character), mode);
+                let numeric = fields
+                    .iter()
+                    .filter(|field| field.section() == InspectorSection::Numeric)
+                    .collect::<Vec<_>>();
+                assert_eq!(numeric.len(), 2);
+                assert_eq!(numeric[0].copy_value(), Some(kind));
+                assert_eq!(numeric[1].values(), [value]);
+                assert_eq!(numeric[1].copy_value(), Some(value));
+            }
+        }
+        let relevant =
+            InspectorField::for_code_point(CodePoint::from('A'), InspectorDisplayMode::Relevant);
+        assert!(
+            relevant
+                .iter()
+                .all(|field| field.section() != InspectorSection::Numeric)
+        );
+        let all = InspectorField::for_code_point(CodePoint::from('A'), InspectorDisplayMode::All);
+        let numeric = all
+            .iter()
+            .filter(|field| field.section() == InspectorSection::Numeric)
+            .collect::<Vec<_>>();
+        assert_eq!(numeric[0].values(), ["None"]);
+        assert_eq!(numeric[1].values(), ["NaN"]);
+        assert_eq!(numeric[1].copy_value(), None);
+    }
 
     #[test]
     fn selection_follows_property_identity_and_falls_back_to_nearby_visible_fields() {
