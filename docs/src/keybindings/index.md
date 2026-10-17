@@ -30,7 +30,7 @@ Context: `inspector`.
 | `page_down` | <kbd>Ctrl-D</kbd> | Move properties down one page |
 | `first` | <kbd>g</kbd> | Select the first property |
 | `last` | <kbd>G</kbd> | Select the last property |
-| `explain_property` | <kbd>Enter</kbd> | Explain the selected property |
+| `explain_property` | <kbd>e</kbd> | Explain the selected property |
 | `copy_value` | <kbd>y</kbd> | Copy the selected property value |
 | `toggle_properties` | <kbd>a</kbd> | Toggle Relevant / All properties |
 | `search` | <kbd>/</kbd> | Open search |
@@ -44,7 +44,7 @@ Context: `inspector`.
 
 ## Property
 
-Context: `property`. Open a property's explanation with <kbd>Enter</kbd> in the Inspector. The Inspector's bindings are inactive until you return.
+Context: `property`. Open a property's explanation with <kbd>e</kbd> in the Inspector. The Inspector's bindings are inactive until you return.
 
 | Command | Keys | Action |
 | --- | --- | --- |

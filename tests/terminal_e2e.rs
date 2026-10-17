@@ -25,7 +25,7 @@ fn property_page_keeps_reading_position_and_restores_the_source_inspector() -> t
         })?
         .with_styles()
         .to_string();
-    terminal.send(Key::Enter)?;
+    terminal.send(Key::Char('e'))?;
     terminal.wait_until(|screen| {
         screen.row_text(0).contains("sauva / Property")
             && screen.row_text(0).trim_end().ends_with("General Category")
@@ -80,7 +80,7 @@ fn property_page_opens_new_and_unavailable_fields_with_custom_bindings(
     let config = directory.path().join("config.toml");
     fs::write(
         &config,
-        "[keybindings.inspector]\nexplain_property = ['e']\n[keybindings.property]\nclose = ['backspace']\nmove_down = ['n']\n",
+        "[keybindings.inspector]\nexplain_property = ['x']\n[keybindings.property]\nclose = ['backspace']\nmove_down = ['n']\n",
     )?;
     let mut terminal = termlens::bin!(
         "sauva",
@@ -93,8 +93,8 @@ fn property_page_opens_new_and_unavailable_fields_with_custom_bindings(
     for _ in 0..index {
         terminal.send(Key::Char('j'))?;
     }
-    terminal.send(Key::Enter)?;
     terminal.send(Key::Char('e'))?;
+    terminal.send(Key::Char('x'))?;
     terminal.wait_until(|screen| {
         screen.row_text(0).contains("sauva / Property")
             && screen.row_text(0).contains(label)

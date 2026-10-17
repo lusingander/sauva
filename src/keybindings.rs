@@ -433,7 +433,7 @@ keybinding_context!(InspectorKeybindings, Context::Inspector, {
     first => (Command::First, ["g"]),
     last => (Command::Last, ["G"]),
     copy_value => (Command::CopyValue, ["y"]),
-    explain_property => (Command::ExplainProperty, ["enter"]),
+    explain_property => (Command::ExplainProperty, ["e"]),
     toggle_properties => (Command::ToggleProperties, ["a"]),
     search => (Command::OpenSearch, ["/"]),
     bookmarks => (Command::OpenBookmarks, ["M"]),
@@ -968,7 +968,7 @@ mod tests {
         let keymap = configured(
             r#"
             [inspector]
-            explain_property = ['e']
+            explain_property = ['x']
             [property]
             close = ['backspace']
             move_down = ['n']
@@ -978,13 +978,10 @@ mod tests {
         )
         .unwrap();
         assert_eq!(
-            keymap.resolve(Context::Inspector, plain('e')),
+            keymap.resolve(Context::Inspector, plain('x')),
             Some(Command::ExplainProperty)
         );
-        assert_eq!(
-            keymap.resolve(Context::Inspector, named(KeyCode::Enter)),
-            None
-        );
+        assert_eq!(keymap.resolve(Context::Inspector, plain('e')), None);
         assert_eq!(
             keymap.resolve(Context::Property, plain('n')),
             Some(Command::MoveDown)

@@ -22,7 +22,7 @@ expression: "render_to_text(&state, width, height)"
   Ctrl-d                   Move properties down one page                                          ┃
   g                        Select the first property                                              ┃
   G                        Select the last property                                               ┃
-  Enter                    Explain the selected property                                          ┃
+  e                        Explain the selected property                                          ┃
   y                        Copy the selected property value                                       ┃
   a                        Toggle relevant or all properties                                      ┃
   /                        Open search                                                            ┃
