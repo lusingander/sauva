@@ -14,6 +14,7 @@ use crate::{
     normalization::NormalizationMove,
     search::SearchMove,
     sequence::SequenceMove,
+    viewport::DocumentMove,
 };
 
 pub fn action_for_key(state: &AppState, key: KeyEvent, keymap: &ResolvedKeymap) -> Option<Action> {
@@ -63,7 +64,9 @@ pub fn action_for_key(state: &AppState, key: KeyEvent, keymap: &ResolvedKeymap) 
 }
 
 pub fn context_for_state(state: &AppState) -> Context {
-    if state.copy_dialog().is_some() {
+    if state.property().is_some() {
+        Context::Property
+    } else if state.copy_dialog().is_some() {
         Context::CopyDialog
     } else {
         view_context_for_state(state)
@@ -127,6 +130,16 @@ fn action_for_command(context: Context, command: Command) -> Option<Action> {
         (X::Inspector, C::PageDown) => Some(Action::MoveInspector(InspectorMove::PageForward)),
         (X::Inspector, C::First) => Some(Action::MoveInspector(InspectorMove::First)),
         (X::Inspector, C::Last) => Some(Action::MoveInspector(InspectorMove::Last)),
+        (X::Inspector, C::ExplainProperty) => Some(Action::OpenProperty),
+        (X::Property, C::Close) => Some(Action::CloseProperty),
+        (X::Property, C::MoveUp) => Some(Action::MoveProperty(DocumentMove::LineBackward)),
+        (X::Property, C::MoveDown) => Some(Action::MoveProperty(DocumentMove::LineForward)),
+        (X::Property, C::PageUp) => Some(Action::MoveProperty(DocumentMove::PageBackward)),
+        (X::Property, C::PageDown) => Some(Action::MoveProperty(DocumentMove::PageForward)),
+        (X::Property, C::First) => Some(Action::MoveProperty(DocumentMove::First)),
+        (X::Property, C::Last) => Some(Action::MoveProperty(DocumentMove::Last)),
+        (X::Property, C::OpenReference) => Some(Action::OpenPropertyReference),
+        (X::Property, C::CopyReferenceUrl) => Some(Action::CopyPropertyReference),
         (X::Inspector, C::CopyValue) => Some(Action::CopyInspectorValue),
         (X::Inspector, C::ToggleProperties) => Some(Action::ToggleInspectorProperties),
         (X::Inspector, C::OpenSearch) => Some(Action::OpenSearch),

@@ -8,6 +8,7 @@ mod key_value;
 pub mod layout;
 mod normalization;
 pub mod normalization_result;
+pub mod property;
 pub mod render;
 mod scrollbar;
 mod search;

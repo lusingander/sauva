@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use tui_input::backend::crossterm::to_input_request;
 use umbra::optional;
 
-const ALL_COMMANDS: [Command; 30] = [
+const ALL_COMMANDS: [Command; 34] = [
     Command::Quit,
     Command::Help,
     Command::Close,
@@ -23,6 +23,10 @@ const ALL_COMMANDS: [Command; 30] = [
     Command::First,
     Command::Last,
     Command::CopyValue,
+    Command::ToggleProperties,
+    Command::ExplainProperty,
+    Command::OpenReference,
+    Command::CopyReferenceUrl,
     Command::OpenCopyDialog,
     Command::OpenSearch,
     Command::OpenBookmarks,
@@ -43,6 +47,7 @@ const ALL_COMMANDS: [Command; 30] = [
 pub enum Context {
     Global,
     Inspector,
+    Property,
     Search,
     Bookmarks,
     Sequence,
@@ -61,6 +66,7 @@ impl Context {
         match self {
             Self::Global => "global",
             Self::Inspector => "inspector",
+            Self::Property => "property",
             Self::Search => "search",
             Self::Bookmarks => "bookmarks",
             Self::Sequence => "sequence",
@@ -94,6 +100,9 @@ pub enum Command {
     First,
     Last,
     CopyValue,
+    ExplainProperty,
+    OpenReference,
+    CopyReferenceUrl,
     ToggleProperties,
     OpenCopyDialog,
     OpenSearch,
@@ -150,6 +159,9 @@ impl Command {
             Self::First => "first",
             Self::Last => "last",
             Self::CopyValue => "copy_value",
+            Self::ExplainProperty => "explain_property",
+            Self::OpenReference => "open_reference",
+            Self::CopyReferenceUrl => "copy_reference_url",
             Self::ToggleProperties => "toggle_properties",
             Self::OpenCopyDialog => "open_copy_dialog",
             Self::OpenSearch => "search",
@@ -310,6 +322,9 @@ pub struct Keybindings {
     inspector: InspectorKeybindings,
     #[garde(dive)]
     #[nested]
+    property: PropertyKeybindings,
+    #[garde(dive)]
+    #[nested]
     search: SearchKeybindings,
     #[garde(dive)]
     #[nested]
@@ -348,6 +363,7 @@ impl Keybindings {
         let mut bindings = Vec::new();
         self.global.append_bindings(&mut bindings);
         self.inspector.append_bindings(&mut bindings);
+        self.property.append_bindings(&mut bindings);
         self.search.append_bindings(&mut bindings);
         self.bookmarks.append_bindings(&mut bindings);
         self.sequence.append_bindings(&mut bindings);
@@ -417,6 +433,7 @@ keybinding_context!(InspectorKeybindings, Context::Inspector, {
     first => (Command::First, ["g"]),
     last => (Command::Last, ["G"]),
     copy_value => (Command::CopyValue, ["y"]),
+    explain_property => (Command::ExplainProperty, ["enter"]),
     toggle_properties => (Command::ToggleProperties, ["a"]),
     search => (Command::OpenSearch, ["/"]),
     bookmarks => (Command::OpenBookmarks, ["M"]),
@@ -547,6 +564,18 @@ keybinding_context!(BrowseCodePointsKeybindings, Context::BrowseCodePoints, {
     first => (Command::First, ["g"]),
     last => (Command::Last, ["G"]),
     activate => (Command::Activate, ["enter"]),
+});
+
+keybinding_context!(PropertyKeybindings, Context::Property, {
+    close => (Command::Close, ["esc"]),
+    move_up => (Command::MoveUp, ["k", "up"]),
+    move_down => (Command::MoveDown, ["j", "down"]),
+    page_up => (Command::PageUp, ["ctrl-u"]),
+    page_down => (Command::PageDown, ["ctrl-d"]),
+    first => (Command::First, ["g"]),
+    last => (Command::Last, ["G"]),
+    open_reference => (Command::OpenReference, ["o"]),
+    copy_reference_url => (Command::CopyReferenceUrl, ["y"]),
 });
 
 keybinding_context!(HelpKeybindings, Context::Help, {
@@ -833,6 +862,7 @@ impl ResolvedKeymap {
     fn validate_global_conflicts(&self) -> Result<(), KeybindingError> {
         for context in [
             Context::Inspector,
+            Context::Property,
             Context::Search,
             Context::Bookmarks,
             Context::Sequence,

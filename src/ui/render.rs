@@ -13,7 +13,7 @@ use crate::{
     ui::{
         bookmarks, browser, copy_dialog, glyph_preview, help, inspector,
         layout::{MINIMUM_SIZE, calculate},
-        normalization, search, sequence,
+        normalization, property, search, sequence,
         settings::UiSettings,
         theme::ColorTheme,
     },
@@ -36,6 +36,8 @@ pub fn render(
     render_header(frame, layout.header, state, color_theme);
     if state.help().is_open() {
         help::render(frame, layout.main, state, keymap, color_theme);
+    } else if state.property().is_some() {
+        property::render(frame, layout.main, state, color_theme);
     } else {
         match state.view() {
             View::Inspector => {
@@ -68,7 +70,10 @@ fn render_header(frame: &mut Frame, area: Rect, state: &AppState, color_theme: &
     let status = if state.help().is_open() {
         help::context_label(context).to_owned()
     } else {
-        header_status(state)
+        state.property().map_or_else(
+            || header_status(state),
+            |property| property.field().label().to_owned(),
+        )
     };
     let status_width = (Line::from(status.as_str()).width() + 1) as u16;
     let left = Rect::new(
@@ -97,6 +102,9 @@ fn render_header(frame: &mut Frame, area: Rect, state: &AppState, color_theme: &
 }
 
 fn header_location(state: &AppState, context: Context) -> String {
+    if context == Context::Property {
+        return "Property".to_owned();
+    }
     match context {
         Context::Inspector if state.inspecting_bookmark() => "Bookmarks / Inspector".to_owned(),
         Context::Inspector => state.sequence().map_or_else(

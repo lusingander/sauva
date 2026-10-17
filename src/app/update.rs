@@ -8,6 +8,7 @@ use crate::{
     copy_dialog::CopyDialogState,
     inspector::{InspectorField, InspectorFieldId},
     normalization::NormalizationState,
+    property::PropertyState,
     search::SearchState,
     unicode::CodePoint,
 };
@@ -33,6 +34,25 @@ pub fn update(state: &mut AppState, action: Action) {
     {
         return;
     }
+    if state.property.is_some()
+        && !matches!(
+            action,
+            Action::Quit
+                | Action::ToggleHelp
+                | Action::CloseHelp
+                | Action::MoveHelp(_)
+                | Action::ResizeHelpViewport { .. }
+                | Action::CloseProperty
+                | Action::MoveProperty(_)
+                | Action::ResizePropertyViewport { .. }
+                | Action::OpenPropertyReference
+                | Action::CopyPropertyReference
+                | Action::UpdateGlyphPreview(_)
+                | Action::ShowFooterStatus(_)
+        )
+    {
+        return;
+    }
     if action.clears_footer_status() {
         state.footer_status = None;
     }
@@ -46,6 +66,11 @@ pub fn update(state: &mut AppState, action: Action) {
         | Action::CopyDialogSelection
         | Action::CompleteCopyDialog(_) => update_copy_dialog(state, action),
         Action::Quit => state.running = false,
+        Action::CloseProperty
+        | Action::MoveProperty(_)
+        | Action::ResizePropertyViewport { .. }
+        | Action::OpenPropertyReference
+        | Action::CopyPropertyReference => update_property(state, action),
         Action::ResizeInspectorViewport {
             viewport_height,
             document_height,
@@ -127,8 +152,44 @@ fn update_help(state: &mut AppState, action: Action) {
     }
 }
 
+fn update_property(state: &mut AppState, action: Action) {
+    let Some(property) = state.property.as_mut() else {
+        return;
+    };
+    if state.help.is_open() {
+        return;
+    }
+    match action {
+        Action::CloseProperty => state.property = None,
+        Action::MoveProperty(movement) => property.viewport_mut().move_viewport(movement),
+        Action::ResizePropertyViewport {
+            viewport_height,
+            document_height,
+        } => property
+            .viewport_mut()
+            .resize_viewport(viewport_height, document_height),
+        Action::OpenPropertyReference => state.reference_request = Some(property.reference().url),
+        Action::CopyPropertyReference => {
+            state.clipboard_request = Some(ClipboardRequest {
+                label: "Reference URL",
+                success_message: "Copied reference URL".to_owned(),
+                value: Some(property.reference().url.to_owned()),
+                from_copy_dialog: false,
+            })
+        }
+        _ => {}
+    }
+}
+
 fn update_inspector(state: &mut AppState, action: Action) {
     match action {
+        Action::OpenProperty if !state.help.is_open() => {
+            state.property =
+                InspectorField::for_code_point(state.selected, state.inspector.display_mode())
+                    .into_iter()
+                    .nth(state.inspector.selected_index())
+                    .map(|field| PropertyState::new(state.selected, field));
+        }
         Action::MoveCodePoint(movement) => {
             let selected = match movement {
                 CodePointMove::Previous => state.selected.previous(),

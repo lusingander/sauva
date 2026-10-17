@@ -1,4 +1,41 @@
-use crate::inspector::InspectorFieldId;
+use crate::{
+    inspector::{InspectorField, InspectorFieldId},
+    unicode::CodePoint,
+    viewport::DocumentViewport,
+};
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PropertyState {
+    code_point: CodePoint,
+    field: InspectorField,
+    viewport: DocumentViewport,
+}
+
+impl PropertyState {
+    pub fn new(code_point: CodePoint, field: InspectorField) -> Self {
+        Self {
+            code_point,
+            field,
+            viewport: DocumentViewport::default(),
+        }
+    }
+
+    pub const fn code_point(&self) -> CodePoint {
+        self.code_point
+    }
+    pub const fn field(&self) -> &InspectorField {
+        &self.field
+    }
+    pub const fn viewport(&self) -> &DocumentViewport {
+        &self.viewport
+    }
+    pub fn viewport_mut(&mut self) -> &mut DocumentViewport {
+        &mut self.viewport
+    }
+    pub fn reference(&self) -> PropertyReference {
+        reference(self.field.id())
+    }
+}
 
 #[derive(Debug, Clone, Copy)]
 pub struct PropertyReference {

@@ -127,6 +127,7 @@ fn run_event_loop(
 enum VisibleScreen {
     Help,
     CopyDialog,
+    Property,
     Inspector,
     Browser(BrowseLevel),
     Search,
@@ -143,6 +144,9 @@ impl VisibleScreen {
         }
         if state.copy_dialog().is_some() {
             return Self::CopyDialog;
+        }
+        if state.property().is_some() {
+            return Self::Property;
         }
 
         match state.view() {
@@ -205,6 +209,17 @@ fn resize_active_view(state: &mut AppState, area: Rect, keymap: &ResolvedKeymap)
         return;
     }
     if state.copy_dialog().is_some() {
+        return;
+    }
+    if state.property().is_some() {
+        let (viewport_height, document_height) = crate::ui::property::viewport_metrics(area, state);
+        update(
+            state,
+            Action::ResizePropertyViewport {
+                viewport_height,
+                document_height,
+            },
+        );
         return;
     }
 
