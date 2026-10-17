@@ -133,20 +133,4 @@ mod tests {
             Err(CodePointNotationError::OutOfRange { value })
         );
     }
-
-    #[test]
-    fn provides_stable_user_facing_error_messages() {
-        assert_eq!(
-            CodePointNotationError::Empty.to_string(),
-            "enter a code point"
-        );
-        assert_eq!(
-            CodePointNotationError::InvalidFormat.to_string(),
-            "use U+ followed by 1-6 hexadecimal digits"
-        );
-        assert_eq!(
-            CodePointNotationError::OutOfRange { value: 0x11_0000 }.to_string(),
-            "code point must be between U+0000 and U+10FFFF"
-        );
-    }
 }

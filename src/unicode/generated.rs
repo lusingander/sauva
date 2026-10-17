@@ -14,10 +14,10 @@ use crate::unicode::{
     BidiClass, Decomposition, EastAsianWidth, GeneralCategory, NameAlias, NameAliasType,
 };
 
-pub(super) const UNICODE_VERSION: &str = "17.0.0";
+pub const UNICODE_VERSION: &str = "17.0.0";
 
 #[rustfmt::skip]
-pub(super) const PRIMARY_NAMES: &[(u32, &str)] = &[
+pub const PRIMARY_NAMES: &[(u32, &str)] = &[
     (0x000020, "SPACE"),
     (0x000021, "EXCLAMATION MARK"),
     (0x000022, "QUOTATION MARK"),
@@ -159822,7 +159822,7 @@ pub(super) const PRIMARY_NAMES: &[(u32, &str)] = &[
 ];
 
 #[rustfmt::skip]
-pub(super) const GENERAL_CATEGORIES: &[(u32, u32, GeneralCategory)] = &[
+pub const GENERAL_CATEGORIES: &[(u32, u32, GeneralCategory)] = &[
     (0x000000, 0x00001F, GeneralCategory::Control),
     (0x000020, 0x000020, GeneralCategory::SpaceSeparator),
     (0x000021, 0x000023, GeneralCategory::OtherPunctuation),
@@ -163970,7 +163970,7 @@ pub(super) const GENERAL_CATEGORIES: &[(u32, u32, GeneralCategory)] = &[
 ];
 
 #[rustfmt::skip]
-pub(super) const BLOCKS: &[(u32, u32, &str)] = &[
+pub const BLOCKS: &[(u32, u32, &str)] = &[
     (0x000000, 0x00007F, "Basic Latin"),
     (0x000080, 0x0000FF, "Latin-1 Supplement"),
     (0x000100, 0x00017F, "Latin Extended-A"),
@@ -164320,7 +164320,7 @@ pub(super) const BLOCKS: &[(u32, u32, &str)] = &[
 ];
 
 #[rustfmt::skip]
-pub(super) const SCRIPTS: &[(u32, u32, &str)] = &[
+pub const SCRIPTS: &[(u32, u32, &str)] = &[
     (0x000000, 0x000040, "Common"),
     (0x000041, 0x00005A, "Latin"),
     (0x00005B, 0x000060, "Common"),
@@ -165308,7 +165308,7 @@ pub(super) const SCRIPTS: &[(u32, u32, &str)] = &[
 ];
 
 #[rustfmt::skip]
-pub(super) const AGES: &[(u32, u32, &str)] = &[
+pub const AGES: &[(u32, u32, &str)] = &[
     (0x000000, 0x0001F5, "1.1"),
     (0x0001F6, 0x0001F9, "3.0"),
     (0x0001FA, 0x000217, "1.1"),
@@ -167100,7 +167100,7 @@ pub(super) const AGES: &[(u32, u32, &str)] = &[
 ];
 
 #[rustfmt::skip]
-pub(super) const DEFAULT_IGNORABLES: &[(u32, u32)] = &[
+pub const DEFAULT_IGNORABLES: &[(u32, u32)] = &[
     (0x0000AD, 0x0000AD),
     (0x00034F, 0x00034F),
     (0x00061C, 0x00061C),
@@ -167121,7 +167121,7 @@ pub(super) const DEFAULT_IGNORABLES: &[(u32, u32)] = &[
 ];
 
 #[rustfmt::skip]
-pub(super) const NAME_ALIASES: &[(u32, &[NameAlias])] = &[
+pub const NAME_ALIASES: &[(u32, &[NameAlias])] = &[
     (0x000000, &[
         NameAlias::new("NULL", NameAliasType::Control),
         NameAlias::new("NUL", NameAliasType::Abbreviation),
@@ -168382,7 +168382,7 @@ pub(super) const NAME_ALIASES: &[(u32, &[NameAlias])] = &[
 ];
 
 #[rustfmt::skip]
-pub(super) const EAST_ASIAN_WIDTHS: &[(u32, u32, EastAsianWidth)] = &[
+pub const EAST_ASIAN_WIDTHS: &[(u32, u32, EastAsianWidth)] = &[
     (0x000000, 0x00001F, EastAsianWidth::Neutral),
     (0x000020, 0x00007E, EastAsianWidth::Narrow),
     (0x00007F, 0x0000A0, EastAsianWidth::Neutral),
@@ -168988,7 +168988,7 @@ pub(super) const EAST_ASIAN_WIDTHS: &[(u32, u32, EastAsianWidth)] = &[
 ];
 
 #[rustfmt::skip]
-pub(super) const CANONICAL_COMBINING_CLASS_VALUES: &[(u8, &str)] = &[
+pub const CANONICAL_COMBINING_CLASS_VALUES: &[(u8, &str)] = &[
     (0, "Not Reordered"),
     (1, "Overlay"),
     (6, "Han Reading"),
@@ -169050,7 +169050,7 @@ pub(super) const CANONICAL_COMBINING_CLASS_VALUES: &[(u8, &str)] = &[
 ];
 
 #[rustfmt::skip]
-pub(super) const CANONICAL_COMBINING_CLASSES: &[(u32, u32, u8)] = &[
+pub const CANONICAL_COMBINING_CLASSES: &[(u32, u32, u8)] = &[
     (0x000000, 0x0002FF, 0),
     (0x000300, 0x000314, 230),
     (0x000315, 0x000315, 232),
@@ -169660,7 +169660,7 @@ pub(super) const CANONICAL_COMBINING_CLASSES: &[(u32, u32, u8)] = &[
 ];
 
 #[rustfmt::skip]
-pub(super) const DECOMPOSITIONS: &[(u32, Decomposition)] = &[
+pub const DECOMPOSITIONS: &[(u32, Decomposition)] = &[
     (0x0000A0, Decomposition::compatibility("noBreak", &[0x000020])),
     (0x0000A8, Decomposition::compatibility("compat", &[0x000020, 0x000308])),
     (0x0000AA, Decomposition::compatibility("super", &[0x000061])),
@@ -175578,7 +175578,7 @@ pub(super) const DECOMPOSITIONS: &[(u32, Decomposition)] = &[
 ];
 
 #[rustfmt::skip]
-pub(super) const BIDI_CLASSES: &[(u32, u32, BidiClass)] = &[
+pub const BIDI_CLASSES: &[(u32, u32, BidiClass)] = &[
     (0x000000, 0x000008, BidiClass::BoundaryNeutral),
     (0x000009, 0x000009, BidiClass::SegmentSeparator),
     (0x00000A, 0x00000A, BidiClass::ParagraphSeparator),

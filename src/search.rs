@@ -118,8 +118,9 @@ impl SearchResult {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub enum SearchOutcome {
+    #[default]
     Empty,
     Results {
         name_query: Option<String>,
@@ -144,7 +145,7 @@ impl SearchOutcome {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct SearchState {
     input: Input,
     outcome: SearchOutcome,
@@ -153,15 +154,6 @@ pub struct SearchState {
 }
 
 impl SearchState {
-    pub fn new() -> Self {
-        Self {
-            input: Input::default(),
-            outcome: SearchOutcome::Empty,
-            selected_index: None,
-            viewport: ListViewport::new(),
-        }
-    }
-
     pub const fn input(&self) -> &Input {
         &self.input
     }
@@ -223,12 +215,6 @@ impl SearchState {
             self.selected_index.unwrap_or(0),
             self.outcome.results().len(),
         );
-    }
-}
-
-impl Default for SearchState {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
@@ -645,7 +631,7 @@ mod tests {
 
     #[test]
     fn search_state_starts_empty_without_a_selection() {
-        let state = SearchState::new();
+        let state = SearchState::default();
 
         assert_eq!(state.input().value(), "");
         assert_eq!(state.outcome(), &SearchOutcome::Empty);
@@ -655,7 +641,7 @@ mod tests {
 
     #[test]
     fn editing_a_query_refreshes_results_and_selects_the_first() {
-        let mut state = SearchState::new();
+        let mut state = SearchState::default();
 
         state.edit(InputRequest::InsertChar('→'));
 
@@ -712,7 +698,7 @@ mod tests {
     }
 
     fn search_state_with_query(query: &str) -> SearchState {
-        let mut state = SearchState::new();
+        let mut state = SearchState::default();
         for character in query.chars() {
             state.edit(InputRequest::InsertChar(character));
         }

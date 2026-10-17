@@ -141,11 +141,10 @@ impl Error for ParseError {}
 mod tests {
     use crate::property_value_aliases::parse;
 
-    const VALID: &str = "\
-bc ; L ; Left_To_Right
+    const VALID: &str = r#"bc ; L ; Left_To_Right
 ccc; 0 ; NR ; Not_Reordered
 ea ; Na ; Narrow
-";
+"#;
 
     #[test]
     fn parses_the_supported_property_shapes() {
@@ -163,7 +162,9 @@ ea ; Na ; Narrow
 
     #[test]
     fn rejects_the_wrong_shape_with_a_physical_line_number() {
-        let source = "bc ; L ; Left_To_Right\nccc ; 0 ; Not_Reordered\nea ; Na ; Narrow";
+        let source = r#"bc ; L ; Left_To_Right
+ccc ; 0 ; Not_Reordered
+ea ; Na ; Narrow"#;
 
         assert_eq!(
             parse(source).unwrap_err().to_string(),
@@ -173,7 +174,8 @@ ea ; Na ; Narrow
 
     #[test]
     fn requires_every_supported_property() {
-        let source = "bc ; L ; Left_To_Right\nccc; 0 ; NR ; Not_Reordered";
+        let source = r#"bc ; L ; Left_To_Right
+ccc; 0 ; NR ; Not_Reordered"#;
 
         assert_eq!(
             parse(source).unwrap_err().to_string(),

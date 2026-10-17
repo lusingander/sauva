@@ -1,11 +1,11 @@
-use crate::unicode::generated::{
-    AGES, BIDI_CLASSES, BLOCKS, CANONICAL_COMBINING_CLASS_VALUES, CANONICAL_COMBINING_CLASSES,
-    DECOMPOSITIONS, DEFAULT_IGNORABLES, EAST_ASIAN_WIDTHS, GENERAL_CATEGORIES, NAME_ALIASES,
-    PRIMARY_NAMES, SCRIPTS, UNICODE_VERSION,
-};
 use crate::unicode::{
     BidiClass, CanonicalCombiningClass, CodePoint, Decomposition, DisplayKind,
     DisplayRepresentation, EastAsianWidth, NameAlias, UnicodeScalarEncoding,
+    generated::{
+        AGES, BIDI_CLASSES, BLOCKS, CANONICAL_COMBINING_CLASS_VALUES, CANONICAL_COMBINING_CLASSES,
+        DECOMPOSITIONS, DEFAULT_IGNORABLES, EAST_ASIAN_WIDTHS, GENERAL_CATEGORIES, NAME_ALIASES,
+        PRIMARY_NAMES, SCRIPTS, UNICODE_VERSION,
+    },
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -18,14 +18,15 @@ mod text_preview;
 pub mod theme;
 mod workspace;
 
-use ratatui::layout::Rect;
-use ratatui::text::{Line, Span};
+use ratatui::{
+    layout::Rect,
+    text::{Line, Span},
+};
 use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     app::{AppState, View},
-    ui::settings::UiSettings,
-    ui::theme::SelectionColors,
+    ui::{settings::UiSettings, theme::SelectionColors},
     unicode::CodePoint,
 };
 

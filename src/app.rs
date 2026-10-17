@@ -1,17 +1,22 @@
+mod update;
+
+use smart_default::SmartDefault;
 use tui_input::InputRequest;
 
-use crate::bookmarks::{Bookmark, BookmarkMove, BookmarkState};
-use crate::browser::{BrowseLevel, BrowseMove, BrowseState, BrowseTarget};
-use crate::copy_dialog::{CopyDialogState, CopyMove};
-use crate::help::{HelpMove, HelpState};
-use crate::inspector::{
-    InspectorField, InspectorFieldId, InspectorGroup, InspectorMove, InspectorState,
+pub use crate::app::update::update;
+
+use crate::{
+    bookmarks::{Bookmark, BookmarkMove, BookmarkState},
+    browser::{BrowseLevel, BrowseMove, BrowseState},
+    copy_dialog::{CopyDialogState, CopyMove},
+    help::{HelpMove, HelpState},
+    inspector::{InspectorGroup, InspectorMove, InspectorState},
+    normalization::{NormalizationMove, NormalizationState},
+    preview::{GlyphPreviewState, GlyphPreviewUpdate},
+    search::{SearchMove, SearchState},
+    sequence::{SequenceMove, SequenceState},
+    unicode::CodePoint,
 };
-use crate::normalization::{NormalizationMove, NormalizationState};
-use crate::preview::{GlyphPreviewState, GlyphPreviewUpdate};
-use crate::search::{SearchMove, SearchState};
-use crate::sequence::{SequenceMove, SequenceState};
-use crate::unicode::CodePoint;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Action {
@@ -176,10 +181,13 @@ impl ClipboardRequest {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, SmartDefault)]
 pub struct AppState {
+    #[default(true)]
     running: bool,
+    #[default(View::Inspector)]
     view: View,
+    #[default(CodePoint::from('A'))]
     selected: CodePoint,
     inspector: InspectorState,
     browse: Option<BrowseState>,
@@ -199,43 +207,22 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new() -> Self {
-        let selected = CodePoint::new(0x0041).expect("U+0041 is a valid code point");
-        Self {
-            running: true,
-            view: View::Inspector,
-            selected,
-            inspector: InspectorState::new(),
-            browse: None,
-            search: None,
-            bookmarks: BookmarkState::default(),
-            inspecting_bookmark: false,
-            bookmark_origin: None,
-            bookmark_request: None,
-            sequence: None,
-            normalization: None,
-            showing_normalization_result: false,
-            help: HelpState::new(),
-            copy_dialog: None,
-            glyph_preview: GlyphPreviewState::new(),
-            clipboard_request: None,
-            footer_status: None,
-        }
-    }
-
     pub fn with_selected(selected: CodePoint) -> Self {
-        let mut state = Self::new();
-        state.selected = selected;
-        state
+        Self {
+            selected,
+            ..Self::default()
+        }
     }
 
     pub fn with_sequence(source: String) -> Self {
         let sequence = SequenceState::new(source);
         let selected = sequence.selected();
-        let mut state = Self::with_selected(selected);
-        state.view = View::Sequence;
-        state.sequence = Some(sequence);
-        state
+        Self {
+            view: View::Sequence,
+            selected,
+            sequence: Some(sequence),
+            ..Self::default()
+        }
     }
 
     pub fn is_running(&self) -> bool {
@@ -356,445 +343,13 @@ impl AppState {
     }
 }
 
-impl Default for AppState {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-pub fn update(state: &mut AppState, action: Action) {
-    // A dialog owns input without replacing the underlying screen or selection.
-    if state.copy_dialog.is_some()
-        && !matches!(
-            action,
-            Action::Quit
-                | Action::ToggleHelp
-                | Action::CloseHelp
-                | Action::MoveHelp(_)
-                | Action::ResizeHelpViewport { .. }
-                | Action::OpenCopyDialog
-                | Action::CloseCopyDialog
-                | Action::MoveCopyDialog(_)
-                | Action::CopyDialogSelection
-                | Action::CompleteCopyDialog(_)
-                | Action::UpdateGlyphPreview(_)
-                | Action::ShowFooterStatus(_)
-        )
-    {
-        return;
-    }
-    if action.clears_footer_status() {
-        state.footer_status = None;
-    }
-    match action {
-        Action::Quit => state.running = false,
-        Action::ToggleHelp => state.help.toggle(),
-        Action::CloseHelp => state.help.close(),
-        Action::MoveHelp(movement) if state.help.is_open() => {
-            state.help.move_viewport(movement);
-        }
-        Action::MoveHelp(_) => {}
-        Action::ResizeHelpViewport {
-            viewport_height,
-            document_height,
-        } if state.help.is_open() => state.help.resize_viewport(viewport_height, document_height),
-        Action::ResizeHelpViewport { .. } => {}
-        Action::MoveCodePoint(movement) if state.view == View::Inspector => {
-            let selected = match movement {
-                CodePointMove::Previous => state.selected.previous(),
-                CodePointMove::Next => state.selected.next(),
-            };
-            if let Some(selected) = selected {
-                select_code_point(state, selected);
-            }
-        }
-        Action::MoveCodePoint(_) => {}
-        Action::MoveInspector(movement) if state.view == View::Inspector => {
-            state.inspector.move_selection(movement);
-        }
-        Action::MoveInspector(_) => {}
-        Action::CopyInspectorValue if state.view == View::Inspector => {
-            state.clipboard_request = InspectorField::for_code_point(state.selected)
-                .into_iter()
-                .nth(state.inspector.selected_index())
-                .map(|field| ClipboardRequest {
-                    label: field.label(),
-                    success_message: if field.id() == InspectorFieldId::Character {
-                        format!("Copied Character: {}", state.selected)
-                    } else {
-                        format!("Copied {}", field.label())
-                    },
-                    value: field.copy_value().map(str::to_owned),
-                    from_copy_dialog: false,
-                });
-        }
-        Action::CopyInspectorValue => {}
-        Action::ResizeInspectorViewport {
-            viewport_height,
-            document_height,
-            field_ranges,
-            groups,
-        } => {
-            state
-                .inspector
-                .resize_viewport(viewport_height, document_height, field_ranges, groups)
-        }
-        Action::OpenBrowser(level) if state.view == View::Inspector => {
-            let previous_preview = state.preview_code_point();
-            state.browse = Some(BrowseState::at(level, state.selected));
-            state.view = View::Browser;
-            refresh_preview_for_change(state, previous_preview);
-        }
-        Action::OpenBrowser(_) => {}
-        Action::OpenBookmarks if state.view == View::Inspector => {
-            let previous_preview = state.preview_code_point();
-            if !state.inspecting_bookmark {
-                state.bookmark_origin = Some(state.selected);
-            }
-            state.bookmarks.select(state.selected);
-            state.view = View::Bookmarks;
-            refresh_preview_for_change(state, previous_preview);
-        }
-        Action::OpenBookmarks => {}
-        Action::CloseBookmarks if state.view == View::Bookmarks => {
-            let previous_preview = state.preview_code_point();
-            if let Some(origin) = state.bookmark_origin.take() {
-                select_code_point(state, origin);
-            }
-            state.inspecting_bookmark = false;
-            state.view = View::Inspector;
-            refresh_preview_for_change(state, previous_preview);
-        }
-        Action::CloseBookmarks => {}
-        Action::MoveBookmarks(movement) if state.view == View::Bookmarks => {
-            let previous_preview = state.preview_code_point();
-            state.bookmarks.move_selection(movement);
-            refresh_preview_for_change(state, previous_preview);
-        }
-        Action::MoveBookmarks(_) => {}
-        Action::ResizeBookmarksViewport(height) => state.bookmarks.resize_viewport(height),
-        Action::InspectBookmark if state.view == View::Bookmarks => {
-            if let Some(entry) = state.bookmarks.selected() {
-                let previous_preview = state.preview_code_point();
-                select_code_point(state, entry.code_point());
-                state.inspecting_bookmark = true;
-                state.view = View::Inspector;
-                refresh_preview_for_change(state, previous_preview);
-            }
-        }
-        Action::InspectBookmark => {}
-        Action::ReturnToBookmarks if state.view == View::Inspector && state.inspecting_bookmark => {
-            let previous_preview = state.preview_code_point();
-            state.view = View::Bookmarks;
-            refresh_preview_for_change(state, previous_preview);
-        }
-        Action::ReturnToBookmarks => {}
-        Action::ToggleBookmark if !state.help.is_open() => {
-            let code_point = match state.view {
-                View::Inspector => Some(state.selected),
-                View::Bookmarks => state.bookmarks.selected().map(Bookmark::code_point),
-                _ => None,
-            };
-            if let Some(code_point) = code_point {
-                state.bookmark_request = Some(BookmarkRequest {
-                    code_point,
-                    bookmarked: !state.bookmarks.contains(code_point),
-                });
-            }
-        }
-        Action::ToggleBookmark => {}
-        Action::CompleteBookmark { entries, request } => {
-            let previous_preview = state.preview_code_point();
-            state.bookmarks.replace(entries);
-            state.footer_status = Some(FooterStatus::info(format!(
-                "{} {}",
-                if request.bookmarked {
-                    "Bookmarked"
-                } else {
-                    "Removed bookmark"
-                },
-                request.code_point,
-            )));
-            refresh_preview_for_change(state, previous_preview);
-        }
-        Action::AdvanceBrowser if state.view == View::Browser => {
-            let previous_preview = state.preview_code_point();
-            let (target, cursor) = {
-                let browse = state
-                    .browse
-                    .as_mut()
-                    .expect("the browser view always has browse state");
-                (browse.advance(), browse.cursor())
-            };
-            if target == BrowseTarget::Inspector {
-                select_code_point(state, cursor);
-                state.view = View::Inspector;
-                state.browse = None;
-            }
-            refresh_preview_for_change(state, previous_preview);
-        }
-        Action::AdvanceBrowser => {}
-        Action::BackBrowser if state.view == View::Browser => {
-            let previous_preview = state.preview_code_point();
-            let browse = state
-                .browse
-                .as_mut()
-                .expect("the browser view always has browse state");
-            if browse.back() == BrowseTarget::Inspector {
-                state.view = View::Inspector;
-                state.browse = None;
-            }
-            refresh_preview_for_change(state, previous_preview);
-        }
-        Action::BackBrowser => {}
-        Action::CloseBrowser if state.view == View::Browser => {
-            let previous_preview = state.preview_code_point();
-            state.view = View::Inspector;
-            state.browse = None;
-            refresh_preview_for_change(state, previous_preview);
-        }
-        Action::CloseBrowser => {}
-        Action::MoveBrowser(movement) if state.view == View::Browser => {
-            let previous_preview = state.preview_code_point();
-            let browse = state
-                .browse
-                .as_mut()
-                .expect("the browser view always has browse state");
-            browse.move_cursor(movement);
-            refresh_preview_for_change(state, previous_preview);
-        }
-        Action::MoveBrowser(_) => {}
-        Action::ResizeBrowserViewport(height) => {
-            if let Some(browse) = state.browse.as_mut() {
-                browse.resize_list_viewports(height);
-            }
-        }
-        Action::OpenSearch if state.view == View::Inspector => {
-            state.search.get_or_insert_with(SearchState::new);
-            state.view = View::Search;
-        }
-        Action::OpenSearch => {}
-        Action::CloseSearch if state.view == View::Search => state.view = View::Inspector,
-        Action::CloseSearch => {}
-        Action::InspectSearchResult if state.view == View::Search => {
-            if let Some(result) = state
-                .search
-                .as_ref()
-                .expect("the search view always has search state")
-                .selected_result()
-            {
-                select_code_point(state, result.code_point());
-                state.view = View::Inspector;
-            }
-        }
-        Action::InspectSearchResult => {}
-        Action::EditSearch(request) if state.view == View::Search => state
-            .search
-            .as_mut()
-            .expect("the search view always has search state")
-            .edit(request),
-        Action::EditSearch(_) => {}
-        Action::MoveSearch(movement) if state.view == View::Search => {
-            state
-                .search
-                .as_mut()
-                .expect("the search view always has search state")
-                .move_selection(movement);
-        }
-        Action::MoveSearch(_) => {}
-        Action::ResizeSearchViewport(height) => {
-            if let Some(search) = state.search.as_mut() {
-                search.resize_viewport(height);
-            }
-        }
-        Action::MoveSequence(movement) if state.view == View::Sequence => {
-            let previous_preview = state.preview_code_point();
-            state
-                .sequence_mut()
-                .expect("the sequence view always has sequence state")
-                .move_selection(movement);
-            follow_normalization_selection(state);
-            refresh_preview_for_change(state, previous_preview);
-        }
-        Action::MoveSequence(_) => {}
-        Action::ResizeSequenceViewport(height) => {
-            if let Some(sequence) = state.sequence_mut() {
-                sequence.resize_viewport(height);
-            }
-        }
-        Action::ResizeNormalizationOriginalViewport(height)
-            if state.view == View::Sequence && state.showing_normalization_result =>
-        {
-            state
-                .normalization
-                .as_mut()
-                .unwrap()
-                .comparison_mut()
-                .resize_original_viewport(state.sequence.as_ref().unwrap().analysis(), height);
-        }
-        Action::ResizeNormalizationOriginalViewport(_) => {}
-        Action::InspectSequenceCodePoint if state.view == View::Sequence => {
-            state.inspecting_bookmark = false;
-            let selected = state
-                .sequence()
-                .expect("the sequence view always has sequence state")
-                .selected();
-            select_code_point(state, selected);
-            state.view = View::Inspector;
-        }
-        Action::InspectSequenceCodePoint => {}
-        Action::ReturnToSequence
-            if state.view == View::Inspector
-                && state.sequence.is_some()
-                && !state.inspecting_bookmark =>
-        {
-            let previous_preview = state.preview_code_point();
-            state.view = View::Sequence;
-            refresh_preview_for_change(state, previous_preview);
-        }
-        Action::ReturnToSequence => {}
-        Action::OpenNormalization
-            if state.view == View::Sequence && !state.showing_normalization_result =>
-        {
-            let previous_preview = state.preview_code_point();
-            state.normalization.get_or_insert_with(|| {
-                NormalizationState::new(state.sequence.as_ref().unwrap().analysis())
-            });
-            state.view = View::Normalization;
-            refresh_preview_for_change(state, previous_preview);
-        }
-        Action::OpenNormalization => {}
-        Action::MoveNormalization(movement) if state.view == View::Normalization => {
-            state
-                .normalization
-                .as_mut()
-                .unwrap()
-                .move_selection(movement, state.sequence.as_ref().unwrap().analysis());
-        }
-        Action::MoveNormalization(_) => {}
-        Action::CloseNormalization if state.view == View::Normalization => {
-            let previous_preview = state.preview_code_point();
-            state.view = View::Sequence;
-            refresh_preview_for_change(state, previous_preview);
-        }
-        Action::CloseNormalization => {}
-        Action::InspectNormalizationResult if state.view == View::Normalization => {
-            let previous_preview = state.preview_code_point();
-            state.showing_normalization_result = true;
-            state.view = View::Sequence;
-            follow_normalization_selection(state);
-            refresh_preview_for_change(state, previous_preview);
-        }
-        Action::InspectNormalizationResult => {}
-        Action::ReturnToNormalization
-            if state.view == View::Sequence && state.showing_normalization_result =>
-        {
-            let previous_preview = state.preview_code_point();
-            state.showing_normalization_result = false;
-            state.view = View::Normalization;
-            refresh_preview_for_change(state, previous_preview);
-        }
-        Action::ReturnToNormalization => {}
-        Action::CopyNormalizationResult if state.view == View::Normalization => {
-            let normalization = state.normalization.as_ref().unwrap();
-            state.clipboard_request = Some(ClipboardRequest {
-                label: normalization.form().label(),
-                success_message: format!("Copied {} Result", normalization.form().label()),
-                value: Some(
-                    normalization
-                        .comparison()
-                        .result
-                        .analysis()
-                        .source()
-                        .to_owned(),
-                ),
-                from_copy_dialog: false,
-            });
-        }
-        Action::CopyNormalizationResult => {}
-        Action::OpenCopyDialog
-            if state.view == View::Sequence
-                && !state.help.is_open()
-                && state.copy_dialog.is_none() =>
-        {
-            state.copy_dialog = Some(CopyDialogState::default());
-        }
-        Action::OpenCopyDialog => {}
-        Action::CloseCopyDialog if !state.help.is_open() => state.copy_dialog = None,
-        Action::CloseCopyDialog => {}
-        Action::MoveCopyDialog(movement) if !state.help.is_open() => {
-            if let Some(dialog) = &mut state.copy_dialog {
-                dialog.move_selection(movement);
-            }
-        }
-        Action::MoveCopyDialog(_) => {}
-        Action::CopyDialogSelection if !state.help.is_open() && state.copy_dialog.is_some() => {
-            let target = state.copy_dialog.as_ref().unwrap().selected_target();
-            let value = target.text(state.sequence().unwrap()).to_owned();
-            let source = if state.showing_normalization_result {
-                format!(
-                    "{} Result",
-                    state.normalization.as_ref().unwrap().form().label()
-                )
-            } else {
-                "Input".to_owned()
-            };
-            let count = value.chars().count();
-            state.clipboard_request = Some(ClipboardRequest {
-                label: target.label(),
-                success_message: format!(
-                    "Copied {} ({source}): {count} code point{}",
-                    target.label(),
-                    if count == 1 { "" } else { "s" },
-                ),
-                value: Some(value),
-                from_copy_dialog: true,
-            });
-        }
-        Action::CopyDialogSelection => {}
-        Action::CompleteCopyDialog(status) if state.copy_dialog.is_some() => {
-            if status.level() == FooterStatusLevel::Info {
-                state.copy_dialog = None;
-            }
-            state.footer_status = Some(status);
-        }
-        Action::CompleteCopyDialog(_) => {}
-        Action::UpdateGlyphPreview(update) => state.glyph_preview.apply(update),
-        Action::ShowFooterStatus(status) => state.footer_status = Some(status),
-    }
-}
-
-fn select_code_point(state: &mut AppState, code_point: CodePoint) {
-    if state.selected != code_point {
-        state.selected = code_point;
-        state.glyph_preview.selection_changed();
-    }
-}
-
-fn follow_normalization_selection(state: &mut AppState) {
-    if state.showing_normalization_result {
-        state
-            .normalization
-            .as_mut()
-            .unwrap()
-            .comparison_mut()
-            .follow_selection(state.sequence.as_ref().unwrap().analysis());
-    }
-}
-
-fn refresh_preview_for_change(state: &mut AppState, previous: Option<CodePoint>) {
-    if state.preview_code_point() != previous {
-        state.glyph_preview.selection_changed();
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn bookmarks_request_persistence_before_changing_state_and_keep_status_on_resize() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         update(&mut state, Action::ToggleBookmark);
         assert!(!state.bookmarks().contains(state.selected()));
         assert!(state.footer_status().is_none());
@@ -1008,7 +563,7 @@ mod tests {
 
     #[test]
     fn normalization_actions_are_scoped_to_their_views() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         update(&mut state, Action::OpenNormalization);
         update(
             &mut state,
@@ -1196,7 +751,7 @@ mod tests {
 
     #[test]
     fn copy_dialog_supports_single_code_point_results_and_is_scoped_to_sequence_views() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         update(&mut state, Action::OpenCopyDialog);
         assert!(state.copy_dialog().is_none());
         let mut state = AppState::with_sequence("A\u{0301}".to_owned());
@@ -1214,7 +769,7 @@ mod tests {
 
     #[test]
     fn starts_running() {
-        let state = AppState::new();
+        let state = AppState::default();
 
         assert!(state.is_running());
         assert_eq!(state.selected().value(), 0x0041);
@@ -1230,7 +785,7 @@ mod tests {
 
     #[test]
     fn help_opens_without_changing_the_base_view_and_resets_when_closed() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         update(&mut state, Action::OpenSearch);
 
         update(&mut state, Action::ToggleHelp);
@@ -1257,7 +812,7 @@ mod tests {
 
     #[test]
     fn quit_action_stops_the_app() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
 
         update(&mut state, Action::Quit);
 
@@ -1266,7 +821,7 @@ mod tests {
 
     #[test]
     fn preview_target_follows_only_code_point_selections() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         assert_eq!(state.preview_code_point().unwrap().value(), 0x0041);
 
         update(&mut state, Action::OpenBrowser(BrowseLevel::Plane));
@@ -1295,7 +850,7 @@ mod tests {
 
     #[test]
     fn inspector_movement_is_limited_to_the_inspector() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         resize_inspector(&mut state, 5, 20);
 
         update(
@@ -1355,7 +910,7 @@ mod tests {
 
     #[test]
     fn search_inspection_preserves_the_selected_inspector_field() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         resize_inspector(&mut state, 5, 20);
         update(&mut state, Action::MoveInspector(InspectorMove::Last));
         assert_eq!(state.inspector().offset(), 15);
@@ -1384,7 +939,7 @@ mod tests {
             preview::{GlyphPreviewGeometry, GlyphPreviewStatus},
         };
 
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         let image_id = ImageId::new(7).unwrap();
         let canvas = CanvasSize::new(80, 64).unwrap();
         let geometry = GlyphPreviewGeometry::new(10, 4, canvas);
@@ -1419,7 +974,7 @@ mod tests {
 
     #[test]
     fn closing_and_reopening_other_views_preserves_the_inspector_offset() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         resize_inspector(&mut state, 5, 20);
         update(&mut state, Action::MoveInspector(InspectorMove::Last));
 
@@ -1511,7 +1066,7 @@ mod tests {
             preview::{GlyphPreviewGeometry, GlyphPreviewStatus},
         };
 
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         update(&mut state, Action::OpenBrowser(BrowseLevel::CodePointTable));
         update(
             &mut state,
@@ -1571,7 +1126,7 @@ mod tests {
 
     #[test]
     fn browser_enter_and_back_actions_follow_the_hierarchy() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         update(&mut state, Action::OpenBrowser(BrowseLevel::Plane));
 
         update(&mut state, Action::AdvanceBrowser);
@@ -1605,7 +1160,7 @@ mod tests {
 
     #[test]
     fn reopening_code_points_uses_the_selection_from_search() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         update(&mut state, Action::OpenBrowser(BrowseLevel::CodePointTable));
         update(&mut state, Action::MoveBrowser(BrowseMove::Right));
         assert_eq!(state.selected().value(), 0x0041);
@@ -1718,7 +1273,7 @@ mod tests {
 
     #[test]
     fn search_cannot_open_from_the_browser() {
-        let mut browser = AppState::new();
+        let mut browser = AppState::default();
         update(&mut browser, Action::OpenBrowser(BrowseLevel::Plane));
 
         update(&mut browser, Action::OpenSearch);
@@ -1729,7 +1284,7 @@ mod tests {
 
     #[test]
     fn editing_and_moving_search_results_do_not_change_the_shared_selection() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         update(&mut state, Action::OpenSearch);
         edit_search_query(&mut state, "rightwards arrow");
         let first = state.search().unwrap().selected_result().unwrap();
@@ -1742,7 +1297,7 @@ mod tests {
 
     #[test]
     fn inspecting_a_search_result_updates_the_shared_selection_and_closes_search() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         resize_inspector(&mut state, 5, 20);
         update(&mut state, Action::MoveInspector(InspectorMove::Last));
         update(&mut state, Action::OpenSearch);
@@ -1759,7 +1314,7 @@ mod tests {
 
     #[test]
     fn search_accepts_short_explicit_code_point_notation() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         update(&mut state, Action::OpenSearch);
         edit_search_query(&mut state, "U+A");
 
@@ -1771,7 +1326,7 @@ mod tests {
 
     #[test]
     fn inspecting_without_a_result_keeps_search_open_and_preserves_selection() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         update(&mut state, Action::OpenSearch);
         edit_search_query(&mut state, "not a unicode name");
 
@@ -1783,7 +1338,7 @@ mod tests {
 
     #[test]
     fn closing_and_reopening_search_retains_query_selection_and_viewport() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         update(&mut state, Action::OpenSearch);
         edit_search_query(&mut state, "rightwards arrow");
         update(&mut state, Action::ResizeSearchViewport(2));
@@ -1805,7 +1360,7 @@ mod tests {
 
     #[test]
     fn footer_status_survives_internal_updates_and_clears_on_the_next_user_action() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         update(
             &mut state,
             Action::ShowFooterStatus(FooterStatus::info("Copied Code Point")),

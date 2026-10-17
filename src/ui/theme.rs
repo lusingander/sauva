@@ -216,7 +216,13 @@ mod tests {
 
     #[test]
     fn difference_colors_keep_their_own_defaults_when_partially_configured() {
-        let config: OptionalColorTheme = toml::from_str("[difference]\nfg = \"white\"").unwrap();
+        let config: OptionalColorTheme = toml::from_str(
+            r#"
+                [difference]
+                fg = "white"
+            "#,
+        )
+        .unwrap();
         let theme: ColorTheme = config.into();
         assert_eq!(theme.difference.fg, Color::White);
         assert_eq!(theme.difference.bg, Color::Yellow);
@@ -225,7 +231,7 @@ mod tests {
 
     #[test]
     fn unknown_color_field_is_rejected() {
-        let error = toml::from_str::<OptionalColorTheme>("acccent = \"cyan\"").unwrap_err();
+        let error = toml::from_str::<OptionalColorTheme>(r#"acccent = "cyan""#).unwrap_err();
 
         assert!(error.to_string().contains("unknown field `acccent`"));
     }

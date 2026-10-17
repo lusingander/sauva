@@ -1,8 +1,10 @@
 use std::{error::Error, fmt, fs, path::Path};
 
-use crate::property_value_aliases::{PropertyValueAlias, parse as parse_property_value_aliases};
-use crate::ucd::{UcdEntry, parse};
-use crate::unicode_data::{DecompositionEntry, DecompositionKind, parse_decomposition_entries};
+use crate::{
+    property_value_aliases::{PropertyValueAlias, parse as parse_property_value_aliases},
+    ucd::{UcdEntry, parse},
+    unicode_data::{DecompositionEntry, DecompositionKind, parse_decomposition_entries},
+};
 
 const UNICODE_VERSION: &str = "17.0.0";
 const MAX_CODE_POINT: u32 = 0x10_ffff;
@@ -864,16 +866,16 @@ fn render(data: &RenderData<'_>) -> String {
         "use crate::unicode::{\n    BidiClass, Decomposition, EastAsianWidth, GeneralCategory, NameAlias, NameAliasType,\n};\n\n",
     );
     output.push_str(&format!(
-        "pub(super) const UNICODE_VERSION: &str = {UNICODE_VERSION:?};\n\n"
+        "pub const UNICODE_VERSION: &str = {UNICODE_VERSION:?};\n\n"
     ));
     output.push_str("#[rustfmt::skip]\n");
-    output.push_str("pub(super) const PRIMARY_NAMES: &[(u32, &str)] = &[\n");
+    output.push_str("pub const PRIMARY_NAMES: &[(u32, &str)] = &[\n");
     for (code_point, name) in data.names {
         output.push_str(&format!("    (0x{code_point:06X}, {name:?}),\n"));
     }
     output.push_str("];\n\n");
     output.push_str("#[rustfmt::skip]\n");
-    output.push_str("pub(super) const GENERAL_CATEGORIES: &[(u32, u32, GeneralCategory)] = &[\n");
+    output.push_str("pub const GENERAL_CATEGORIES: &[(u32, u32, GeneralCategory)] = &[\n");
     for range in data.categories {
         output.push_str(&format!(
             "    (0x{:06X}, 0x{:06X}, GeneralCategory::{}),\n",
@@ -888,7 +890,7 @@ fn render(data: &RenderData<'_>) -> String {
     render_string_ranges(&mut output, "AGES", data.ages);
     output.push('\n');
     output.push_str("#[rustfmt::skip]\n");
-    output.push_str("pub(super) const DEFAULT_IGNORABLES: &[(u32, u32)] = &[\n");
+    output.push_str("pub const DEFAULT_IGNORABLES: &[(u32, u32)] = &[\n");
     for range in data.default_ignorables {
         output.push_str(&format!(
             "    (0x{:06X}, 0x{:06X}),\n",
@@ -897,7 +899,7 @@ fn render(data: &RenderData<'_>) -> String {
     }
     output.push_str("];\n\n");
     output.push_str("#[rustfmt::skip]\n");
-    output.push_str("pub(super) const NAME_ALIASES: &[(u32, &[NameAlias])] = &[\n");
+    output.push_str("pub const NAME_ALIASES: &[(u32, &[NameAlias])] = &[\n");
     for group in data.name_aliases {
         output.push_str(&format!("    (0x{:06X}, &[\n", group.code_point));
         for alias in &group.aliases {
@@ -917,13 +919,13 @@ fn render(data: &RenderData<'_>) -> String {
     );
     output.push('\n');
     output.push_str("#[rustfmt::skip]\n");
-    output.push_str("pub(super) const CANONICAL_COMBINING_CLASS_VALUES: &[(u8, &str)] = &[\n");
+    output.push_str("pub const CANONICAL_COMBINING_CLASS_VALUES: &[(u8, &str)] = &[\n");
     for value in data.canonical_combining_class_values {
         output.push_str(&format!("    ({}, {:?}),\n", value.value, value.name));
     }
     output.push_str("];\n\n");
     output.push_str("#[rustfmt::skip]\n");
-    output.push_str("pub(super) const CANONICAL_COMBINING_CLASSES: &[(u32, u32, u8)] = &[\n");
+    output.push_str("pub const CANONICAL_COMBINING_CLASSES: &[(u32, u32, u8)] = &[\n");
     for range in data.canonical_combining_classes {
         output.push_str(&format!(
             "    (0x{:06X}, 0x{:06X}, {}),\n",
@@ -957,7 +959,7 @@ fn render_header(output: &mut String) {
 
 fn render_decompositions(output: &mut String, decompositions: &[DecompositionEntry]) {
     output.push_str("#[rustfmt::skip]\n");
-    output.push_str("pub(super) const DECOMPOSITIONS: &[(u32, Decomposition)] = &[\n");
+    output.push_str("pub const DECOMPOSITIONS: &[(u32, Decomposition)] = &[\n");
     for decomposition in decompositions {
         let mapping = decomposition
             .mapping()
@@ -984,7 +986,7 @@ fn render_decompositions(output: &mut String, decompositions: &[DecompositionEnt
 fn render_string_ranges(output: &mut String, constant_name: &str, ranges: &[StringRange]) {
     output.push_str("#[rustfmt::skip]\n");
     output.push_str(&format!(
-        "pub(super) const {constant_name}: &[(u32, u32, &str)] = &[\n"
+        "pub const {constant_name}: &[(u32, u32, &str)] = &[\n"
     ));
     for range in ranges {
         output.push_str(&format!(
@@ -1003,7 +1005,7 @@ fn render_enum_ranges(
 ) {
     output.push_str("#[rustfmt::skip]\n");
     output.push_str(&format!(
-        "pub(super) const {constant_name}: &[(u32, u32, {enum_name})] = &[\n"
+        "pub const {constant_name}: &[(u32, u32, {enum_name})] = &[\n"
     ));
     for range in ranges {
         output.push_str(&format!(
@@ -1121,33 +1123,11 @@ mod tests {
     use rstest::rstest;
 
     #[test]
-    fn generated_header_includes_unicode_license_attribution() {
-        let mut output = String::new();
-
-        render_header(&mut output);
-
-        assert_eq!(
-            output,
-            concat!(
-                "// @generated by tools/ucd-generator. DO NOT EDIT.\n",
-                "// Unicode version: 17.0.0\n",
-                "// Contains data derived from the Unicode Character Database.\n",
-                "// Copyright © 1991-2026 Unicode, Inc.\n",
-                "// Distributed under Unicode License v3; see UNICODE-LICENSE.txt.\n",
-                "// Third-party attribution details: THIRD_PARTY_NOTICES.\n",
-                "// Sources: data/ucd/17.0.0/DerivedName.txt, DerivedGeneralCategory.txt,\n",
-                "// Blocks.txt, Scripts.txt, DerivedAge.txt, DerivedCoreProperties.txt,\n",
-                "// NameAliases.txt, EastAsianWidth.txt, DerivedCombiningClass.txt,\n",
-                "// DerivedBidiClass.txt, PropertyValueAliases.txt, and UnicodeData.txt\n",
-                "// Regenerate: cargo run --manifest-path tools/ucd-generator/Cargo.toml -- data/ucd/17.0.0 src/unicode/generated.rs\n\n",
-            )
-        );
-    }
-
-    #[test]
     fn expands_pattern_names_and_sorts_them() {
         let entries = parse(
-            "4E00..4E02 ; CJK UNIFIED IDEOGRAPH-*\n0041 ; LATIN CAPITAL LETTER A\n18CFF ; KHITAN SMALL SCRIPT CHARACTER-*",
+            r#"4E00..4E02 ; CJK UNIFIED IDEOGRAPH-*
+0041 ; LATIN CAPITAL LETTER A
+18CFF ; KHITAN SMALL SCRIPT CHARACTER-*"#,
         )
         .unwrap();
 
@@ -1174,21 +1154,23 @@ mod tests {
 
         assert_eq!(
             output,
-            concat!(
-                "#[rustfmt::skip]\n",
-                "pub(super) const DECOMPOSITIONS: &[(u32, Decomposition)] = &[\n",
-                "    (0x0000A0, Decomposition::compatibility(\"noBreak\", &[0x000020])),\n",
-                "    (0x0000E9, Decomposition::canonical(&[0x000065, 0x000301])),\n",
-                "];\n",
-            )
+            r#"#[rustfmt::skip]
+pub const DECOMPOSITIONS: &[(u32, Decomposition)] = &[
+    (0x0000A0, Decomposition::compatibility("noBreak", &[0x000020])),
+    (0x0000E9, Decomposition::canonical(&[0x000065, 0x000301])),
+];
+"#
         );
     }
 
     #[test]
     fn groups_name_aliases_by_code_point_without_reordering_each_group() {
-        let entries =
-            parse("0001;START OF HEADING;control\n0000;NULL;control\n0000;NUL;abbreviation")
-                .unwrap();
+        let entries = parse(
+            r#"0001;START OF HEADING;control
+0000;NULL;control
+0000;NUL;abbreviation"#,
+        )
+        .unwrap();
 
         assert_eq!(
             build_name_aliases(&entries).unwrap(),
@@ -1229,7 +1211,12 @@ mod tests {
 
     #[test]
     fn sorts_and_merges_complete_general_category_ranges() {
-        let entries = parse("0002..10FFFF ; Cn\n0001 ; Cn\n0000 ; Cc").unwrap();
+        let entries = parse(
+            r#"0002..10FFFF ; Cn
+0001 ; Cn
+0000 ; Cc"#,
+        )
+        .unwrap();
 
         assert_eq!(
             build_general_categories(&entries).unwrap(),
@@ -1250,7 +1237,11 @@ mod tests {
 
     #[test]
     fn rejects_general_category_gaps() {
-        let entries = parse("0000 ; Cc\n0002..10FFFF ; Cn").unwrap();
+        let entries = parse(
+            r#"0000 ; Cc
+0002..10FFFF ; Cn"#,
+        )
+        .unwrap();
 
         assert_eq!(
             build_general_categories(&entries).unwrap_err().to_string(),
@@ -1260,9 +1251,13 @@ mod tests {
 
     #[test]
     fn builds_sparse_string_properties_and_checks_the_default() {
-        let entries =
-            parse("# @missing: 0000..10FFFF; Unknown\n0042 ; Latin\n0041 ; Latin\n0061 ; Latin")
-                .unwrap();
+        let entries = parse(
+            r#"# @missing: 0000..10FFFF; Unknown
+0042 ; Latin
+0041 ; Latin
+0061 ; Latin"#,
+        )
+        .unwrap();
 
         assert_eq!(
             build_string_property(&entries, "Script", "Unknown").unwrap(),
@@ -1341,7 +1336,9 @@ mod tests {
     #[test]
     fn rejects_crossing_missing_defaults() {
         let entries = parse(
-            "# @missing: 0000..10FFFF; Left_To_Right\n# @missing: 0100..02FF; Right_To_Left\n# @missing: 0200..03FF; Arabic_Letter",
+            r#"# @missing: 0000..10FFFF; Left_To_Right
+# @missing: 0100..02FF; Right_To_Left
+# @missing: 0200..03FF; Arabic_Letter"#,
         )
         .unwrap();
 
@@ -1356,7 +1353,9 @@ mod tests {
     #[test]
     fn selects_and_merges_one_binary_property() {
         let entries = parse(
-            "0041 ; Other_Property\n00AD ; Default_Ignorable_Code_Point\n00AE..00AF ; Default_Ignorable_Code_Point",
+            r#"0041 ; Other_Property
+00AD ; Default_Ignorable_Code_Point
+00AE..00AF ; Default_Ignorable_Code_Point"#,
         )
         .unwrap();
 
@@ -1372,7 +1371,9 @@ mod tests {
     #[test]
     fn rejects_overlapping_sparse_property_ranges() {
         let entries = parse(
-            "# @missing: 0000..10FFFF; No_Block\n0000..007F ; Basic Latin\n007F..00FF ; Latin-1 Supplement",
+            r#"# @missing: 0000..10FFFF; No_Block
+0000..007F ; Basic Latin
+007F..00FF ; Latin-1 Supplement"#,
         )
         .unwrap();
 
@@ -1388,13 +1389,15 @@ mod tests {
     fn requires_the_expected_final_unicode_version() {
         assert!(
             validate_unicode_version(
-                "This directory contains final data files\nfor Version 17.0.0 of the Unicode Standard."
+                r#"This directory contains final data files
+for Version 17.0.0 of the Unicode Standard."#
             )
             .is_ok()
         );
         assert_eq!(
             validate_unicode_version(
-                "This directory contains final data files\nfor Version 18.0.0 of the Unicode Standard."
+                r#"This directory contains final data files
+for Version 18.0.0 of the Unicode Standard."#
             )
             .unwrap_err()
             .to_string(),

@@ -36,7 +36,7 @@ impl GlyphCache {
         Self::with_limits(settings, DEFAULT_CACHE_MAX_ENTRIES, DEFAULT_CACHE_MAX_BYTES)
     }
 
-    pub(super) fn with_limits(
+    pub fn with_limits(
         settings: GlyphPreviewSettings,
         max_entries: usize,
         max_bytes: usize,
@@ -94,12 +94,12 @@ impl GlyphCache {
     }
 
     #[cfg(test)]
-    pub(super) fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.entries.len()
     }
 
     #[cfg(test)]
-    pub(super) const fn total_bytes(&self) -> usize {
+    pub const fn total_bytes(&self) -> usize {
         self.total_bytes
     }
 }

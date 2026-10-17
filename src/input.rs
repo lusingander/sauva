@@ -98,8 +98,7 @@ pub fn view_context_for_state(state: &AppState) -> Context {
 
 #[rustfmt::skip]
 fn action_for_command(context: Context, command: Command) -> Option<Action> {
-    use Command as C;
-    use Context as X;
+    use crate::keybindings::{Command as C, Context as X};
 
     match (context, command) {
         (_, C::Quit) => Some(Action::Quit),
@@ -200,7 +199,7 @@ mod tests {
     #[test]
     fn bookmark_keys_are_scoped_and_help_and_key_repeat_do_not_toggle_bookmarks() {
         let key = |character| KeyEvent::new(KeyCode::Char(character), KeyModifiers::NONE);
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         state.set_bookmarks(vec![crate::bookmarks::Bookmark::new(
             CodePoint::from('A'),
             jiff::Timestamp::UNIX_EPOCH,
@@ -288,7 +287,7 @@ mod tests {
             action_for_key(&state, key(KeyCode::Esc)),
             Some(Action::CloseCopyDialog)
         );
-        let mut search = AppState::new();
+        let mut search = AppState::default();
         crate::app::update(&mut search, Action::OpenSearch);
         assert_eq!(
             action_for_key(&search, key(KeyCode::Char('Y'))),
@@ -347,7 +346,7 @@ mod tests {
 
     #[test]
     fn lowercase_q_requests_quit() {
-        let state = AppState::new();
+        let state = AppState::default();
         let action = action_for_key(
             &state,
             KeyEvent::new(KeyCode::Char('q'), KeyModifiers::NONE),
@@ -358,7 +357,7 @@ mod tests {
 
     #[test]
     fn escape_requests_quit() {
-        let state = AppState::new();
+        let state = AppState::default();
         let action = action_for_key(&state, KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE));
 
         assert_eq!(action, Some(Action::Quit));
@@ -367,7 +366,7 @@ mod tests {
     #[test]
     fn control_c_requests_quit_in_every_state() {
         let states = [
-            AppState::new(),
+            AppState::default(),
             browser_state(BrowseLevel::Plane),
             search_state(),
         ];
@@ -384,7 +383,7 @@ mod tests {
     #[case('b', BrowseLevel::Block)]
     #[case('c', BrowseLevel::CodePointTable)]
     fn browser_shortcuts_open_the_requested_level(#[case] key: char, #[case] level: BrowseLevel) {
-        let state = AppState::new();
+        let state = AppState::default();
 
         assert_eq!(
             action_for_key(
@@ -398,7 +397,7 @@ mod tests {
     #[rstest]
     #[case('o')]
     fn former_shortcuts_are_unassigned(#[case] key: char) {
-        let state = AppState::new();
+        let state = AppState::default();
 
         assert_eq!(
             action_for_key(
@@ -411,7 +410,7 @@ mod tests {
 
     #[test]
     fn slash_opens_search_from_the_inspector() {
-        let state = AppState::new();
+        let state = AppState::default();
 
         assert_eq!(
             action_for_key(
@@ -432,7 +431,7 @@ mod tests {
         )
         .unwrap();
         let keymap = ResolvedKeymap::with_config(config.into()).unwrap();
-        let state = AppState::new();
+        let state = AppState::default();
 
         assert_eq!(
             super::action_for_key(
@@ -459,7 +458,7 @@ mod tests {
         crate::app::update(&mut result, Action::InspectNormalizationResult);
 
         for mut state in [
-            AppState::new(),
+            AppState::default(),
             AppState::with_sequence("A\u{0301}B".to_owned()),
             result,
         ] {
@@ -527,7 +526,7 @@ mod tests {
         #[case] movement: InspectorMove,
     ) {
         assert_eq!(
-            action_for_key(&AppState::new(), KeyEvent::new(code, modifiers)),
+            action_for_key(&AppState::default(), KeyEvent::new(code, modifiers)),
             Some(Action::MoveInspector(movement))
         );
     }
@@ -542,14 +541,17 @@ mod tests {
         #[case] movement: CodePointMove,
     ) {
         assert_eq!(
-            action_for_key(&AppState::new(), KeyEvent::new(code, KeyModifiers::NONE)),
+            action_for_key(
+                &AppState::default(),
+                KeyEvent::new(code, KeyModifiers::NONE)
+            ),
             Some(Action::MoveCodePoint(movement))
         );
     }
 
     #[test]
     fn adjacent_code_point_movement_repeats_but_release_does_not() {
-        let state = AppState::new();
+        let state = AppState::default();
         let repeated =
             KeyEvent::new_with_kind(KeyCode::Right, KeyModifiers::NONE, KeyEventKind::Repeat);
         let released =
@@ -564,7 +566,7 @@ mod tests {
 
     #[test]
     fn inspector_scroll_repeats_but_release_does_not() {
-        let state = AppState::new();
+        let state = AppState::default();
         let repeated =
             KeyEvent::new_with_kind(KeyCode::Down, KeyModifiers::NONE, KeyEventKind::Repeat);
         let released =
@@ -579,7 +581,7 @@ mod tests {
 
     #[test]
     fn y_copies_the_inspector_value_but_does_not_repeat() {
-        let state = AppState::new();
+        let state = AppState::default();
         let pressed = KeyEvent::new(KeyCode::Char('y'), KeyModifiers::NONE);
         let repeated =
             KeyEvent::new_with_kind(KeyCode::Char('y'), KeyModifiers::NONE, KeyEventKind::Repeat);
@@ -593,7 +595,7 @@ mod tests {
 
     #[test]
     fn key_release_has_no_action() {
-        let state = AppState::new();
+        let state = AppState::default();
         let action = action_for_key(
             &state,
             KeyEvent::new_with_kind(
@@ -675,7 +677,7 @@ mod tests {
     #[test]
     fn f1_toggles_help_in_every_base_view() {
         for state in [
-            AppState::new(),
+            AppState::default(),
             browser_state(BrowseLevel::Plane),
             search_state(),
         ] {
@@ -957,13 +959,13 @@ mod tests {
     }
 
     fn browser_state(level: BrowseLevel) -> AppState {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         crate::app::update(&mut state, Action::OpenBrowser(level));
         state
     }
 
     fn search_state() -> AppState {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         crate::app::update(&mut state, Action::OpenSearch);
         state
     }

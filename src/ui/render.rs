@@ -322,7 +322,7 @@ mod tests {
         #[case] width: u16,
         #[case] height: u16,
     ) {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         state.set_bookmarks(vec![crate::bookmarks::Bookmark::new(
             crate::unicode::CodePoint::from('→'),
             jiff::Timestamp::UNIX_EPOCH,
@@ -360,7 +360,7 @@ mod tests {
 
     #[test]
     fn bookmarking_changes_the_inspector_header_without_moving_its_properties() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         let before = render_to_text(&state, 60, 16);
         state.set_bookmarks(vec![crate::bookmarks::Bookmark::new(
             state.selected(),

@@ -6,15 +6,17 @@ use ratatui::{
     widgets::Paragraph,
 };
 
-use crate::app::AppState;
-use crate::inspector::{InspectorField, InspectorGroup};
-use crate::ui::{
-    key_value, layout, padded_line, padded_line_content_width,
-    scrollbar::{self, ViewportScrollbar},
-    theme::ColorTheme,
-    workspace,
+use crate::{
+    app::AppState,
+    inspector::{InspectorField, InspectorGroup},
+    ui::{
+        key_value, layout, padded_line, padded_line_content_width,
+        scrollbar::{self, ViewportScrollbar},
+        theme::ColorTheme,
+        workspace,
+    },
+    unicode::CodePoint,
 };
-use crate::unicode::CodePoint;
 
 const LABEL_WIDTH: usize = 27;
 

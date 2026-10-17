@@ -6,8 +6,9 @@ use crate::{
     image::kitty::ImageId,
 };
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum GlyphPreviewStatus {
+    #[default]
     Detecting,
     Hidden,
     Pending,
@@ -56,7 +57,7 @@ impl GlyphPreviewGeometry {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct GlyphPreviewState {
     availability: Option<GraphicsAvailability>,
     status: GlyphPreviewStatus,
@@ -66,16 +67,6 @@ pub struct GlyphPreviewState {
 }
 
 impl GlyphPreviewState {
-    pub const fn new() -> Self {
-        Self {
-            availability: None,
-            status: GlyphPreviewStatus::Detecting,
-            image_id: None,
-            geometry: None,
-            font: None,
-        }
-    }
-
     pub const fn status(&self) -> GlyphPreviewStatus {
         self.status
     }
@@ -167,12 +158,6 @@ impl GlyphPreviewState {
     }
 }
 
-impl Default for GlyphPreviewState {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum GlyphPreviewUpdate {
     Configure {
@@ -205,7 +190,7 @@ mod tests {
 
     #[test]
     fn configures_available_and_unavailable_states() {
-        let mut state = GlyphPreviewState::new();
+        let mut state = GlyphPreviewState::default();
         let image_id = ImageId::new(7).unwrap();
 
         state.apply(GlyphPreviewUpdate::Configure {
@@ -247,7 +232,7 @@ mod tests {
 
     #[test]
     fn tracks_the_resolved_font_for_the_current_selection() {
-        let mut state = GlyphPreviewState::new();
+        let mut state = GlyphPreviewState::default();
         let font = fixture_font_info();
         state.apply(GlyphPreviewUpdate::Prepared {
             image_id: None,
@@ -264,7 +249,7 @@ mod tests {
     }
 
     fn prepared_state() -> GlyphPreviewState {
-        let mut state = GlyphPreviewState::new();
+        let mut state = GlyphPreviewState::default();
         let image_id = ImageId::new(7).unwrap();
         let canvas = CanvasSize::new(80, 64).unwrap();
         state.apply(GlyphPreviewUpdate::Configure {

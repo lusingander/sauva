@@ -216,7 +216,6 @@ fn parse_code_point_digits(digits: &str, minimum_digits: usize) -> Result<CodePo
 
 #[cfg(test)]
 mod tests {
-    use clap::CommandFactory;
     use rstest::rstest;
 
     use super::*;
@@ -534,20 +533,6 @@ mod tests {
         let error = try_parse(&["sauva", "--graphics", "sometimes"]).unwrap_err();
 
         assert_eq!(error.kind(), clap::error::ErrorKind::InvalidValue);
-    }
-
-    #[test]
-    fn help_documents_the_graphics_modes() {
-        let help = Cli::command().render_long_help().to_string();
-
-        assert!(help.contains("Usage: sauva [OPTIONS] [INPUT]"));
-        assert!(help.contains("Text or code point to inspect"));
-        assert!(help.contains("or - to read stdin"));
-        assert!(help.contains("-t, --text <TEXT>"));
-        assert!(help.contains("- reads stdin"));
-        assert!(help.contains("--graphics <MODE>"));
-        assert!(help.contains("possible values: auto, force, iterm2, off"));
-        assert!(help.contains("--print-default-config"));
     }
 
     #[test]

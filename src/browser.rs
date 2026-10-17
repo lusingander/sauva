@@ -62,10 +62,10 @@ impl BrowseState {
             },
             block_index: block.index(),
             table_source: TableSource::Range,
-            plane_viewport: ListViewport::new(),
-            range_viewport: ListViewport::new(),
-            block_viewport: ListViewport::new(),
-            table_viewport: ListViewport::new(),
+            plane_viewport: ListViewport::default(),
+            range_viewport: ListViewport::default(),
+            block_viewport: ListViewport::default(),
+            table_viewport: ListViewport::default(),
         }
     }
 

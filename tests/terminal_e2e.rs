@@ -15,13 +15,20 @@ fn bookmarks_persist_and_show_configured_dates_and_restore_the_source_inspector(
     let path = directory.path().join("config.toml");
     fs::write(
         &path,
-        "[ui]\nbookmark_date_format = '%d/%m/%Y %H:%M:%S %Z'\n",
+        r#"
+            [ui]
+            bookmark_date_format = '%d/%m/%Y %H:%M:%S %Z'
+        "#,
     )?;
     let data = directory.path().join("sauva");
     fs::create_dir(&data)?;
     fs::write(
         data.join("bookmarks.toml"),
-        "[[bookmarks]]\ncode_point = 'U+2192'\nadded_at = '2020-01-02T03:04:05Z'\n",
+        r#"
+            [[bookmarks]]
+            code_point = 'U+2192'
+            added_at = '2020-01-02T03:04:05Z'
+        "#,
     )?;
     let launch = || {
         termlens::bin!(

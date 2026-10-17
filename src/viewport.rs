@@ -7,13 +7,6 @@ pub struct ListViewport {
 }
 
 impl ListViewport {
-    pub const fn new() -> Self {
-        Self {
-            offset: 0,
-            height: 0,
-        }
-    }
-
     pub fn resize(&mut self, height: usize, selected: usize, item_count: usize) {
         self.height = height;
         self.ensure_visible(selected, item_count);
@@ -53,7 +46,7 @@ mod tests {
 
     #[test]
     fn scrolls_only_after_the_selection_crosses_an_edge() {
-        let mut viewport = ListViewport::new();
+        let mut viewport = ListViewport::default();
         viewport.resize(10, 0, 256);
 
         for selected in 1..10 {
@@ -67,7 +60,7 @@ mod tests {
 
     #[test]
     fn reversing_direction_moves_within_the_window_before_scrolling() {
-        let mut viewport = ListViewport::new();
+        let mut viewport = ListViewport::default();
         viewport.resize(10, 10, 256);
         assert_eq!(viewport.visible_range(256), 1..11);
 
@@ -82,7 +75,7 @@ mod tests {
 
     #[test]
     fn jumps_scroll_only_enough_to_reveal_the_selection() {
-        let mut viewport = ListViewport::new();
+        let mut viewport = ListViewport::default();
         viewport.resize(10, 128, 256);
         assert_eq!(viewport.visible_range(256), 119..129);
 
@@ -94,7 +87,7 @@ mod tests {
 
     #[test]
     fn resizing_preserves_the_offset_when_possible_and_keeps_selection_visible() {
-        let mut viewport = ListViewport::new();
+        let mut viewport = ListViewport::default();
         viewport.resize(10, 10, 256);
         assert_eq!(viewport.visible_range(256), 1..11);
 
@@ -108,7 +101,7 @@ mod tests {
 
     #[test]
     fn empty_lists_and_zero_height_have_empty_ranges() {
-        let mut viewport = ListViewport::new();
+        let mut viewport = ListViewport::default();
 
         viewport.resize(10, 0, 0);
         assert_eq!(viewport.visible_range(0), 0..0);

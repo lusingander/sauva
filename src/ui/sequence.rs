@@ -42,7 +42,7 @@ pub fn render(frame: &mut Frame, area: Rect, state: &AppState, color_theme: &Col
     );
 }
 
-pub(super) fn render_list(
+pub fn render_list(
     frame: &mut Frame,
     area: Rect,
     sequence: &SequenceState,
@@ -121,7 +121,7 @@ pub(super) fn render_list(
     );
 }
 
-pub(super) fn grapheme_gutter(
+pub fn grapheme_gutter(
     analysis: &TextAnalysis,
     index: usize,
     viewport_start: usize,
