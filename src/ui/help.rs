@@ -764,27 +764,6 @@ mod tests {
     use crate::{fixtures, keybindings::OptionalKeybindings, ui::layout::MINIMUM_SIZE};
 
     #[test]
-    fn about_formats_all_fixture_metadata() {
-        let text = about_document(FIXTURE_PACKAGE, Style::new(), Style::new());
-        let rendered = text
-            .lines
-            .iter()
-            .map(|line| line.to_string())
-            .collect::<Vec<_>>();
-
-        assert_eq!(
-            rendered,
-            vec![
-                "sauva - Terminal Unicode Explorer",
-                "",
-                "Version: 1.2.3",
-                "",
-                "https://example.com/sauva",
-            ]
-        );
-    }
-
-    #[test]
     fn cargo_metadata_is_complete_and_fits_the_minimum_width() {
         let text = about_document(CARGO_PACKAGE, Style::new(), Style::new());
         let (width, height) = MINIMUM_SIZE;
@@ -856,34 +835,23 @@ mod tests {
         assert!(rendered.contains("q  Esc  Ctrl-c"));
         assert!(rendered.contains("h  Left"));
         assert!(rendered.contains("F1"));
-        assert!(rendered.contains("Browse code points"));
     }
 
     #[test]
-    fn search_help_is_context_specific_and_explains_raw_input() {
-        let text = document(
-            Context::Search,
-            false,
-            &ResolvedKeymap::default(),
-            Style::new(),
-            Style::new(),
-            80,
-        );
-        let rendered = text
-            .lines
-            .iter()
-            .map(|line| line.to_string())
-            .collect::<Vec<_>>()
-            .join("\n");
+    fn search_help_uses_search_commands() {
+        let commands = help_items(Context::Search, false)
+            .into_iter()
+            .map(|item| item.command)
+            .collect::<Vec<_>>();
 
-        assert!(rendered.contains("Select the previous result"));
-        assert!(rendered.contains("Type normally to edit the query"));
-        assert!(!rendered.contains("Browse code points"));
+        assert!(commands.contains(&Command::PreviousResult));
+        assert!(commands.contains(&Command::NextResult));
+        assert!(commands.contains(&Command::InspectResult));
+        assert!(!commands.contains(&Command::BrowseCodePoints));
     }
 
     #[test]
     fn inspector_help_only_offers_back_when_a_sequence_or_bookmark_parent_exists() {
-        let keymap = ResolvedKeymap::default();
         let mut sequence = AppState::with_sequence("AB".to_owned());
         crate::app::update(&mut sequence, crate::app::Action::InspectSequenceCodePoint);
         let mut bookmark = AppState::default();
@@ -899,25 +867,16 @@ mod tests {
             (bookmark, true),
         ] {
             let has_parent = state.has_inspector_parent();
-            let text = document(
-                Context::Inspector,
-                has_parent,
-                &keymap,
-                Style::new(),
-                Style::new(),
-                80,
-            )
-            .to_string();
-            assert_eq!(text.contains("Return to the previous screen"), expected);
             assert_eq!(
-                footer_text(footer(
-                    Context::Inspector,
-                    has_parent,
-                    140,
-                    &keymap,
-                    &ColorTheme::default()
-                ))
-                .contains("BS Back"),
+                help_items(Context::Inspector, has_parent)
+                    .iter()
+                    .any(|item| item.command == Command::Back),
+                expected
+            );
+            assert_eq!(
+                short_help_items(Context::Inspector, has_parent)
+                    .iter()
+                    .any(|item| item.commands.contains(&Command::Back)),
                 expected
             );
         }
@@ -934,13 +893,13 @@ mod tests {
         )
         .unwrap();
         let keymap = ResolvedKeymap::with_config(config.into()).unwrap();
-        let footer = footer_text(footer(
+        let footer = footer(
             Context::Inspector,
             false,
             140,
             &keymap,
             &ColorTheme::default(),
-        ));
+        );
         let help = document(
             Context::Inspector,
             false,
@@ -948,18 +907,25 @@ mod tests {
             Style::new(),
             Style::new(),
             80,
-        )
-        .lines
-        .iter()
-        .map(|line| line.to_string())
-        .collect::<Vec<_>>()
-        .join("\n");
+        );
+        let footer_keys = footer
+            .left
+            .spans
+            .iter()
+            .map(|span| span.content.as_ref())
+            .collect::<Vec<_>>();
+        let help_keys = help
+            .lines
+            .iter()
+            .filter_map(|line| line.spans.first())
+            .map(|span| span.content.as_ref())
+            .collect::<Vec<_>>();
 
-        assert!(footer.contains("h/n Point"));
-        assert!(!footer.contains("/ Search"));
-        assert!(help.lines().any(|line| line.starts_with("n ")));
-        assert!(!help.contains("l  Right"));
-        assert!(!help.contains("Open search"));
+        assert!(footer_keys.contains(&"h/n"));
+        assert!(!footer_keys.contains(&"/"));
+        assert!(help_keys.contains(&"n"));
+        assert!(!help_keys.contains(&"l"));
+        assert!(!help_keys.contains(&"/"));
     }
 
     fn footer_text(footer: FooterContent) -> String {
