@@ -555,7 +555,7 @@ fn short_help_items(context: Context, has_inspector_parent: bool) -> Vec<ShortHe
             short(&[C::PreviousGroup, C::NextGroup], "Section", 2),
             short(&[C::PageUp, C::PageDown], "Page", 3),
             short(&[C::First, C::Last], "Ends", 3),
-            short(&[C::ExplainProperty], "Explain", 0),
+            short(&[C::ExplainProperty], "Explain", 2),
             short(&[C::CopyValue], "Copy", 1),
             short(&[C::OpenSearch], "Search", 2),
             short(&[C::ToggleBookmark, C::OpenBookmarks], "Bookmarks", 3),
@@ -835,6 +835,9 @@ mod tests {
         assert!(Line::from(narrow.as_str()).width() <= 60);
         assert!(wide.contains("C-u/C-d Page"));
         assert!(!narrow.contains("C-u/C-d Page"));
+        assert!(wide.contains("Explain"));
+        assert!(!narrow.contains("Explain"));
+        assert!(narrow.contains("y Copy"));
         assert!(narrow.contains("q Quit"));
         assert!(narrow.contains("F1 Help"));
     }
