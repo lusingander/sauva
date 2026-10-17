@@ -58,8 +58,6 @@ Context: `property`. Open a property's explanation with <kbd>e</kbd> in the Insp
 | `copy_reference_url` | <kbd>y</kbd> | Copy the specification URL |
 | `close` | <kbd>Esc</kbd> | Return to the Inspector |
 
-Global <kbd>F1</kbd> opens this page's operation help. Closing help restores the reading position. Global <kbd>Ctrl-C</kbd> quits Sauva.
-
 ## Search
 
 Context: `search`.

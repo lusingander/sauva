@@ -70,7 +70,7 @@ Code point navigation and display mode changes keep the same property selected w
 
 Select a property and press <kbd>e</kbd> to read its meaning, possible values or format, notes, and a specification reference. Explanations are bundled with Sauva and can be read offline, including for unavailable values shown in **All** mode.
 
-The page header identifies the property. **Current value** shows the selected code point and its value; it scrolls with the explanation. Use the same scrolling keys as Help, and press <kbd>Esc</kbd> to return to the Inspector's existing selection and position. <kbd>F1</kbd> opens operation help and returns to the same reading position when closed.
+**Current value** shows the selected code point and its value; it scrolls with the explanation.
 
 Press <kbd>o</kbd> to open the specification in your default browser, or <kbd>y</kbd> to copy its URL. Opening the reference uses the external browser; reading the explanation does not access the network.
 
