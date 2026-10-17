@@ -35,7 +35,7 @@ impl SequenceState {
         Self {
             analysis,
             selected_index: 0,
-            viewport: ListViewport::new(),
+            viewport: ListViewport::default(),
         }
     }
 

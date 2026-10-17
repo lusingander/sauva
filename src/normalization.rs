@@ -144,7 +144,7 @@ impl NormalizationState {
             NormalizationComparison {
                 result,
                 diff,
-                original_viewport: ListViewport::new(),
+                original_viewport: ListViewport::default(),
             }
         });
     }

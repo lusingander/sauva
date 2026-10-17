@@ -44,7 +44,7 @@ pub fn run(
     let availability = graphics::detect(graphics_mode);
     let mut preview_runtime =
         GlyphPreviewRuntime::with_settings(availability, glyph_preview.clone());
-    let mut clipboard = SystemClipboard::new();
+    let mut clipboard = SystemClipboard::default();
     update(
         state,
         Action::UpdateGlyphPreview(preview_runtime.configure_update()),

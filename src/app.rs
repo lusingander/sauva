@@ -1,5 +1,6 @@
 mod update;
 
+use smart_default::SmartDefault;
 use tui_input::InputRequest;
 
 pub use crate::app::update::update;
@@ -178,10 +179,13 @@ impl ClipboardRequest {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, SmartDefault)]
 pub struct AppState {
+    #[default(true)]
     running: bool,
+    #[default(View::Inspector)]
     view: View,
+    #[default(CodePoint::from('A'))]
     selected: CodePoint,
     inspector: InspectorState,
     browse: Option<BrowseState>,
@@ -201,43 +205,22 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new() -> Self {
-        let selected = CodePoint::new(0x0041).expect("U+0041 is a valid code point");
-        Self {
-            running: true,
-            view: View::Inspector,
-            selected,
-            inspector: InspectorState::new(),
-            browse: None,
-            search: None,
-            bookmarks: BookmarkState::default(),
-            inspecting_bookmark: false,
-            bookmark_origin: None,
-            bookmark_request: None,
-            sequence: None,
-            normalization: None,
-            showing_normalization_result: false,
-            help: HelpState::new(),
-            copy_dialog: None,
-            glyph_preview: GlyphPreviewState::new(),
-            clipboard_request: None,
-            footer_status: None,
-        }
-    }
-
     pub fn with_selected(selected: CodePoint) -> Self {
-        let mut state = Self::new();
-        state.selected = selected;
-        state
+        Self {
+            selected,
+            ..Self::default()
+        }
     }
 
     pub fn with_sequence(source: String) -> Self {
         let sequence = SequenceState::new(source);
         let selected = sequence.selected();
-        let mut state = Self::with_selected(selected);
-        state.view = View::Sequence;
-        state.sequence = Some(sequence);
-        state
+        Self {
+            view: View::Sequence,
+            selected,
+            sequence: Some(sequence),
+            ..Self::default()
+        }
     }
 
     pub fn is_running(&self) -> bool {
@@ -358,19 +341,13 @@ impl AppState {
     }
 }
 
-impl Default for AppState {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn bookmarks_request_persistence_before_changing_state_and_keep_status_on_resize() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         update(&mut state, Action::ToggleBookmark);
         assert!(!state.bookmarks().contains(state.selected()));
         assert!(state.footer_status().is_none());
@@ -584,7 +561,7 @@ mod tests {
 
     #[test]
     fn normalization_actions_are_scoped_to_their_views() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         update(&mut state, Action::OpenNormalization);
         update(
             &mut state,
@@ -772,7 +749,7 @@ mod tests {
 
     #[test]
     fn copy_dialog_supports_single_code_point_results_and_is_scoped_to_sequence_views() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         update(&mut state, Action::OpenCopyDialog);
         assert!(state.copy_dialog().is_none());
         let mut state = AppState::with_sequence("A\u{0301}".to_owned());
@@ -790,7 +767,7 @@ mod tests {
 
     #[test]
     fn starts_running() {
-        let state = AppState::new();
+        let state = AppState::default();
 
         assert!(state.is_running());
         assert_eq!(state.selected().value(), 0x0041);
@@ -806,7 +783,7 @@ mod tests {
 
     #[test]
     fn help_opens_without_changing_the_base_view_and_resets_when_closed() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         update(&mut state, Action::OpenSearch);
 
         update(&mut state, Action::ToggleHelp);
@@ -833,7 +810,7 @@ mod tests {
 
     #[test]
     fn quit_action_stops_the_app() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
 
         update(&mut state, Action::Quit);
 
@@ -842,7 +819,7 @@ mod tests {
 
     #[test]
     fn preview_target_follows_only_code_point_selections() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         assert_eq!(state.preview_code_point().unwrap().value(), 0x0041);
 
         update(&mut state, Action::OpenBrowser(BrowseLevel::Plane));
@@ -871,7 +848,7 @@ mod tests {
 
     #[test]
     fn inspector_movement_is_limited_to_the_inspector() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         resize_inspector(&mut state, 5, 20);
 
         update(
@@ -931,7 +908,7 @@ mod tests {
 
     #[test]
     fn search_inspection_preserves_the_selected_inspector_field() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         resize_inspector(&mut state, 5, 20);
         update(&mut state, Action::MoveInspector(InspectorMove::Last));
         assert_eq!(state.inspector().offset(), 15);
@@ -960,7 +937,7 @@ mod tests {
             preview::{GlyphPreviewGeometry, GlyphPreviewStatus},
         };
 
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         let image_id = ImageId::new(7).unwrap();
         let canvas = CanvasSize::new(80, 64).unwrap();
         let geometry = GlyphPreviewGeometry::new(10, 4, canvas);
@@ -995,7 +972,7 @@ mod tests {
 
     #[test]
     fn closing_and_reopening_other_views_preserves_the_inspector_offset() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         resize_inspector(&mut state, 5, 20);
         update(&mut state, Action::MoveInspector(InspectorMove::Last));
 
@@ -1087,7 +1064,7 @@ mod tests {
             preview::{GlyphPreviewGeometry, GlyphPreviewStatus},
         };
 
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         update(&mut state, Action::OpenBrowser(BrowseLevel::CodePointTable));
         update(
             &mut state,
@@ -1147,7 +1124,7 @@ mod tests {
 
     #[test]
     fn browser_enter_and_back_actions_follow_the_hierarchy() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         update(&mut state, Action::OpenBrowser(BrowseLevel::Plane));
 
         update(&mut state, Action::AdvanceBrowser);
@@ -1181,7 +1158,7 @@ mod tests {
 
     #[test]
     fn reopening_code_points_uses_the_selection_from_search() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         update(&mut state, Action::OpenBrowser(BrowseLevel::CodePointTable));
         update(&mut state, Action::MoveBrowser(BrowseMove::Right));
         assert_eq!(state.selected().value(), 0x0041);
@@ -1294,7 +1271,7 @@ mod tests {
 
     #[test]
     fn search_cannot_open_from_the_browser() {
-        let mut browser = AppState::new();
+        let mut browser = AppState::default();
         update(&mut browser, Action::OpenBrowser(BrowseLevel::Plane));
 
         update(&mut browser, Action::OpenSearch);
@@ -1305,7 +1282,7 @@ mod tests {
 
     #[test]
     fn editing_and_moving_search_results_do_not_change_the_shared_selection() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         update(&mut state, Action::OpenSearch);
         edit_search_query(&mut state, "rightwards arrow");
         let first = state.search().unwrap().selected_result().unwrap();
@@ -1318,7 +1295,7 @@ mod tests {
 
     #[test]
     fn inspecting_a_search_result_updates_the_shared_selection_and_closes_search() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         resize_inspector(&mut state, 5, 20);
         update(&mut state, Action::MoveInspector(InspectorMove::Last));
         update(&mut state, Action::OpenSearch);
@@ -1335,7 +1312,7 @@ mod tests {
 
     #[test]
     fn search_accepts_short_explicit_code_point_notation() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         update(&mut state, Action::OpenSearch);
         edit_search_query(&mut state, "U+A");
 
@@ -1347,7 +1324,7 @@ mod tests {
 
     #[test]
     fn inspecting_without_a_result_keeps_search_open_and_preserves_selection() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         update(&mut state, Action::OpenSearch);
         edit_search_query(&mut state, "not a unicode name");
 
@@ -1359,7 +1336,7 @@ mod tests {
 
     #[test]
     fn closing_and_reopening_search_retains_query_selection_and_viewport() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         update(&mut state, Action::OpenSearch);
         edit_search_query(&mut state, "rightwards arrow");
         update(&mut state, Action::ResizeSearchViewport(2));
@@ -1381,7 +1358,7 @@ mod tests {
 
     #[test]
     fn footer_status_survives_internal_updates_and_clears_on_the_next_user_action() {
-        let mut state = AppState::new();
+        let mut state = AppState::default();
         update(
             &mut state,
             Action::ShowFooterStatus(FooterStatus::info("Copied Code Point")),

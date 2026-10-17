@@ -886,14 +886,18 @@ mod tests {
         let keymap = ResolvedKeymap::default();
         let mut sequence = AppState::with_sequence("AB".to_owned());
         crate::app::update(&mut sequence, crate::app::Action::InspectSequenceCodePoint);
-        let mut bookmark = AppState::new();
+        let mut bookmark = AppState::default();
         bookmark.set_bookmarks(vec![crate::bookmarks::Bookmark::new(
             bookmark.selected(),
             jiff::Timestamp::UNIX_EPOCH,
         )]);
         crate::app::update(&mut bookmark, crate::app::Action::OpenBookmarks);
         crate::app::update(&mut bookmark, crate::app::Action::InspectBookmark);
-        for (state, expected) in [(AppState::new(), false), (sequence, true), (bookmark, true)] {
+        for (state, expected) in [
+            (AppState::default(), false),
+            (sequence, true),
+            (bookmark, true),
+        ] {
             let has_parent = state.has_inspector_parent();
             let text = document(
                 Context::Inspector,

@@ -19,15 +19,6 @@ pub struct HelpState {
 }
 
 impl HelpState {
-    pub const fn new() -> Self {
-        Self {
-            open: false,
-            offset: 0,
-            viewport_height: 0,
-            document_height: 0,
-        }
-    }
-
     pub const fn is_open(self) -> bool {
         self.open
     }
@@ -101,7 +92,7 @@ mod tests {
 
     #[test]
     fn opens_at_the_top_and_closes_cleanly() {
-        let mut state = HelpState::new();
+        let mut state = HelpState::default();
         state.open();
         state.resize_viewport(5, 20);
         state.move_viewport(HelpMove::Last);
@@ -117,7 +108,7 @@ mod tests {
 
     #[test]
     fn movement_is_clamped_to_the_document() {
-        let mut state = HelpState::new();
+        let mut state = HelpState::default();
         state.open();
         state.resize_viewport(5, 12);
 

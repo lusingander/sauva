@@ -41,18 +41,6 @@ pub struct InspectorState {
 }
 
 impl InspectorState {
-    pub const fn new() -> Self {
-        Self {
-            selected_index: 0,
-            offset: 0,
-            viewport_height: 0,
-            document_height: 0,
-            field_ranges: Vec::new(),
-            groups: Vec::new(),
-            align_group: false,
-        }
-    }
-
     #[cfg(test)]
     pub const fn offset(&self) -> usize {
         self.offset
@@ -642,7 +630,7 @@ mod tests {
 
     #[test]
     fn moves_between_fields_and_across_pages() {
-        let mut state = InspectorState::new();
+        let mut state = InspectorState::default();
         state.resize_viewport(4, 12, vec![1..2, 2..4, 5..6, 8..10, 10..11], Vec::new());
 
         state.move_selection(InspectorMove::NextField);
@@ -668,7 +656,7 @@ mod tests {
     #[test]
     fn returning_to_the_first_field_restores_the_document_heading() {
         for movement in [InspectorMove::PreviousField, InspectorMove::PageBackward] {
-            let mut state = InspectorState::new();
+            let mut state = InspectorState::default();
             state.resize_viewport(4, 12, vec![1..2, 2..4, 5..6, 8..10, 10..11], Vec::new());
             state.move_selection(InspectorMove::Last);
 
@@ -682,7 +670,7 @@ mod tests {
 
     #[test]
     fn group_movement_targets_adjacent_sections_even_from_the_middle() {
-        let mut state = InspectorState::new();
+        let mut state = InspectorState::default();
         state.resize_viewport(
             3,
             13,
@@ -726,7 +714,7 @@ mod tests {
 
     #[test]
     fn group_jump_preserves_the_heading_when_the_first_field_exceeds_the_viewport() {
-        let mut state = InspectorState::new();
+        let mut state = InspectorState::default();
         let fields = vec![1..2, 4..12, 12..13];
         let groups = vec![
             InspectorGroup {
@@ -758,7 +746,7 @@ mod tests {
 
     #[test]
     fn resizing_keeps_the_complete_selection_visible() {
-        let mut state = InspectorState::new();
+        let mut state = InspectorState::default();
         let ranges = vec![1..2, 10..11, 32..35];
         state.resize_viewport(10, 35, ranges.clone(), Vec::new());
         state.move_selection(InspectorMove::Last);
@@ -774,7 +762,7 @@ mod tests {
 
     #[test]
     fn zero_height_and_empty_documents_have_empty_ranges() {
-        let mut state = InspectorState::new();
+        let mut state = InspectorState::default();
 
         state.resize_viewport(0, 20, vec![1..2, 2..3], Vec::new());
         state.move_selection(InspectorMove::Last);

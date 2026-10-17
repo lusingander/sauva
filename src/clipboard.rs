@@ -26,12 +26,6 @@ pub struct SystemClipboard {
     clipboard: Option<arboard::Clipboard>,
 }
 
-impl SystemClipboard {
-    pub const fn new() -> Self {
-        Self { clipboard: None }
-    }
-}
-
 impl ClipboardWriter for SystemClipboard {
     fn write_text(&mut self, text: &str) -> Result<(), ClipboardError> {
         if self.clipboard.is_none() {

@@ -177,7 +177,7 @@ fn update_inspector(state: &mut AppState, action: Action) {
             refresh_preview_for_change(state, previous_preview);
         }
         Action::OpenSearch => {
-            state.search.get_or_insert_with(SearchState::new);
+            state.search.get_or_insert_with(SearchState::default);
             state.view = View::Search;
         }
         Action::ReturnToSequence if state.sequence.is_some() && !state.inspecting_bookmark => {
