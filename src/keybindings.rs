@@ -941,7 +941,17 @@ mod tests {
 
     #[test]
     fn bookmark_bindings_are_customizable_and_checked_for_global_conflicts() {
-        let keymap = configured("[inspector]\nbookmarks = ['B']\ntoggle_bookmark = ['s']\n[bookmarks]\nactivate = ['l']").unwrap();
+        let keymap = configured(
+            r#"
+                [inspector]
+                bookmarks = ['B']
+                toggle_bookmark = ['s']
+
+                [bookmarks]
+                activate = ['l']
+            "#,
+        )
+        .unwrap();
         assert_eq!(
             keymap.resolve(Context::Inspector, plain('B')),
             Some(Command::OpenBookmarks)
@@ -957,7 +967,12 @@ mod tests {
             Some(Command::Activate)
         );
         assert!(matches!(
-            configured("[bookmarks]\nmove_down = ['ctrl-c']"),
+            configured(
+                r#"
+                    [bookmarks]
+                    move_down = ['ctrl-c']
+                "#,
+            ),
             Err(KeybindingError::GlobalConflict {
                 context: Context::Bookmarks,
                 ..
@@ -967,9 +982,16 @@ mod tests {
 
     #[test]
     fn copy_bindings_are_customizable_without_leaking_into_search() {
-        let keymap =
-            configured("[sequence]\nopen_copy_dialog = ['C']\n[copy_dialog]\nactivate = ['y']")
-                .unwrap();
+        let keymap = configured(
+            r#"
+                [sequence]
+                open_copy_dialog = ['C']
+
+                [copy_dialog]
+                activate = ['y']
+            "#,
+        )
+        .unwrap();
         assert_eq!(
             keymap.resolve(Context::Sequence, plain('C')),
             Some(Command::OpenCopyDialog)
@@ -988,7 +1010,13 @@ mod tests {
             None
         );
         assert_eq!(keymap.resolve(Context::Search, plain('Y')), None);
-        let error = configured("[copy_dialog]\nmove_down = ['ctrl-c']").unwrap_err();
+        let error = configured(
+            r#"
+                [copy_dialog]
+                move_down = ['ctrl-c']
+            "#,
+        )
+        .unwrap_err();
         assert!(matches!(
             error,
             KeybindingError::GlobalConflict {
@@ -1017,9 +1045,16 @@ mod tests {
 
     #[test]
     fn block_browser_bindings_can_be_customized() {
-        let keymap =
-            configured("[inspector]\nbrowse_blocks = ['B']\n[browse_block]\nmove_down = ['n']")
-                .unwrap();
+        let keymap = configured(
+            r#"
+                [inspector]
+                browse_blocks = ['B']
+
+                [browse_block]
+                move_down = ['n']
+            "#,
+        )
+        .unwrap();
 
         assert_eq!(
             keymap.resolve(Context::Inspector, plain('B')),
@@ -1172,7 +1207,12 @@ mod tests {
     #[case(Context::NormalizationResult)]
     fn group_bindings_can_be_remapped_or_disabled_per_context(#[case] context: Context) {
         let keymap = configured(&format!(
-            "[{}]\nprevious_group = ['a']\nnext_group = []\nmove_down = [']']",
+            r#"
+                [{}]
+                previous_group = ['a']
+                next_group = []
+                move_down = [']']
+            "#,
             context.config_name(),
         ))
         .unwrap();
@@ -1200,7 +1240,13 @@ mod tests {
 
     #[test]
     fn conflicts_with_default_group_keys_identify_both_commands() {
-        let error = configured("[sequence]\nmove_down = [']']").unwrap_err();
+        let error = configured(
+            r#"
+                [sequence]
+                move_down = [']']
+            "#,
+        )
+        .unwrap_err();
         let message = error.to_string();
         assert!(message.contains("keybindings.sequence.move_down"));
         assert!(message.contains("keybindings.sequence.next_group"));
@@ -1313,8 +1359,14 @@ mod tests {
     #[test]
     fn keys_used_by_search_input_are_rejected_in_search_and_global() {
         for source in [
-            "[search]\nnext_result = [\"x\"]\n",
-            "[global]\nhelp = [\"delete\"]\n",
+            r#"
+                [search]
+                next_result = ["x"]
+            "#,
+            r#"
+                [global]
+                help = ["delete"]
+            "#,
         ] {
             assert!(matches!(
                 configured(source).unwrap_err(),
@@ -1340,8 +1392,14 @@ mod tests {
     #[test]
     fn unknown_contexts_and_commands_are_rejected_during_deserialization() {
         for source in [
-            "[unknown]\nquit = [\"q\"]\n",
-            "[inspector]\nquitt = [\"q\"]\n",
+            r#"
+                [unknown]
+                quit = ["q"]
+            "#,
+            r#"
+                [inspector]
+                quitt = ["q"]
+            "#,
         ] {
             let error = toml::from_str::<OptionalKeybindings>(source).unwrap_err();
 

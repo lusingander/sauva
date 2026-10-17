@@ -303,8 +303,16 @@ mod tests {
         let cp = CodePoint::from('A');
         for source in [
             "not valid TOML",
-            "[[bookmarks]]\ncode_point = 'U+110000'\nadded_at = '2026-10-16T00:00:00Z'",
-            "[[bookmarks]]\ncode_point = 'U+0041'\nadded_at = 'invalid'",
+            r#"
+                [[bookmarks]]
+                code_point = 'U+110000'
+                added_at = '2026-10-16T00:00:00Z'
+            "#,
+            r#"
+                [[bookmarks]]
+                code_point = 'U+0041'
+                added_at = 'invalid'
+            "#,
         ] {
             fs::write(&path, source).unwrap();
             assert!(update_file(&path, cp, true, Timestamp::UNIX_EPOCH).is_err());

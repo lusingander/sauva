@@ -331,8 +331,8 @@ mod tests {
         ] {
             assert!(generated.contains(table), "missing {table}");
         }
-        assert!(generated.contains("fg = \"#f5f7fa\""));
-        assert!(generated.contains("input_cursor = \"native\""));
+        assert!(generated.contains(r##"fg = "#f5f7fa""##));
+        assert!(generated.contains(r#"input_cursor = "native""#));
 
         let parsed: OptionalConfig = toml::from_str(&generated).unwrap();
         let parsed: Config = parsed.into();
