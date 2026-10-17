@@ -6,7 +6,7 @@ use crate::{
     bookmarks::Bookmark,
     browser::{BrowseState, BrowseTarget},
     copy_dialog::CopyDialogState,
-    inspector::{InspectorField, InspectorFieldId},
+    inspector::{InspectorDisplayMode, InspectorField, InspectorFieldId},
     normalization::NormalizationState,
     search::SearchState,
     unicode::CodePoint,
@@ -142,19 +142,20 @@ fn update_inspector(state: &mut AppState, action: Action) {
             state.inspector.move_selection(movement);
         }
         Action::CopyInspectorValue => {
-            state.clipboard_request = InspectorField::for_code_point(state.selected)
-                .into_iter()
-                .nth(state.inspector.selected_index())
-                .map(|field| ClipboardRequest {
-                    label: field.label(),
-                    success_message: if field.id() == InspectorFieldId::Character {
-                        format!("Copied Character: {}", state.selected)
-                    } else {
-                        format!("Copied {}", field.label())
-                    },
-                    value: field.copy_value().map(str::to_owned),
-                    from_copy_dialog: false,
-                });
+            state.clipboard_request =
+                InspectorField::for_code_point(state.selected, InspectorDisplayMode::All)
+                    .into_iter()
+                    .nth(state.inspector.selected_index())
+                    .map(|field| ClipboardRequest {
+                        label: field.label(),
+                        success_message: if field.id() == InspectorFieldId::Character {
+                            format!("Copied Character: {}", state.selected)
+                        } else {
+                            format!("Copied {}", field.label())
+                        },
+                        value: field.copy_value().map(str::to_owned),
+                        from_copy_dialog: false,
+                    });
         }
         Action::OpenBrowser(level) => {
             let previous_preview = state.preview_code_point();

@@ -8,7 +8,7 @@ use ratatui::{
 
 use crate::{
     app::AppState,
-    inspector::{InspectorField, InspectorGroup},
+    inspector::{InspectorDisplayMode, InspectorField, InspectorGroup},
     ui::{
         key_value, layout, padded_line, padded_line_content_width,
         scrollbar::{self, ViewportScrollbar},
@@ -89,7 +89,7 @@ impl InspectorDocument {
         let mut field_ranges = Vec::new();
         let mut groups = Vec::new();
         let mut previous_section = None;
-        for (index, field) in InspectorField::for_code_point(code_point)
+        for (index, field) in InspectorField::for_code_point(code_point, InspectorDisplayMode::All)
             .into_iter()
             .enumerate()
         {
@@ -245,7 +245,7 @@ mod tests {
         for (code_point, width) in [(0, 96), (0xe9, 56), (0xd800, 32)] {
             let code_point = CodePoint::new(code_point).unwrap();
             let document = InspectorDocument::for_code_point(code_point, width);
-            let fields = InspectorField::for_code_point(code_point);
+            let fields = InspectorField::for_code_point(code_point, InspectorDisplayMode::All);
             let expected = fields
                 .iter()
                 .enumerate()
@@ -274,7 +274,7 @@ mod tests {
         for code_point in [CodePoint::from('A'), CodePoint::new(0xd800).unwrap()] {
             let mut state = AppState::with_selected(code_point);
             let area = Rect::new(0, 0, 60, 16);
-            let fields = InspectorField::for_code_point(code_point);
+            let fields = InspectorField::for_code_point(code_point, InspectorDisplayMode::All);
             let groups = viewport_metrics(area, &state).groups;
             for group in &groups[1..] {
                 let metrics = viewport_metrics(area, &state);

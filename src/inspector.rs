@@ -11,6 +11,29 @@ const NO_BLOCK: &str = "No Block";
 const UNAVAILABLE_ENCODING: &str = "Not available — not a Unicode scalar value";
 const NONE: &str = "None";
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum InspectorDisplayMode {
+    #[default]
+    Relevant,
+    All,
+}
+
+impl InspectorDisplayMode {
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::Relevant => "Relevant",
+            Self::All => "All",
+        }
+    }
+
+    pub const fn toggle(self) -> Self {
+        match self {
+            Self::Relevant => Self::All,
+            Self::All => Self::Relevant,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InspectorMove {
     PreviousField,
@@ -334,7 +357,7 @@ pub struct InspectorField {
 }
 
 impl InspectorField {
-    pub fn for_code_point(code_point: CodePoint) -> Vec<Self> {
+    pub fn for_code_point(code_point: CodePoint, mode: InspectorDisplayMode) -> Vec<Self> {
         let details = InspectorDetails::for_code_point(code_point);
         let mut fields = vec![
             Self::new(
@@ -563,7 +586,36 @@ impl InspectorField {
             "Unicode Version",
             [details.unicode_version().to_owned()],
         ));
+        if mode == InspectorDisplayMode::Relevant {
+            fields.retain(|field| field.is_relevant(&details));
+        }
         fields
+    }
+
+    fn is_relevant(&self, details: &InspectorDetails) -> bool {
+        match self.id {
+            InspectorFieldId::Aliases => !details.name_aliases().is_empty(),
+            InspectorFieldId::CanonicalCombiningClass => {
+                details.canonical_combining_class().value() != 0
+                    || matches!(
+                        details.general_category(),
+                        GeneralCategory::NonspacingMark
+                            | GeneralCategory::SpacingMark
+                            | GeneralCategory::EnclosingMark
+                    )
+            }
+            InspectorFieldId::DefaultIgnorable => details.is_default_ignorable(),
+            InspectorFieldId::Utf8
+            | InspectorFieldId::Utf16
+            | InspectorFieldId::HtmlDecimal
+            | InspectorFieldId::HtmlHex
+            | InspectorFieldId::RustChar
+            | InspectorFieldId::UnicodeEscape => details.encoding().is_some(),
+            InspectorFieldId::DecompositionType | InspectorFieldId::Decomposition => {
+                details.decomposition().is_some()
+            }
+            _ => true,
+        }
     }
 
     fn copyable(
@@ -838,7 +890,8 @@ mod tests {
 
     #[test]
     fn builds_stable_fields_with_unwrapped_copy_values() {
-        let fields = InspectorField::for_code_point(CodePoint::new(0).unwrap());
+        let fields =
+            InspectorField::for_code_point(CodePoint::new(0).unwrap(), InspectorDisplayMode::All);
 
         assert_eq!(fields.len(), 22);
         assert_eq!(fields[0].id(), InspectorFieldId::Character);
@@ -854,20 +907,116 @@ mod tests {
     }
 
     #[test]
+    fn relevant_properties_preserve_basic_values_for_all_scalar_categories() {
+        use InspectorFieldId::*;
+
+        for value in [0x0041, 0x0378, 0xe000, 0x2fe0, 0x10ffff] {
+            let code_point = crate::unicode::CodePoint::new(value).unwrap();
+            let fields = InspectorField::for_code_point(code_point, InspectorDisplayMode::Relevant);
+            assert_eq!(
+                fields.iter().map(InspectorField::id).collect::<Vec<_>>(),
+                [
+                    Character,
+                    CodePoint,
+                    PrimaryName,
+                    Plane,
+                    Block,
+                    GeneralCategory,
+                    Script,
+                    Age,
+                    EastAsianWidth,
+                    BidiClass,
+                    Utf8,
+                    Utf16,
+                    HtmlDecimal,
+                    HtmlHex,
+                    RustChar,
+                    UnicodeEscape,
+                    UnicodeVersion,
+                ],
+                "{code_point}",
+            );
+        }
+    }
+
+    #[test]
+    fn relevant_properties_include_applicable_supplemental_data() {
+        use InspectorFieldId::*;
+
+        let supplemental = [
+            Aliases,
+            CanonicalCombiningClass,
+            DefaultIgnorable,
+            DecompositionType,
+            Decomposition,
+        ];
+        let cases: &[(u32, &[InspectorFieldId])] = &[
+            (0x0000, &[Aliases]),
+            (0x00e9, &[DecompositionType, Decomposition]),
+            (0xfb01, &[DecompositionType, Decomposition]),
+            (0xac00, &[DecompositionType, Decomposition]),
+            (0x0301, &[CanonicalCombiningClass]),
+            (
+                0x034f,
+                &[Aliases, CanonicalCombiningClass, DefaultIgnorable],
+            ),
+            (0x0903, &[CanonicalCombiningClass]),
+            (0x20dd, &[CanonicalCombiningClass]),
+            (0x115f, &[DefaultIgnorable]),
+        ];
+        for &(value, expected) in cases {
+            let code_point = crate::unicode::CodePoint::new(value).unwrap();
+            let fields = InspectorField::for_code_point(code_point, InspectorDisplayMode::Relevant);
+            assert_eq!(
+                fields
+                    .iter()
+                    .map(InspectorField::id)
+                    .filter(|id| supplemental.contains(id))
+                    .collect::<Vec<_>>(),
+                expected,
+                "{code_point}",
+            );
+        }
+    }
+
+    #[test]
     fn marks_absent_and_non_scalar_field_values_as_unavailable_to_copy() {
-        let ordinary = InspectorField::for_code_point(CodePoint::from('A'));
-        let surrogate = InspectorField::for_code_point(CodePoint::new(0xd800).unwrap());
+        let ordinary =
+            InspectorField::for_code_point(CodePoint::from('A'), InspectorDisplayMode::All);
+        let surrogate = InspectorField::for_code_point(
+            CodePoint::new(0xd800).unwrap(),
+            InspectorDisplayMode::All,
+        );
 
         assert_eq!(ordinary[3].values(), ["None"]);
         assert_eq!(ordinary[3].copy_value(), None);
         assert_eq!(surrogate[0].copy_value(), None);
         assert_eq!(surrogate[13].id(), InspectorFieldId::Utf8);
         assert_eq!(surrogate[13].copy_value(), None);
+
+        let relevant = InspectorField::for_code_point(
+            CodePoint::new(0xd800).unwrap(),
+            InspectorDisplayMode::Relevant,
+        );
+        assert_eq!(relevant.len(), 11);
+        assert!(
+            relevant
+                .iter()
+                .all(|field| field.section() != InspectorSection::Encoding)
+        );
+        assert!(
+            relevant
+                .iter()
+                .any(|field| field.id() == InspectorFieldId::GeneralCategory)
+        );
     }
 
     #[test]
     fn keeps_decomposition_entries_separate_for_display_and_copy() {
-        let fields = InspectorField::for_code_point(CodePoint::new(0x00e9).unwrap());
+        let fields = InspectorField::for_code_point(
+            CodePoint::new(0x00e9).unwrap(),
+            InspectorDisplayMode::All,
+        );
         let decomposition = fields
             .iter()
             .find(|field| field.id() == InspectorFieldId::Decomposition)
