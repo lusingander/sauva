@@ -15,7 +15,7 @@ use crate::{
     unicode::CodePoint,
 };
 
-pub(super) fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorTheme) {
+pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorTheme) {
     let dialog = state.copy_dialog().expect("the copy dialog is open");
     let sequence = state.sequence().expect("copy candidates have a sequence");
     let width = area.width.saturating_sub(2).min(66);

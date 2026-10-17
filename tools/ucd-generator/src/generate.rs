@@ -866,16 +866,16 @@ fn render(data: &RenderData<'_>) -> String {
         "use crate::unicode::{\n    BidiClass, Decomposition, EastAsianWidth, GeneralCategory, NameAlias, NameAliasType,\n};\n\n",
     );
     output.push_str(&format!(
-        "pub(super) const UNICODE_VERSION: &str = {UNICODE_VERSION:?};\n\n"
+        "pub const UNICODE_VERSION: &str = {UNICODE_VERSION:?};\n\n"
     ));
     output.push_str("#[rustfmt::skip]\n");
-    output.push_str("pub(super) const PRIMARY_NAMES: &[(u32, &str)] = &[\n");
+    output.push_str("pub const PRIMARY_NAMES: &[(u32, &str)] = &[\n");
     for (code_point, name) in data.names {
         output.push_str(&format!("    (0x{code_point:06X}, {name:?}),\n"));
     }
     output.push_str("];\n\n");
     output.push_str("#[rustfmt::skip]\n");
-    output.push_str("pub(super) const GENERAL_CATEGORIES: &[(u32, u32, GeneralCategory)] = &[\n");
+    output.push_str("pub const GENERAL_CATEGORIES: &[(u32, u32, GeneralCategory)] = &[\n");
     for range in data.categories {
         output.push_str(&format!(
             "    (0x{:06X}, 0x{:06X}, GeneralCategory::{}),\n",
@@ -890,7 +890,7 @@ fn render(data: &RenderData<'_>) -> String {
     render_string_ranges(&mut output, "AGES", data.ages);
     output.push('\n');
     output.push_str("#[rustfmt::skip]\n");
-    output.push_str("pub(super) const DEFAULT_IGNORABLES: &[(u32, u32)] = &[\n");
+    output.push_str("pub const DEFAULT_IGNORABLES: &[(u32, u32)] = &[\n");
     for range in data.default_ignorables {
         output.push_str(&format!(
             "    (0x{:06X}, 0x{:06X}),\n",
@@ -899,7 +899,7 @@ fn render(data: &RenderData<'_>) -> String {
     }
     output.push_str("];\n\n");
     output.push_str("#[rustfmt::skip]\n");
-    output.push_str("pub(super) const NAME_ALIASES: &[(u32, &[NameAlias])] = &[\n");
+    output.push_str("pub const NAME_ALIASES: &[(u32, &[NameAlias])] = &[\n");
     for group in data.name_aliases {
         output.push_str(&format!("    (0x{:06X}, &[\n", group.code_point));
         for alias in &group.aliases {
@@ -919,13 +919,13 @@ fn render(data: &RenderData<'_>) -> String {
     );
     output.push('\n');
     output.push_str("#[rustfmt::skip]\n");
-    output.push_str("pub(super) const CANONICAL_COMBINING_CLASS_VALUES: &[(u8, &str)] = &[\n");
+    output.push_str("pub const CANONICAL_COMBINING_CLASS_VALUES: &[(u8, &str)] = &[\n");
     for value in data.canonical_combining_class_values {
         output.push_str(&format!("    ({}, {:?}),\n", value.value, value.name));
     }
     output.push_str("];\n\n");
     output.push_str("#[rustfmt::skip]\n");
-    output.push_str("pub(super) const CANONICAL_COMBINING_CLASSES: &[(u32, u32, u8)] = &[\n");
+    output.push_str("pub const CANONICAL_COMBINING_CLASSES: &[(u32, u32, u8)] = &[\n");
     for range in data.canonical_combining_classes {
         output.push_str(&format!(
             "    (0x{:06X}, 0x{:06X}, {}),\n",
@@ -959,7 +959,7 @@ fn render_header(output: &mut String) {
 
 fn render_decompositions(output: &mut String, decompositions: &[DecompositionEntry]) {
     output.push_str("#[rustfmt::skip]\n");
-    output.push_str("pub(super) const DECOMPOSITIONS: &[(u32, Decomposition)] = &[\n");
+    output.push_str("pub const DECOMPOSITIONS: &[(u32, Decomposition)] = &[\n");
     for decomposition in decompositions {
         let mapping = decomposition
             .mapping()
@@ -986,7 +986,7 @@ fn render_decompositions(output: &mut String, decompositions: &[DecompositionEnt
 fn render_string_ranges(output: &mut String, constant_name: &str, ranges: &[StringRange]) {
     output.push_str("#[rustfmt::skip]\n");
     output.push_str(&format!(
-        "pub(super) const {constant_name}: &[(u32, u32, &str)] = &[\n"
+        "pub const {constant_name}: &[(u32, u32, &str)] = &[\n"
     ));
     for range in ranges {
         output.push_str(&format!(
@@ -1005,7 +1005,7 @@ fn render_enum_ranges(
 ) {
     output.push_str("#[rustfmt::skip]\n");
     output.push_str(&format!(
-        "pub(super) const {constant_name}: &[(u32, u32, {enum_name})] = &[\n"
+        "pub const {constant_name}: &[(u32, u32, {enum_name})] = &[\n"
     ));
     for range in ranges {
         output.push_str(&format!(
@@ -1178,7 +1178,7 @@ mod tests {
             output,
             concat!(
                 "#[rustfmt::skip]\n",
-                "pub(super) const DECOMPOSITIONS: &[(u32, Decomposition)] = &[\n",
+                "pub const DECOMPOSITIONS: &[(u32, Decomposition)] = &[\n",
                 "    (0x0000A0, Decomposition::compatibility(\"noBreak\", &[0x000020])),\n",
                 "    (0x0000E9, Decomposition::canonical(&[0x000065, 0x000301])),\n",
                 "];\n",
