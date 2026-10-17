@@ -8,6 +8,7 @@ help = ["f2"]
 
 [keybindings.inspector]
 next_code_point = ["l", "right", "n"]
+toggle_properties = ["t"]
 back = ["backspace"]
 browse_planes = []
 

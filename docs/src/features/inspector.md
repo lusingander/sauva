@@ -11,6 +11,8 @@ sauva U+2192
 
 ## Properties
 
+The fixed **Properties** heading shows the current display mode. The Inspector starts in **Relevant** mode; press <kbd>a</kbd> to toggle between **Relevant** and **All**. The mode is kept while navigating code points or returning from another screen.
+
 | Section | Fields |
 | --- | --- |
 | Identity | Character, Code Point, Primary Name, Aliases, Plane, Block |
@@ -18,6 +20,15 @@ sauva U+2192
 | Encoding | UTF-8, UTF-16, HTML Decimal, HTML Hex, Rust char, Unicode Escape |
 | Normalization | Decomposition Type, Decomposition |
 | Data | Unicode Version |
+
+In **Relevant** mode:
+
+- **Aliases**, **Decomposition Type**, and **Decomposition** appear only when present. Empty sections are omitted.
+- **Canonical Combining Class** appears for combining marks, including those with a value of `0`, and for any code point with a nonzero value.
+- **Default Ignorable** appears only when its value is `Yes`.
+- **Encoding** shows the available representations. For surrogates, it shows one explanation instead of unavailable fields.
+
+The remaining fields are always shown, including default values for unassigned code points. **All** mode shows every field, including `None`, `No`, `0`, and unavailable values.
 
 Some useful distinctions:
 
@@ -38,12 +49,15 @@ The glyph panel renders the selected code point and shows the font used, when sp
 | <kbd>Ctrl-U</kbd> / <kbd>Ctrl-D</kbd> | Move through properties by page |
 | <kbd>g</kbd> / <kbd>G</kbd> | Select the first / last property |
 | <kbd>y</kbd> | Copy the selected value |
+| <kbd>a</kbd> | Toggle Relevant / All properties |
 | <kbd>/</kbd> | Open Search |
 | <kbd>p</kbd>, <kbd>r</kbd>, <kbd>b</kbd>, <kbd>c</kbd> | Open Browse at the corresponding level |
 | <kbd>Backspace</kbd> | Return to the original or normalized sequence, when one is open |
 | <kbd>q</kbd>, <kbd>Esc</kbd> | Quit |
 
 Adjacent navigation follows code point values, even when the Inspector was opened from a sequence. <kbd>Backspace</kbd> returns to the sequence's existing selection.
+
+Code point navigation and display mode changes keep the same property selected when possible. If that property is hidden, selection moves to a nearby property, preferring the same section.
 
 ## Copying Values
 
