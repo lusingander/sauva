@@ -93,3 +93,31 @@ path = "../UNICODE-LICENSE.txt"
 source = "https://www.unicode.org/license.txt"
 sha256 = "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96"
 size = 1995
+
+[[files]]
+path = "DerivedNumericType.txt"
+source = "https://www.unicode.org/Public/17.0.0/ucd/extracted/DerivedNumericType.txt"
+retrieved_on = "2026-10-17"
+sha256 = "7c83684d3336b698381745b78a971c3e1242cb3fcac58604469086c19b6edcee"
+size = 21655
+
+[[files]]
+path = "DerivedNumericValues.txt"
+source = "https://www.unicode.org/Public/17.0.0/ucd/extracted/DerivedNumericValues.txt"
+retrieved_on = "2026-10-17"
+sha256 = "139b976bdc288be01c80f018523da769cf2845109b5a7f0f8a432db64bfedcfa"
+size = 140679
+
+[[files]]
+path = "SpecialCasing.txt"
+source = "https://www.unicode.org/Public/17.0.0/ucd/SpecialCasing.txt"
+retrieved_on = "2026-10-17"
+sha256 = "efc25faf19de21b92c1194c111c932e03d2a5eaf18194e33f1156e96de4c9588"
+size = 17049
+
+[[files]]
+path = "CaseFolding.txt"
+source = "https://www.unicode.org/Public/17.0.0/ucd/CaseFolding.txt"
+retrieved_on = "2026-10-17"
+sha256 = "ff8d8fefbf123574205085d6714c36149eb946d717a0c585c27f0f4ef58c4183"
+size = 87539
