@@ -30,6 +30,7 @@ Context: `inspector`.
 | `page_down` | <kbd>Ctrl-D</kbd> | Move properties down one page |
 | `first` | <kbd>g</kbd> | Select the first property |
 | `last` | <kbd>G</kbd> | Select the last property |
+| `explain_property` | <kbd>Enter</kbd> | Explain the selected property |
 | `copy_value` | <kbd>y</kbd> | Copy the selected property value |
 | `toggle_properties` | <kbd>a</kbd> | Toggle Relevant / All properties |
 | `search` | <kbd>/</kbd> | Open search |
@@ -40,6 +41,24 @@ Context: `inspector`.
 | `browse_blocks` | <kbd>b</kbd> | Browse blocks |
 | `browse_code_points` | <kbd>c</kbd> | Browse code points in the current range |
 | `back` | <kbd>Backspace</kbd> | Return to the bookmark list or sequence that opened the Inspector |
+
+## Property
+
+Context: `property`. Open a property's explanation with <kbd>Enter</kbd> in the Inspector. The Inspector's bindings are inactive until you return.
+
+| Command | Keys | Action |
+| --- | --- | --- |
+| `move_up` | <kbd>k</kbd>, <kbd>Up</kbd> | Scroll up one line |
+| `move_down` | <kbd>j</kbd>, <kbd>Down</kbd> | Scroll down one line |
+| `page_up` | <kbd>Ctrl-U</kbd> | Scroll up one page |
+| `page_down` | <kbd>Ctrl-D</kbd> | Scroll down one page |
+| `first` | <kbd>g</kbd> | Go to the beginning |
+| `last` | <kbd>G</kbd> | Go to the end |
+| `open_reference` | <kbd>o</kbd> | Open the specification in the default browser |
+| `copy_reference_url` | <kbd>y</kbd> | Copy the specification URL |
+| `close` | <kbd>Esc</kbd> | Return to the Inspector |
+
+Global <kbd>F1</kbd> opens this page's operation help. Closing help restores the reading position. Global <kbd>Ctrl-C</kbd> quits Sauva.
 
 ## Search
 

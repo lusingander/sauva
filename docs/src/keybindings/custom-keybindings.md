@@ -36,6 +36,7 @@ Use `sauva --print-default-config` to see every context, command, and default bi
 | --- | --- |
 | `global` | Every screen; supports `quit` and `help` |
 | `inspector` | Code point properties |
+| `property` | The selected property's explanation |
 | `search` | Search results |
 | `sequence` | The original input sequence |
 | `normalization` | Normalization form comparison |
