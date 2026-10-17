@@ -1,7 +1,7 @@
 use std::ops::Range;
 
 use crate::unicode::{
-    BidiClass, CanonicalCombiningClass, CodePoint, Decomposition, DecompositionType,
+    BidiClass, CanonicalCombiningClass, CaseMapping, CodePoint, Decomposition, DecompositionType,
     DisplayRepresentation, EastAsianWidth, GeneralCategory, NameAlias, NumericType, Plane,
     UnicodeDatabase, UnicodeRecord, UnicodeScalarEncoding,
 };
@@ -339,6 +339,18 @@ impl InspectorDetails {
         self.record.numeric_type()
     }
 
+    pub fn uppercase_mapping(&self) -> CaseMapping {
+        self.record.uppercase_mapping()
+    }
+
+    pub fn lowercase_mapping(&self) -> CaseMapping {
+        self.record.lowercase_mapping()
+    }
+
+    pub fn titlecase_mapping(&self) -> CaseMapping {
+        self.record.titlecase_mapping()
+    }
+
     pub const fn numeric_value(&self) -> Option<&'static str> {
         self.record.numeric_value()
     }
@@ -352,6 +364,7 @@ impl InspectorDetails {
 pub enum InspectorSection {
     Identity,
     Classification,
+    Case,
     Numeric,
     Encoding,
     Normalization,
@@ -363,6 +376,7 @@ impl InspectorSection {
         match self {
             Self::Identity => "Identity",
             Self::Classification => "Classification",
+            Self::Case => "Case",
             Self::Numeric => "Numeric",
             Self::Encoding => "Encoding",
             Self::Normalization => "Normalization",
@@ -386,6 +400,9 @@ pub enum InspectorFieldId {
     CanonicalCombiningClass,
     BidiClass,
     DefaultIgnorable,
+    UppercaseMapping,
+    LowercaseMapping,
+    TitlecaseMapping,
     NumericType,
     NumericValue,
     Utf8,
@@ -536,6 +553,31 @@ impl InspectorField {
             ),
         ]);
 
+        for (id, label, mapping) in [
+            (
+                InspectorFieldId::UppercaseMapping,
+                "Uppercase Mapping",
+                details.uppercase_mapping(),
+            ),
+            (
+                InspectorFieldId::LowercaseMapping,
+                "Lowercase Mapping",
+                details.lowercase_mapping(),
+            ),
+            (
+                InspectorFieldId::TitlecaseMapping,
+                "Titlecase Mapping",
+                details.titlecase_mapping(),
+            ),
+        ] {
+            fields.push(Self::code_point_mapping(
+                id,
+                InspectorSection::Case,
+                label,
+                mapping.mapping(),
+            ));
+        }
+
         fields.push(Self::copyable(
             InspectorFieldId::NumericType,
             InspectorSection::Numeric,
@@ -628,14 +670,11 @@ impl InspectorField {
                     }
                 }],
             ));
-            fields.push(Self::copyable(
+            fields.push(Self::code_point_mapping(
                 InspectorFieldId::Decomposition,
                 InspectorSection::Normalization,
                 "Decomposition",
-                decomposition.mapping().map(|code_point| {
-                    let name = UnicodeDatabase::primary_name_or_fallback(code_point);
-                    format!("{code_point} {name}")
-                }),
+                decomposition.mapping(),
             ));
         } else {
             fields.extend([
@@ -679,6 +718,9 @@ impl InspectorField {
                     )
             }
             InspectorFieldId::DefaultIgnorable => details.is_default_ignorable(),
+            InspectorFieldId::UppercaseMapping => !details.uppercase_mapping().is_identity(),
+            InspectorFieldId::LowercaseMapping => !details.lowercase_mapping().is_identity(),
+            InspectorFieldId::TitlecaseMapping => !details.titlecase_mapping().is_identity(),
             InspectorFieldId::NumericType | InspectorFieldId::NumericValue => {
                 details.numeric_type() != NumericType::None
             }
@@ -693,6 +735,23 @@ impl InspectorField {
             }
             _ => true,
         }
+    }
+
+    fn code_point_mapping(
+        id: InspectorFieldId,
+        section: InspectorSection,
+        label: &'static str,
+        mapping: impl Iterator<Item = CodePoint>,
+    ) -> Self {
+        Self::copyable(
+            id,
+            section,
+            label,
+            mapping.map(|code_point| {
+                let name = UnicodeDatabase::primary_name_or_fallback(code_point);
+                format!("{code_point} {name}")
+            }),
+        )
     }
 
     fn copyable(
@@ -756,6 +815,47 @@ impl InspectorField {
 mod tests {
     use super::*;
     use crate::fixtures;
+
+    #[test]
+    fn case_fields_preserve_full_mapping_order_and_show_identity_only_in_all_mode() {
+        let fields =
+            InspectorField::for_code_point(CodePoint::from('ß'), InspectorDisplayMode::Relevant);
+        for (id, expected) in [
+            (
+                InspectorFieldId::UppercaseMapping,
+                "U+0053 LATIN CAPITAL LETTER S\nU+0053 LATIN CAPITAL LETTER S",
+            ),
+            (
+                InspectorFieldId::TitlecaseMapping,
+                "U+0053 LATIN CAPITAL LETTER S\nU+0073 LATIN SMALL LETTER S",
+            ),
+        ] {
+            let field = fields.iter().find(|field| field.id() == id).unwrap();
+            assert_eq!(field.copy_value(), Some(expected));
+        }
+        assert!(
+            fields
+                .iter()
+                .all(|field| field.id() != InspectorFieldId::LowercaseMapping)
+        );
+        let all = InspectorField::for_code_point(CodePoint::from('A'), InspectorDisplayMode::All);
+        let uppercase = all
+            .iter()
+            .find(|field| field.id() == InspectorFieldId::UppercaseMapping)
+            .unwrap();
+        assert_eq!(uppercase.values(), ["U+0041 LATIN CAPITAL LETTER A"]);
+        assert_eq!(
+            uppercase.copy_value(),
+            Some("U+0041 LATIN CAPITAL LETTER A")
+        );
+        let uncased =
+            InspectorField::for_code_point(CodePoint::from('あ'), InspectorDisplayMode::Relevant);
+        assert!(
+            uncased
+                .iter()
+                .all(|field| field.section() != InspectorSection::Case)
+        );
+    }
 
     #[test]
     fn numeric_fields_show_exact_values_and_hide_only_when_absent() {

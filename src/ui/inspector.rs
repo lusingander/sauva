@@ -115,6 +115,7 @@ impl InspectorDocument {
         for section in [
             InspectorSection::Identity,
             InspectorSection::Classification,
+            InspectorSection::Case,
             InspectorSection::Numeric,
             InspectorSection::Encoding,
             InspectorSection::Normalization,
