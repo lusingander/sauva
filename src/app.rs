@@ -5,16 +5,18 @@ use tui_input::InputRequest;
 
 pub use crate::app::update::update;
 
-use crate::bookmarks::{Bookmark, BookmarkMove, BookmarkState};
-use crate::browser::{BrowseLevel, BrowseMove, BrowseState};
-use crate::copy_dialog::{CopyDialogState, CopyMove};
-use crate::help::{HelpMove, HelpState};
-use crate::inspector::{InspectorGroup, InspectorMove, InspectorState};
-use crate::normalization::{NormalizationMove, NormalizationState};
-use crate::preview::{GlyphPreviewState, GlyphPreviewUpdate};
-use crate::search::{SearchMove, SearchState};
-use crate::sequence::{SequenceMove, SequenceState};
-use crate::unicode::CodePoint;
+use crate::{
+    bookmarks::{Bookmark, BookmarkMove, BookmarkState},
+    browser::{BrowseLevel, BrowseMove, BrowseState},
+    copy_dialog::{CopyDialogState, CopyMove},
+    help::{HelpMove, HelpState},
+    inspector::{InspectorGroup, InspectorMove, InspectorState},
+    normalization::{NormalizationMove, NormalizationState},
+    preview::{GlyphPreviewState, GlyphPreviewUpdate},
+    search::{SearchMove, SearchState},
+    sequence::{SequenceMove, SequenceState},
+    unicode::CodePoint,
+};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Action {

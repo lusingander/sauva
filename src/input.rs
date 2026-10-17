@@ -98,8 +98,7 @@ pub fn view_context_for_state(state: &AppState) -> Context {
 
 #[rustfmt::skip]
 fn action_for_command(context: Context, command: Command) -> Option<Action> {
-    use Command as C;
-    use Context as X;
+    use crate::keybindings::{Command as C, Context as X};
 
     match (context, command) {
         (_, C::Quit) => Some(Action::Quit),

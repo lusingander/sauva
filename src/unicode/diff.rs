@@ -2,7 +2,7 @@ use std::ops::Range;
 
 use unicode_normalization::UnicodeNormalization;
 
-use super::text::{NormalizationForm, TextAnalysis};
+use crate::unicode::text::{NormalizationForm, TextAnalysis};
 
 const MAX_DIFF_CELLS: usize = 262_144;
 

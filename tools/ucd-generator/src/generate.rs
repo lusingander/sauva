@@ -1,8 +1,10 @@
 use std::{error::Error, fmt, fs, path::Path};
 
-use crate::property_value_aliases::{PropertyValueAlias, parse as parse_property_value_aliases};
-use crate::ucd::{UcdEntry, parse};
-use crate::unicode_data::{DecompositionEntry, DecompositionKind, parse_decomposition_entries};
+use crate::{
+    property_value_aliases::{PropertyValueAlias, parse as parse_property_value_aliases},
+    ucd::{UcdEntry, parse},
+    unicode_data::{DecompositionEntry, DecompositionKind, parse_decomposition_entries},
+};
 
 const UNICODE_VERSION: &str = "17.0.0";
 const MAX_CODE_POINT: u32 = 0x10_ffff;

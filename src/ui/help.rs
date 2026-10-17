@@ -346,7 +346,7 @@ fn wrap_words(text: &str, width: usize) -> Vec<String> {
 }
 
 fn help_items(context: Context, has_inspector_parent: bool) -> Vec<HelpItem> {
-    use Command as C;
+    use crate::keybindings::Command as C;
 
     let mut items = match context {
         Context::Inspector => vec![
@@ -532,7 +532,7 @@ fn item(command: Command, description: &'static str) -> HelpItem {
 
 #[rustfmt::skip]
 fn short_help_items(context: Context, has_inspector_parent: bool) -> Vec<ShortHelpItem> {
-    use Command as C;
+    use crate::keybindings::Command as C;
 
     let mut items = match context {
         Context::Inspector => vec![

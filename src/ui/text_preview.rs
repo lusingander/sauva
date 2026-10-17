@@ -1,9 +1,9 @@
-use crate::unicode::{CodePoint, GeneralCategory, UnicodeDatabase};
+use crate::unicode::{CodePoint, UnicodeDatabase};
 
 /// Escape terminal controls and invisible formatting while preserving shaping
 /// within clusters. This representation is never used as clipboard data.
 pub(super) fn safe_cluster(text: &str) -> String {
-    use GeneralCategory as G;
+    use crate::unicode::GeneralCategory as G;
     if text.len() > 1024 {
         return format!("<cluster: {} CP>", text.chars().count());
     }
