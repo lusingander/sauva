@@ -1,3 +1,4 @@
+mod case;
 mod code_point;
 mod database;
 mod decomposition;
@@ -11,6 +12,7 @@ mod properties;
 pub mod text;
 
 pub use crate::unicode::{
+    case::CaseMapping,
     code_point::{CodePoint, CodePointStructure, InvalidCodePoint},
     database::{GeneralCategory, UnicodeBlock, UnicodeDatabase, UnicodeRecord},
     decomposition::{Decomposition, DecompositionType},
@@ -18,5 +20,7 @@ pub use crate::unicode::{
     encoding::UnicodeScalarEncoding,
     notation::{CodePointNotationError, parse_code_point_notation},
     plane::Plane,
-    properties::{BidiClass, CanonicalCombiningClass, EastAsianWidth, NameAlias, NameAliasType},
+    properties::{
+        BidiClass, CanonicalCombiningClass, EastAsianWidth, NameAlias, NameAliasType, NumericType,
+    },
 };

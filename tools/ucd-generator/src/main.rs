@@ -1,3 +1,4 @@
+mod case_mapping;
 mod generate;
 mod property_value_aliases;
 mod ucd;
@@ -50,6 +51,13 @@ fn run() -> Result<(), Box<dyn Error>> {
     );
     println!("Bidi Class ranges: {}", summary.bidi_class_range_count);
 
+    println!("Numeric Type ranges: {}", summary.numeric_type_range_count);
+    println!(
+        "Numeric Value ranges: {}",
+        summary.numeric_value_range_count
+    );
+    println!("case mappings: {}", summary.case_mapping_count);
+    println!("case foldings: {}", summary.case_folding_count);
     Ok(())
 }
 

@@ -177,3 +177,22 @@ impl BidiClass {
         }
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NumericType {
+    None,
+    Decimal,
+    Digit,
+    Numeric,
+}
+
+impl NumericType {
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::None => "None",
+            Self::Decimal => "Decimal",
+            Self::Digit => "Digit",
+            Self::Numeric => "Numeric",
+        }
+    }
+}

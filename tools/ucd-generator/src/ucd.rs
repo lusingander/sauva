@@ -142,7 +142,7 @@ fn parse_range(line_number: usize, text: &str) -> Result<CodePointRange, ParseEr
     Ok(CodePointRange { start, end })
 }
 
-fn parse_code_point(line_number: usize, text: &str) -> Result<u32, ParseError> {
+pub fn parse_code_point(line_number: usize, text: &str) -> Result<u32, ParseError> {
     let value = u32::from_str_radix(text, 16).map_err(|_| {
         ParseError::new(
             line_number,
@@ -167,7 +167,7 @@ pub struct ParseError {
 }
 
 impl ParseError {
-    fn new(line: usize, message: impl Into<String>) -> Self {
+    pub fn new(line: usize, message: impl Into<String>) -> Self {
         Self {
             line,
             message: message.into(),

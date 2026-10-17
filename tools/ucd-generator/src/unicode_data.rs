@@ -1,5 +1,7 @@
 use std::{error::Error, fmt};
 
+use crate::case_mapping::CaseMappings;
+
 const FIELD_COUNT: usize = 15;
 const MAX_CODE_POINT: u32 = 0x10_ffff;
 
@@ -30,8 +32,15 @@ pub enum DecompositionKind {
     Compatibility(String),
 }
 
-pub fn parse_decomposition_entries(source: &str) -> Result<Vec<DecompositionEntry>, ParseError> {
+#[derive(Debug)]
+pub struct UnicodeData {
+    pub decompositions: Vec<DecompositionEntry>,
+    pub case_mappings: CaseMappings,
+}
+
+pub fn parse(source: &str) -> Result<UnicodeData, ParseError> {
     let mut entries = Vec::new();
+    let mut case_mappings = CaseMappings::new();
     let mut previous = None;
 
     for (index, line) in source.lines().enumerate() {
@@ -60,14 +69,37 @@ pub fn parse_decomposition_entries(source: &str) -> Result<Vec<DecompositionEntr
         }
         previous = Some(code_point);
 
-        let decomposition = fields[5].trim();
-        if decomposition.is_empty() {
-            continue;
+        let uppercase = simple_mapping(line_number, fields[12], code_point)?;
+        let lowercase = simple_mapping(line_number, fields[13], code_point)?;
+        let titlecase = simple_mapping(line_number, fields[14], uppercase[0])?;
+        let mappings = [uppercase, lowercase, titlecase];
+        if mappings.iter().any(|mapping| mapping != &[code_point]) {
+            case_mappings.insert(code_point, mappings);
         }
-        entries.push(parse_decomposition(line_number, code_point, decomposition)?);
+        let decomposition = fields[5].trim();
+        if !decomposition.is_empty() {
+            entries.push(parse_decomposition(line_number, code_point, decomposition)?);
+        }
     }
 
-    Ok(entries)
+    Ok(UnicodeData {
+        decompositions: entries,
+        case_mappings,
+    })
+}
+
+fn simple_mapping(line: usize, source: &str, fallback: u32) -> Result<Vec<u32>, ParseError> {
+    if source.trim().is_empty() {
+        return Ok(vec![fallback]);
+    }
+    let target = parse_code_point(line, source.trim())?;
+    if char::from_u32(target).is_none() {
+        return Err(ParseError::new(
+            line,
+            "case mapping target must be a Unicode scalar value",
+        ));
+    }
+    Ok(vec![target])
 }
 
 fn parse_decomposition(
@@ -162,13 +194,24 @@ impl Error for ParseError {}
 mod tests {
     use rstest::rstest;
 
-    use crate::unicode_data::{DecompositionEntry, DecompositionKind, parse_decomposition_entries};
+    use crate::unicode_data::{DecompositionEntry, DecompositionKind, parse};
+
+    #[test]
+    fn simple_titlecase_defaults_to_uppercase_and_targets_must_be_scalars() {
+        let source = "0061;LATIN SMALL LETTER A;Ll;0;L;;;;;N;;;0041;;";
+        let data = parse(source).unwrap();
+        assert_eq!(
+            data.case_mappings[&0x61],
+            [vec![0x41], vec![0x61], vec![0x41]]
+        );
+        assert!(parse(&source.replace("0041", "D800")).is_err());
+    }
 
     #[test]
     fn parses_only_canonical_and_compatibility_decompositions() {
-        let entries =
-            parse_decomposition_entries(include_str!("../tests/fixtures/unicode-data-valid.txt"))
-                .unwrap();
+        let entries = parse(include_str!("../tests/fixtures/unicode-data-valid.txt"))
+            .unwrap()
+            .decompositions;
 
         assert_eq!(
             entries,
@@ -213,11 +256,6 @@ mod tests {
         #[case] fixture: &str,
         #[case] expected: &str,
     ) {
-        assert_eq!(
-            parse_decomposition_entries(fixture)
-                .unwrap_err()
-                .to_string(),
-            expected
-        );
+        assert_eq!(parse(fixture).unwrap_err().to_string(), expected);
     }
 }

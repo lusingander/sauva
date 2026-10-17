@@ -1,9 +1,12 @@
-use std::{error::Error, fmt, fs, path::Path};
+use std::{collections::BTreeMap, error::Error, fmt, fs, path::Path};
 
 use crate::{
+    case_mapping::{CaseMappings, full_folding, full_mappings},
     property_value_aliases::{PropertyValueAlias, parse as parse_property_value_aliases},
     ucd::{UcdEntry, parse},
-    unicode_data::{DecompositionEntry, DecompositionKind, parse_decomposition_entries},
+    unicode_data::{
+        DecompositionEntry, DecompositionKind, UnicodeData, parse as parse_unicode_data,
+    },
 };
 
 const UNICODE_VERSION: &str = "17.0.0";
@@ -22,6 +25,10 @@ pub struct GenerationSummary {
     pub canonical_combining_class_range_count: usize,
     pub decomposition_mapping_count: usize,
     pub bidi_class_range_count: usize,
+    pub case_mapping_count: usize,
+    pub case_folding_count: usize,
+    pub numeric_type_range_count: usize,
+    pub numeric_value_range_count: usize,
 }
 
 pub fn generate(
@@ -69,7 +76,14 @@ pub fn generate(
             &parse_file(input_directory.join("DerivedCombiningClass.txt"))?,
             &property_value_aliases,
         )?;
-    let decompositions = parse_unicode_data_file(input_directory.join("UnicodeData.txt"))?;
+    let unicode_data = parse_unicode_data_file(input_directory.join("UnicodeData.txt"))?;
+    let decompositions = unicode_data.decompositions;
+    let special_casing = input_directory.join("SpecialCasing.txt");
+    let case_mappings = full_mappings(unicode_data.case_mappings, &read(&special_casing)?)
+        .map_err(|source| GenerationError::Parse {
+            path: special_casing,
+            source,
+        })?;
     validate_decomposition_entries(&decompositions)?;
     let bidi_classes = build_enum_property(
         &parse_file(input_directory.join("DerivedBidiClass.txt"))?,
@@ -78,6 +92,21 @@ pub fn generate(
         "Bidi Class",
         bidi_class_variant,
     )?;
+    let numeric_types = build_enum_property(
+        &parse_file(input_directory.join("DerivedNumericType.txt"))?,
+        &property_value_aliases,
+        "nt",
+        "Numeric Type",
+        numeric_type_variant,
+    )?;
+    let numeric_values =
+        build_numeric_values(&read(input_directory.join("DerivedNumericValues.txt"))?)?;
+    let folding_path = input_directory.join("CaseFolding.txt");
+    let case_folding =
+        full_folding(&read(&folding_path)?).map_err(|source| GenerationError::Parse {
+            path: folding_path,
+            source,
+        })?;
     let generated = render(&RenderData {
         names: &names,
         categories: &categories,
@@ -91,6 +120,10 @@ pub fn generate(
         canonical_combining_class_values: &canonical_combining_class_values,
         decompositions: &decompositions,
         bidi_classes: &bidi_classes,
+        case_mappings: &case_mappings,
+        case_folding: &case_folding,
+        numeric_types: &numeric_types,
+        numeric_values: &numeric_values,
     });
 
     fs::write(output, generated).map_err(|source| GenerationError::Io {
@@ -111,6 +144,10 @@ pub fn generate(
         canonical_combining_class_range_count: canonical_combining_classes.len(),
         decomposition_mapping_count: decompositions.len(),
         bidi_class_range_count: bidi_classes.len(),
+        case_mapping_count: case_mappings.len(),
+        case_folding_count: case_folding.len(),
+        numeric_type_range_count: numeric_types.len(),
+        numeric_value_range_count: numeric_values.len(),
     })
 }
 
@@ -123,12 +160,10 @@ fn parse_file(path: impl AsRef<Path>) -> Result<Vec<UcdEntry>, GenerationError> 
     })
 }
 
-fn parse_unicode_data_file(
-    path: impl AsRef<Path>,
-) -> Result<Vec<DecompositionEntry>, GenerationError> {
+fn parse_unicode_data_file(path: impl AsRef<Path>) -> Result<UnicodeData, GenerationError> {
     let path = path.as_ref();
     let source = read(path)?;
-    parse_decomposition_entries(&source).map_err(|source| GenerationError::UnicodeDataParse {
+    parse_unicode_data(&source).map_err(|source| GenerationError::UnicodeDataParse {
         path: path.to_owned(),
         source,
     })
@@ -467,13 +502,64 @@ fn bidi_class_variant(value: &PropertyValueAlias) -> Result<&'static str, Genera
     Ok(variant)
 }
 
+fn numeric_type_variant(value: &PropertyValueAlias) -> Result<&'static str, GenerationError> {
+    match (value.abbreviation(), value.long_name()) {
+        ("None", "None") => Ok("None"),
+        ("De", "Decimal") => Ok("Decimal"),
+        ("Di", "Digit") => Ok("Digit"),
+        ("Nu", "Numeric") => Ok("Numeric"),
+        (abbreviation, name) => Err(GenerationError::Data(format!(
+            "unknown Numeric Type value `{abbreviation}` / `{name}`"
+        ))),
+    }
+}
+
+fn build_numeric_values(source: &str) -> Result<Vec<StringRange>, GenerationError> {
+    let mut projected = String::new();
+    for (index, line) in source.lines().enumerate() {
+        let content = line.split('#').next().unwrap().trim();
+        if !content.is_empty() {
+            let fields = content.split(';').map(str::trim).collect::<Vec<_>>();
+            let [range, approximate, reserved, exact] = fields.as_slice() else {
+                return Err(GenerationError::Data(format!(
+                    "Numeric Value line {} must have four fields",
+                    index + 1
+                )));
+            };
+            let valid_value = if let Some((numerator, denominator)) = exact.split_once('/') {
+                numerator.parse::<i64>().is_ok()
+                    && denominator.parse::<u64>().is_ok_and(|value| value > 0)
+            } else {
+                exact.parse::<i64>().is_ok()
+            };
+            if approximate.is_empty() || !reserved.is_empty() || !valid_value {
+                return Err(GenerationError::Data(format!(
+                    "invalid Numeric Value fields at line {}",
+                    index + 1
+                )));
+            }
+            projected.push_str(&format!("{range}; {exact}"));
+        }
+        projected.push('\n');
+    }
+    let entries = parse(&projected)
+        .map_err(|error| GenerationError::Data(format!("Numeric Value: {error}")))?;
+    build_sparse_string_property(&entries, "Numeric Value")
+}
+
 fn build_string_property(
     entries: &[UcdEntry],
     property_name: &str,
     expected_missing: &str,
 ) -> Result<Vec<StringRange>, GenerationError> {
     validate_missing_entry(entries, property_name, expected_missing)?;
+    build_sparse_string_property(entries, property_name)
+}
 
+fn build_sparse_string_property(
+    entries: &[UcdEntry],
+    property_name: &str,
+) -> Result<Vec<StringRange>, GenerationError> {
     let mut ranges = entries
         .iter()
         .filter(|entry| !entry.is_missing())
@@ -839,6 +925,10 @@ struct RenderData<'a> {
     canonical_combining_class_values: &'a [CanonicalCombiningClassValue],
     decompositions: &'a [DecompositionEntry],
     bidi_classes: &'a [EnumRange],
+    case_mappings: &'a CaseMappings,
+    case_folding: &'a BTreeMap<u32, Vec<u32>>,
+    numeric_types: &'a [EnumRange],
+    numeric_values: &'a [StringRange],
 }
 
 fn render(data: &RenderData<'_>) -> String {
@@ -863,7 +953,7 @@ fn render(data: &RenderData<'_>) -> String {
     );
     render_header(&mut output);
     output.push_str(
-        "use crate::unicode::{\n    BidiClass, Decomposition, EastAsianWidth, GeneralCategory, NameAlias, NameAliasType,\n};\n\n",
+        "use crate::unicode::{\n    BidiClass, Decomposition, EastAsianWidth, GeneralCategory, NameAlias, NameAliasType,\n    NumericType,\n};\n\n",
     );
     output.push_str(&format!(
         "pub const UNICODE_VERSION: &str = {UNICODE_VERSION:?};\n\n"
@@ -936,6 +1026,41 @@ fn render(data: &RenderData<'_>) -> String {
     render_decompositions(&mut output, data.decompositions);
     output.push('\n');
     render_enum_ranges(&mut output, "BIDI_CLASSES", "BidiClass", data.bidi_classes);
+    output.push('\n');
+    render_enum_ranges(
+        &mut output,
+        "NUMERIC_TYPES",
+        "NumericType",
+        data.numeric_types,
+    );
+    output.push('\n');
+    render_string_ranges(&mut output, "NUMERIC_VALUES", data.numeric_values);
+    for (index, name) in [
+        "UPPERCASE_MAPPINGS",
+        "LOWERCASE_MAPPINGS",
+        "TITLECASE_MAPPINGS",
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        output.push('\n');
+        render_mappings(
+            &mut output,
+            name,
+            data.case_mappings
+                .iter()
+                .filter(|(code_point, mappings)| mappings[index] != [**code_point])
+                .map(|(&code_point, mappings)| (code_point, mappings[index].as_slice())),
+        );
+    }
+    output.push('\n');
+    render_mappings(
+        &mut output,
+        "CASE_FOLDINGS",
+        data.case_folding
+            .iter()
+            .map(|(&code_point, mapping)| (code_point, mapping.as_slice())),
+    );
     output
 }
 
@@ -951,10 +1076,29 @@ fn render_header(output: &mut String) {
     ));
     output.push_str("// Blocks.txt, Scripts.txt, DerivedAge.txt, DerivedCoreProperties.txt,\n");
     output.push_str("// NameAliases.txt, EastAsianWidth.txt, DerivedCombiningClass.txt,\n");
-    output.push_str("// DerivedBidiClass.txt, PropertyValueAliases.txt, and UnicodeData.txt\n");
+    output.push_str("// DerivedBidiClass.txt, PropertyValueAliases.txt, UnicodeData.txt,\n");
+    output.push_str("// DerivedNumericType.txt, DerivedNumericValues.txt, SpecialCasing.txt, and CaseFolding.txt\n");
     output.push_str(&format!(
         "// Regenerate: cargo run --manifest-path tools/ucd-generator/Cargo.toml -- data/ucd/{UNICODE_VERSION} src/unicode/generated.rs\n\n"
     ));
+}
+
+fn render_mappings<'a>(
+    output: &mut String,
+    name: &str,
+    mappings: impl Iterator<Item = (u32, &'a [u32])>,
+) {
+    output.push_str("#[rustfmt::skip]\n");
+    output.push_str(&format!("pub const {name}: &[(u32, &[u32])] = &[\n"));
+    for (code_point, mapping) in mappings {
+        let targets = mapping
+            .iter()
+            .map(|value| format!("0x{value:06X}"))
+            .collect::<Vec<_>>()
+            .join(", ");
+        output.push_str(&format!("    (0x{code_point:06X}, &[{targets}]),\n"));
+    }
+    output.push_str("];\n");
 }
 
 fn render_decompositions(output: &mut String, decompositions: &[DecompositionEntry]) {
@@ -1123,6 +1267,28 @@ mod tests {
     use rstest::rstest;
 
     #[test]
+    fn extracts_exact_numeric_values_and_rejects_invalid_fractions_or_overlaps() {
+        let ranges = build_numeric_values(
+            "0F33; -0.5; ; -1/2\n0030; 0.0; ; 0\n0031; 1.0; ; 1\n4E00; 1.0; ; 1",
+        )
+        .unwrap();
+        assert_eq!(
+            ranges
+                .iter()
+                .map(|range| (range.start, range.value.as_str()))
+                .collect::<Vec<_>>(),
+            [(0x30, "0"), (0x31, "1"), (0xf33, "-1/2"), (0x4e00, "1")]
+        );
+        for source in [
+            "0030; 0.0; ; 1/0",
+            "0030; 0.0; ; 0.5",
+            "0030; 0.0; ; 0\n0030; 1.0; ; 1",
+        ] {
+            assert!(build_numeric_values(source).is_err(), "{source}");
+        }
+    }
+
+    #[test]
     fn expands_pattern_names_and_sorts_them() {
         let entries = parse(
             r#"4E00..4E02 ; CJK UNIFIED IDEOGRAPH-*
@@ -1145,9 +1311,9 @@ mod tests {
 
     #[test]
     fn renders_canonical_and_compatibility_decompositions() {
-        let entries =
-            parse_decomposition_entries(include_str!("../tests/fixtures/unicode-data-valid.txt"))
-                .unwrap();
+        let entries = parse_unicode_data(include_str!("../tests/fixtures/unicode-data-valid.txt"))
+            .unwrap()
+            .decompositions;
         let mut output = String::new();
 
         render_decompositions(&mut output, &entries);

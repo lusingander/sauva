@@ -5,15 +5,15 @@ expression: "render_after_inspector_move(&state, width, height, InspectorMove::L
  sauva / Inspector                                                                           U+00E9
 
  Properties                                       Relevant  │ Glyph
-  Block                      Latin-1 Supplement             │  Font     —
- ─────────────────────────────────────────────────────────  │  Version  —
- Classification                                             │
-  General Category           Ll — Lowercase Letter          │
-  Script                     Latin                          │
-  Age                        1.1                            ┃
-  East Asian Width           A — Ambiguous                  ┃
-  Bidi Class                 L — Left To Right              ┃
- ─────────────────────────────────────────────────────────  ┃
+  East Asian Width           A — Ambiguous                  │  Font     —
+  Bidi Class                 L — Left To Right              │  Version  —
+ ─────────────────────────────────────────────────────────  │
+ Case                                                       │
+  Uppercase Mapping                                         │
+    U+00C9 LATIN CAPITAL LETTER E WITH ACUTE                │
+  Titlecase Mapping                                         │
+    U+00C9 LATIN CAPITAL LETTER E WITH ACUTE                │
+ ─────────────────────────────────────────────────────────  │
  Encoding                                                   ┃
   UTF-8                      C3 A9                          ┃
   UTF-16                     00E9                           ┃

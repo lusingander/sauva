@@ -1,9 +1,9 @@
 use std::ops::Range;
 
 use crate::unicode::{
-    BidiClass, CanonicalCombiningClass, CodePoint, Decomposition, DecompositionType,
-    DisplayRepresentation, EastAsianWidth, GeneralCategory, NameAlias, Plane, UnicodeDatabase,
-    UnicodeRecord, UnicodeScalarEncoding,
+    BidiClass, CanonicalCombiningClass, CaseMapping, CodePoint, Decomposition, DecompositionType,
+    DisplayRepresentation, EastAsianWidth, GeneralCategory, NameAlias, NumericType, Plane,
+    UnicodeDatabase, UnicodeRecord, UnicodeScalarEncoding,
 };
 
 const UNASSIGNED: &str = "Unassigned";
@@ -335,6 +335,30 @@ impl InspectorDetails {
         self.record.decomposition()
     }
 
+    pub const fn numeric_type(&self) -> NumericType {
+        self.record.numeric_type()
+    }
+
+    pub fn case_folding(&self) -> CaseMapping {
+        self.record.case_folding()
+    }
+
+    pub fn uppercase_mapping(&self) -> CaseMapping {
+        self.record.uppercase_mapping()
+    }
+
+    pub fn lowercase_mapping(&self) -> CaseMapping {
+        self.record.lowercase_mapping()
+    }
+
+    pub fn titlecase_mapping(&self) -> CaseMapping {
+        self.record.titlecase_mapping()
+    }
+
+    pub const fn numeric_value(&self) -> Option<&'static str> {
+        self.record.numeric_value()
+    }
+
     pub const fn unicode_version(&self) -> &'static str {
         UnicodeDatabase::version()
     }
@@ -344,6 +368,8 @@ impl InspectorDetails {
 pub enum InspectorSection {
     Identity,
     Classification,
+    Case,
+    Numeric,
     Encoding,
     Normalization,
     Data,
@@ -354,6 +380,8 @@ impl InspectorSection {
         match self {
             Self::Identity => "Identity",
             Self::Classification => "Classification",
+            Self::Case => "Case",
+            Self::Numeric => "Numeric",
             Self::Encoding => "Encoding",
             Self::Normalization => "Normalization",
             Self::Data => "Data",
@@ -376,6 +404,12 @@ pub enum InspectorFieldId {
     CanonicalCombiningClass,
     BidiClass,
     DefaultIgnorable,
+    UppercaseMapping,
+    LowercaseMapping,
+    TitlecaseMapping,
+    CaseFolding,
+    NumericType,
+    NumericValue,
     Utf8,
     Utf16,
     HtmlDecimal,
@@ -524,6 +558,58 @@ impl InspectorField {
             ),
         ]);
 
+        for (id, label, mapping) in [
+            (
+                InspectorFieldId::UppercaseMapping,
+                "Uppercase Mapping",
+                details.uppercase_mapping(),
+            ),
+            (
+                InspectorFieldId::LowercaseMapping,
+                "Lowercase Mapping",
+                details.lowercase_mapping(),
+            ),
+            (
+                InspectorFieldId::TitlecaseMapping,
+                "Titlecase Mapping",
+                details.titlecase_mapping(),
+            ),
+            (
+                InspectorFieldId::CaseFolding,
+                "Case Folding",
+                details.case_folding(),
+            ),
+        ] {
+            fields.push(Self::code_point_mapping(
+                id,
+                InspectorSection::Case,
+                label,
+                mapping.mapping(),
+            ));
+        }
+
+        fields.push(Self::copyable(
+            InspectorFieldId::NumericType,
+            InspectorSection::Numeric,
+            "Numeric Type",
+            [details.numeric_type().name().to_owned()],
+        ));
+        fields.push(if let Some(value) = details.numeric_value() {
+            Self::copyable(
+                InspectorFieldId::NumericValue,
+                InspectorSection::Numeric,
+                "Numeric Value",
+                [value.to_owned()],
+            )
+        } else {
+            Self::unavailable(
+                InspectorFieldId::NumericValue,
+                InspectorSection::Numeric,
+                "Numeric Value",
+                "NaN",
+            )
+        });
+
         if let Some(encoding) = details.encoding() {
             fields.extend([
                 Self::copyable(
@@ -594,14 +680,11 @@ impl InspectorField {
                     }
                 }],
             ));
-            fields.push(Self::copyable(
+            fields.push(Self::code_point_mapping(
                 InspectorFieldId::Decomposition,
                 InspectorSection::Normalization,
                 "Decomposition",
-                decomposition.mapping().map(|code_point| {
-                    let name = UnicodeDatabase::primary_name_or_fallback(code_point);
-                    format!("{code_point} {name}")
-                }),
+                decomposition.mapping(),
             ));
         } else {
             fields.extend([
@@ -645,6 +728,13 @@ impl InspectorField {
                     )
             }
             InspectorFieldId::DefaultIgnorable => details.is_default_ignorable(),
+            InspectorFieldId::UppercaseMapping => !details.uppercase_mapping().is_identity(),
+            InspectorFieldId::LowercaseMapping => !details.lowercase_mapping().is_identity(),
+            InspectorFieldId::TitlecaseMapping => !details.titlecase_mapping().is_identity(),
+            InspectorFieldId::CaseFolding => !details.case_folding().is_identity(),
+            InspectorFieldId::NumericType | InspectorFieldId::NumericValue => {
+                details.numeric_type() != NumericType::None
+            }
             InspectorFieldId::Utf8
             | InspectorFieldId::Utf16
             | InspectorFieldId::HtmlDecimal
@@ -656,6 +746,23 @@ impl InspectorField {
             }
             _ => true,
         }
+    }
+
+    fn code_point_mapping(
+        id: InspectorFieldId,
+        section: InspectorSection,
+        label: &'static str,
+        mapping: impl Iterator<Item = CodePoint>,
+    ) -> Self {
+        Self::copyable(
+            id,
+            section,
+            label,
+            mapping.map(|code_point| {
+                let name = UnicodeDatabase::primary_name_or_fallback(code_point);
+                format!("{code_point} {name}")
+            }),
+        )
     }
 
     fn copyable(
@@ -721,6 +828,87 @@ mod tests {
     use crate::fixtures;
 
     #[test]
+    fn case_fields_preserve_full_mapping_order_and_show_identity_only_in_all_mode() {
+        let fields =
+            InspectorField::for_code_point(CodePoint::from('ß'), InspectorDisplayMode::Relevant);
+        for (id, expected) in [
+            (
+                InspectorFieldId::UppercaseMapping,
+                "U+0053 LATIN CAPITAL LETTER S\nU+0053 LATIN CAPITAL LETTER S",
+            ),
+            (
+                InspectorFieldId::TitlecaseMapping,
+                "U+0053 LATIN CAPITAL LETTER S\nU+0073 LATIN SMALL LETTER S",
+            ),
+            (
+                InspectorFieldId::CaseFolding,
+                "U+0073 LATIN SMALL LETTER S\nU+0073 LATIN SMALL LETTER S",
+            ),
+        ] {
+            let field = fields.iter().find(|field| field.id() == id).unwrap();
+            assert_eq!(field.copy_value(), Some(expected));
+        }
+        assert!(
+            fields
+                .iter()
+                .all(|field| field.id() != InspectorFieldId::LowercaseMapping)
+        );
+        let all = InspectorField::for_code_point(CodePoint::from('A'), InspectorDisplayMode::All);
+        let uppercase = all
+            .iter()
+            .find(|field| field.id() == InspectorFieldId::UppercaseMapping)
+            .unwrap();
+        assert_eq!(uppercase.values(), ["U+0041 LATIN CAPITAL LETTER A"]);
+        assert_eq!(
+            uppercase.copy_value(),
+            Some("U+0041 LATIN CAPITAL LETTER A")
+        );
+        let uncased =
+            InspectorField::for_code_point(CodePoint::from('あ'), InspectorDisplayMode::Relevant);
+        assert!(
+            uncased
+                .iter()
+                .all(|field| field.section() != InspectorSection::Case)
+        );
+    }
+
+    #[test]
+    fn numeric_fields_show_exact_values_and_hide_only_when_absent() {
+        for (character, kind, value) in [
+            ('0', "Decimal", "0"),
+            ('½', "Numeric", "1/2"),
+            ('四', "Numeric", "4"),
+        ] {
+            for mode in [InspectorDisplayMode::Relevant, InspectorDisplayMode::All] {
+                let fields = InspectorField::for_code_point(CodePoint::from(character), mode);
+                let numeric = fields
+                    .iter()
+                    .filter(|field| field.section() == InspectorSection::Numeric)
+                    .collect::<Vec<_>>();
+                assert_eq!(numeric.len(), 2);
+                assert_eq!(numeric[0].copy_value(), Some(kind));
+                assert_eq!(numeric[1].values(), [value]);
+                assert_eq!(numeric[1].copy_value(), Some(value));
+            }
+        }
+        let relevant =
+            InspectorField::for_code_point(CodePoint::from('A'), InspectorDisplayMode::Relevant);
+        assert!(
+            relevant
+                .iter()
+                .all(|field| field.section() != InspectorSection::Numeric)
+        );
+        let all = InspectorField::for_code_point(CodePoint::from('A'), InspectorDisplayMode::All);
+        let numeric = all
+            .iter()
+            .filter(|field| field.section() == InspectorSection::Numeric)
+            .collect::<Vec<_>>();
+        assert_eq!(numeric[0].values(), ["None"]);
+        assert_eq!(numeric[1].values(), ["NaN"]);
+        assert_eq!(numeric[1].copy_value(), None);
+    }
+
+    #[test]
     fn selection_follows_property_identity_and_falls_back_to_nearby_visible_fields() {
         use InspectorDisplayMode::{All, Relevant};
         use InspectorFieldId as F;
@@ -767,7 +955,7 @@ mod tests {
                 Relevant,
                 F::UnicodeVersion,
             ),
-            (0xd800, All, F::Utf8, 0xd800, Relevant, F::BidiClass),
+            (0xd800, All, F::Utf8, 0xd800, Relevant, F::UnicodeVersion),
             (
                 0x0021,
                 Relevant,
@@ -792,7 +980,14 @@ mod tests {
                 Relevant,
                 F::UnicodeVersion,
             ),
-            (0xd7ff, Relevant, F::Utf8, 0xd800, Relevant, F::BidiClass),
+            (
+                0xd7ff,
+                Relevant,
+                F::Utf8,
+                0xd800,
+                Relevant,
+                F::UnicodeVersion,
+            ),
             (0x034f, Relevant, F::Aliases, 0x0350, Relevant, F::Plane),
         ];
         for (value, mode, selected, next, next_mode, expected) in cases {
@@ -1033,7 +1228,7 @@ mod tests {
         let fields =
             InspectorField::for_code_point(CodePoint::new(0).unwrap(), InspectorDisplayMode::All);
 
-        assert_eq!(fields.len(), 22);
+        assert_eq!(fields.len(), 28);
         assert_eq!(fields[0].id(), InspectorFieldId::Character);
         assert_eq!(fields[0].section(), InspectorSection::Identity);
         assert_eq!(fields[0].label(), "Character");
@@ -1050,7 +1245,7 @@ mod tests {
     fn relevant_properties_preserve_basic_values_for_all_scalar_categories() {
         use InspectorFieldId::*;
 
-        for value in [0x0041, 0x0378, 0xe000, 0x2fe0, 0x10ffff] {
+        for value in [0x3042, 0x0378, 0xe000, 0x2fe0, 0x10ffff] {
             let code_point = crate::unicode::CodePoint::new(value).unwrap();
             let fields = InspectorField::for_code_point(code_point, InspectorDisplayMode::Relevant);
             assert_eq!(
@@ -1131,8 +1326,11 @@ mod tests {
         assert_eq!(ordinary[3].values(), ["None"]);
         assert_eq!(ordinary[3].copy_value(), None);
         assert_eq!(surrogate[0].copy_value(), None);
-        assert_eq!(surrogate[13].id(), InspectorFieldId::Utf8);
-        assert_eq!(surrogate[13].copy_value(), None);
+        let utf8 = surrogate
+            .iter()
+            .find(|field| field.id() == InspectorFieldId::Utf8)
+            .unwrap();
+        assert_eq!(utf8.copy_value(), None);
 
         let relevant = InspectorField::for_code_point(
             CodePoint::new(0xd800).unwrap(),

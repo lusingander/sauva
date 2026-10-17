@@ -1,10 +1,11 @@
 use crate::unicode::{
-    BidiClass, CanonicalCombiningClass, CodePoint, Decomposition, DisplayKind,
-    DisplayRepresentation, EastAsianWidth, NameAlias, UnicodeScalarEncoding,
+    BidiClass, CanonicalCombiningClass, CaseMapping, CodePoint, Decomposition, DisplayKind,
+    DisplayRepresentation, EastAsianWidth, NameAlias, NumericType, UnicodeScalarEncoding,
     generated::{
         AGES, BIDI_CLASSES, BLOCKS, CANONICAL_COMBINING_CLASS_VALUES, CANONICAL_COMBINING_CLASSES,
-        DECOMPOSITIONS, DEFAULT_IGNORABLES, EAST_ASIAN_WIDTHS, GENERAL_CATEGORIES, NAME_ALIASES,
-        PRIMARY_NAMES, SCRIPTS, UNICODE_VERSION,
+        CASE_FOLDINGS, DECOMPOSITIONS, DEFAULT_IGNORABLES, EAST_ASIAN_WIDTHS, GENERAL_CATEGORIES,
+        LOWERCASE_MAPPINGS, NAME_ALIASES, NUMERIC_TYPES, NUMERIC_VALUES, PRIMARY_NAMES, SCRIPTS,
+        TITLECASE_MAPPINGS, UNICODE_VERSION, UPPERCASE_MAPPINGS,
     },
 };
 
@@ -57,6 +58,8 @@ impl UnicodeDatabase {
             canonical_combining_class: canonical_combining_class(code_point.value()),
             bidi_class: complete_range_value(BIDI_CLASSES, code_point.value()),
             decomposition: decomposition(code_point),
+            numeric_type: complete_range_value(NUMERIC_TYPES, code_point.value()),
+            numeric_value: range_value(NUMERIC_VALUES, code_point.value()),
         }
     }
 
@@ -143,6 +146,8 @@ pub struct UnicodeRecord {
     canonical_combining_class: CanonicalCombiningClass,
     bidi_class: BidiClass,
     decomposition: Option<Decomposition>,
+    numeric_type: NumericType,
+    numeric_value: Option<&'static str>,
 }
 
 impl UnicodeRecord {
@@ -194,6 +199,30 @@ impl UnicodeRecord {
         self.decomposition
     }
 
+    pub fn case_folding(self) -> CaseMapping {
+        case_mapping(CASE_FOLDINGS, self.code_point)
+    }
+
+    pub fn uppercase_mapping(self) -> CaseMapping {
+        case_mapping(UPPERCASE_MAPPINGS, self.code_point)
+    }
+
+    pub fn lowercase_mapping(self) -> CaseMapping {
+        case_mapping(LOWERCASE_MAPPINGS, self.code_point)
+    }
+
+    pub fn titlecase_mapping(self) -> CaseMapping {
+        case_mapping(TITLECASE_MAPPINGS, self.code_point)
+    }
+
+    pub const fn numeric_type(self) -> NumericType {
+        self.numeric_type
+    }
+
+    pub const fn numeric_value(self) -> Option<&'static str> {
+        self.numeric_value
+    }
+
     pub const fn encoding(self) -> Option<UnicodeScalarEncoding> {
         UnicodeScalarEncoding::for_code_point(self.code_point)
     }
@@ -205,6 +234,13 @@ impl UnicodeRecord {
             self.default_ignorable,
         )
     }
+}
+
+fn case_mapping(table: &'static [(u32, &'static [u32])], code_point: CodePoint) -> CaseMapping {
+    let values = table
+        .binary_search_by_key(&code_point.value(), |&(value, _)| value)
+        .map_or(&[][..], |index| table[index].1);
+    CaseMapping::new(code_point, values)
 }
 
 fn primary_name_or_fallback(
@@ -439,6 +475,84 @@ fn decomposition(code_point: CodePoint) -> Option<Decomposition> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn case_folding_is_full_default_folding_instead_of_lowercasing() {
+        let cases: &[(u32, &[u32])] = &[
+            (0xdf, &[0x73, 0x73]),
+            (0x1e9e, &[0x73, 0x73]),
+            (0x3c2, &[0x3c3]),
+            (0x49, &[0x69]),
+            (0x130, &[0x69, 0x307]),
+            (0xab70, &[0x13a0]),
+            (0x61, &[0x61]),
+        ];
+        for &(value, expected) in cases {
+            let record = crate::unicode::UnicodeDatabase::lookup(
+                crate::unicode::CodePoint::new(value).unwrap(),
+            );
+            let mapping = record.case_folding();
+            assert_eq!(
+                mapping
+                    .mapping()
+                    .map(crate::unicode::CodePoint::value)
+                    .collect::<Vec<_>>(),
+                expected
+            );
+        }
+    }
+
+    #[test]
+    fn case_mappings_use_full_default_mappings_and_identity_fallbacks() {
+        let cases: &[(u32, [&[u32]; 3])] = &[
+            (0x61, [&[0x41], &[0x61], &[0x41]]),
+            (0xdf, [&[0x53, 0x53], &[0xdf], &[0x53, 0x73]]),
+            (0x130, [&[0x130], &[0x69, 0x307], &[0x130]]),
+            (0x1f3, [&[0x1f1], &[0x1f3], &[0x1f2]]),
+            (0x3a3, [&[0x3a3], &[0x3c3], &[0x3a3]]),
+            (0x0378, [&[0x0378], &[0x0378], &[0x0378]]),
+            (0xd800, [&[0xd800], &[0xd800], &[0xd800]]),
+        ];
+        for &(value, [uppercase, lowercase, titlecase]) in cases {
+            let code_point = crate::unicode::CodePoint::new(value).unwrap();
+            let record = crate::unicode::UnicodeDatabase::lookup(code_point);
+            for (mapping, expected) in [
+                (record.uppercase_mapping(), uppercase),
+                (record.lowercase_mapping(), lowercase),
+                (record.titlecase_mapping(), titlecase),
+            ] {
+                assert_eq!(
+                    mapping
+                        .mapping()
+                        .map(crate::unicode::CodePoint::value)
+                        .collect::<Vec<_>>(),
+                    expected,
+                    "{code_point}"
+                );
+                assert_eq!(mapping.is_identity(), expected == [value]);
+            }
+        }
+    }
+
+    #[test]
+    fn numeric_properties_include_zero_exact_fractions_and_han_values() {
+        use crate::unicode::NumericType;
+        for (value, kind, numeric) in [
+            (0x0030, NumericType::Decimal, Some("0")),
+            (0x00b2, NumericType::Digit, Some("2")),
+            (0x2163, NumericType::Numeric, Some("4")),
+            (0x00bd, NumericType::Numeric, Some("1/2")),
+            (0x0f33, NumericType::Numeric, Some("-1/2")),
+            (0x56db, NumericType::Numeric, Some("4")),
+            (0x0041, NumericType::None, None),
+            (0xd800, NumericType::None, None),
+        ] {
+            let code_point = crate::unicode::CodePoint::new(value).unwrap();
+            let record = crate::unicode::UnicodeDatabase::lookup(code_point);
+            assert_eq!(record.numeric_type(), kind, "{code_point}");
+            assert_eq!(record.numeric_value(), numeric, "{code_point}");
+        }
+    }
+
     use rstest::rstest;
 
     use super::*;
@@ -891,6 +1005,10 @@ mod tests {
             assert!(!record.east_asian_width().name().is_empty());
             assert!(!record.canonical_combining_class().name().is_empty());
             assert!(!record.bidi_class().name().is_empty());
+            assert_eq!(
+                record.numeric_value().is_some(),
+                record.numeric_type() != NumericType::None
+            );
         }
     }
 }
