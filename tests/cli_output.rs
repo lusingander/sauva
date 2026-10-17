@@ -6,6 +6,21 @@ use std::{
 use rstest::rstest;
 
 #[test]
+fn prints_usage_and_command_name_for_help() {
+    let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
+        .arg("--help")
+        .output()
+        .unwrap();
+
+    assert!(output.status.success(), "status: {}", output.status);
+    assert!(output.stderr.is_empty());
+
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    assert!(stdout.contains("Usage:"));
+    assert!(stdout.contains("sauva"));
+}
+
+#[test]
 fn prints_default_config_without_loading_local_config() {
     let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
         .arg("--print-default-config")
