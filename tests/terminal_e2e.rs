@@ -214,6 +214,91 @@ fn starts_and_restores_the_terminal_on_quit() -> termlens::Result<()> {
 }
 
 #[test]
+fn inspector_property_modes_show_optional_fields_and_preserve_the_selected_property()
+-> termlens::Result<()> {
+    let directory = tempdir()?;
+    let config = directory.path().join("config.toml");
+    fs::write(&config, "")?;
+    let mut terminal = termlens::bin!(
+        "sauva",
+        size(100, 40),
+        env("SAUVA_CONFIG_FILE", &config),
+        env("XDG_DATA_HOME", directory.path()),
+        args(["U+00C5", "--graphics", "off"])
+    )?;
+    let selected_property = |screen: &termlens::Screen, label: &str| {
+        (0..40).any(|row| {
+            screen.row_text(row).trim_start().starts_with(label)
+                && screen.cell(row, 3).unwrap().style().bg == Color::Indexed(6)
+        })
+    };
+    let relevant = terminal.snapshot_after(|screen| {
+        screen.contains("LATIN CAPITAL LETTER A WITH RING ABOVE")
+            && screen.row_text(2).contains("Relevant")
+            && screen.contains("U+030A COMBINING RING ABOVE")
+    })?;
+    assert!(!relevant.contains("Aliases"), "{relevant}");
+    assert!(
+        !relevant.contains("Canonical Combining Class"),
+        "{relevant}"
+    );
+    assert!(!relevant.contains("Default Ignorable"), "{relevant}");
+    assert!(
+        relevant.contains("U+030A COMBINING RING ABOVE"),
+        "{relevant}"
+    );
+
+    terminal.send(Key::Char('a'))?;
+    for _ in 0..3 {
+        terminal.send(Key::Char('j'))?;
+    }
+    let all = terminal.snapshot_after(|screen| {
+        screen.row_text(2).contains("All") && selected_property(screen, "Aliases")
+    })?;
+    insta::assert_snapshot!(all.with_styles());
+
+    terminal.send(Key::Char('a'))?;
+    let relevant = terminal.snapshot_after(|screen| {
+        screen.row_text(2).contains("Relevant")
+            && selected_property(screen, "Plane")
+            && !screen.contains("Default Ignorable")
+    })?;
+    assert!(!relevant.contains("Aliases"), "{relevant}");
+    assert!(
+        !relevant.contains("Canonical Combining Class"),
+        "{relevant}"
+    );
+    assert!(!relevant.contains("Default Ignorable"), "{relevant}");
+    assert!(relevant.contains("Normalization"), "{relevant}");
+    assert!(
+        relevant.contains("U+030A COMBINING RING ABOVE"),
+        "{relevant}"
+    );
+
+    terminal.send(Key::Char('a'))?;
+    terminal.wait_until(|screen| {
+        screen.row_text(2).contains("All") && selected_property(screen, "Plane")
+    })?;
+    terminal.send(Key::Char('l'))?;
+    let all = terminal.snapshot_after(|screen| {
+        screen.contains("LATIN CAPITAL LETTER AE")
+            && screen.contains("Decomposition              None")
+    })?;
+    assert!(all.contains("Decomposition Type         None"), "{all}");
+    assert!(all.contains("Decomposition              None"), "{all}");
+    terminal.send(Key::Char('a'))?;
+    let relevant = terminal.snapshot_after(|screen| {
+        screen.row_text(2).contains("Relevant") && !screen.contains("Decomposition")
+    })?;
+    assert!(!relevant.contains("Normalization"), "{relevant}");
+    assert!(!relevant.contains("Decomposition"), "{relevant}");
+    assert!(relevant.contains("Unicode Version"), "{relevant}");
+    terminal.send(Key::Char('q'))?;
+    assert!(terminal.wait_exit()?.success());
+    Ok(())
+}
+
+#[test]
 fn inspector_group_keys_show_section_headings_and_select_their_first_properties()
 -> termlens::Result<()> {
     let mut terminal =
