@@ -15,6 +15,7 @@ mod inspector;
 mod keybindings;
 mod normalization;
 mod preview;
+mod property;
 mod search;
 mod sequence;
 mod terminal;
