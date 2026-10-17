@@ -367,6 +367,7 @@ fn help_items(context: Context, has_inspector_parent: bool) -> Vec<HelpItem> {
             item(C::First, "Select the first property"),
             item(C::Last, "Select the last property"),
             item(C::CopyValue, "Copy the selected property value"),
+            item(C::ToggleProperties, "Toggle relevant or all properties"),
             item(C::OpenSearch, "Open search"),
             item(C::ToggleBookmark, "Add or remove the code point's bookmark"),
             item(C::OpenBookmarks, "Open bookmarks"),

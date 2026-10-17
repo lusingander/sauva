@@ -6,7 +6,7 @@ use crate::{
     bookmarks::Bookmark,
     browser::{BrowseState, BrowseTarget},
     copy_dialog::CopyDialogState,
-    inspector::{InspectorDisplayMode, InspectorField, InspectorFieldId},
+    inspector::{InspectorField, InspectorFieldId},
     normalization::NormalizationState,
     search::SearchState,
     unicode::CodePoint,
@@ -141,9 +141,12 @@ fn update_inspector(state: &mut AppState, action: Action) {
         Action::MoveInspector(movement) => {
             state.inspector.move_selection(movement);
         }
+        Action::ToggleInspectorProperties => {
+            state.inspector.toggle_display_mode(state.selected);
+        }
         Action::CopyInspectorValue => {
             state.clipboard_request =
-                InspectorField::for_code_point(state.selected, InspectorDisplayMode::All)
+                InspectorField::for_code_point(state.selected, state.inspector.display_mode())
                     .into_iter()
                     .nth(state.inspector.selected_index())
                     .map(|field| ClipboardRequest {
@@ -433,6 +436,9 @@ fn update_copy_dialog(state: &mut AppState, action: Action) {
 
 fn select_code_point(state: &mut AppState, code_point: CodePoint) {
     if state.selected != code_point {
+        state
+            .inspector
+            .follow_code_point(state.selected, code_point);
         state.selected = code_point;
         state.glyph_preview.selection_changed();
     }

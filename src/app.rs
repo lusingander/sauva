@@ -30,6 +30,7 @@ pub enum Action {
     },
     MoveCodePoint(CodePointMove),
     MoveInspector(InspectorMove),
+    ToggleInspectorProperties,
     CopyInspectorValue,
     ResizeInspectorViewport {
         viewport_height: usize,
@@ -851,7 +852,7 @@ mod tests {
     #[test]
     fn inspector_movement_is_limited_to_the_inspector() {
         let mut state = AppState::default();
-        resize_inspector(&mut state, 5, 20);
+        resize_inspector(&mut state, 5);
 
         update(
             &mut state,
@@ -869,16 +870,61 @@ mod tests {
     #[test]
     fn inspector_moves_to_adjacent_code_points_and_preserves_the_selected_field() {
         let mut state = AppState::with_selected(CodePoint::new(0xd7ff).unwrap());
-        resize_inspector(&mut state, 5, 20);
+        resize_inspector(&mut state, 5);
         update(&mut state, Action::MoveInspector(InspectorMove::Last));
 
         update(&mut state, Action::MoveCodePoint(CodePointMove::Next));
         assert_eq!(state.selected().value(), 0xd800);
-        assert_eq!(state.inspector().selected_index(), 19);
-        assert_eq!(state.inspector().offset(), 15);
+        assert_eq!(state.inspector().selected_index(), 10);
+        assert_eq!(state.inspector().offset(), 12);
 
         update(&mut state, Action::MoveCodePoint(CodePointMove::Previous));
         assert_eq!(state.selected().value(), 0xd7ff);
+    }
+
+    #[test]
+    fn property_modes_preserve_selection_and_copy_and_survive_other_views() {
+        use crate::inspector::{InspectorDisplayMode, InspectorField, InspectorFieldId};
+
+        let mut state = AppState::with_selected(CodePoint::from('!'));
+        assert_eq!(
+            state.inspector().display_mode(),
+            InspectorDisplayMode::Relevant
+        );
+        resize_inspector(&mut state, 5);
+        let fields =
+            InspectorField::for_code_point(state.selected(), state.inspector().display_mode());
+        let index = fields
+            .iter()
+            .position(|field| field.id() == InspectorFieldId::GeneralCategory)
+            .unwrap();
+        for _ in 0..index {
+            update(&mut state, Action::MoveInspector(InspectorMove::NextField));
+        }
+        for _ in 0..2 {
+            update(&mut state, Action::ToggleInspectorProperties);
+            update(&mut state, Action::CopyInspectorValue);
+            let request = state.take_clipboard_request().unwrap();
+            assert_eq!(request.label(), "General Category");
+            assert_eq!(request.value(), Some("Po — Other Punctuation"));
+        }
+        update(&mut state, Action::MoveCodePoint(CodePointMove::Previous));
+        update(&mut state, Action::CopyInspectorValue);
+        assert_eq!(
+            state.take_clipboard_request().unwrap().value(),
+            Some("Zs — Space Separator")
+        );
+
+        update(&mut state, Action::ToggleInspectorProperties);
+        update(&mut state, Action::OpenSearch);
+        update(&mut state, Action::ToggleInspectorProperties);
+        update(&mut state, Action::CloseSearch);
+        assert_eq!(state.inspector().display_mode(), InspectorDisplayMode::All);
+        update(&mut state, Action::CopyInspectorValue);
+        assert_eq!(
+            state.take_clipboard_request().unwrap().label(),
+            "General Category"
+        );
     }
 
     #[test]
@@ -911,23 +957,23 @@ mod tests {
     #[test]
     fn search_inspection_preserves_the_selected_inspector_field() {
         let mut state = AppState::default();
-        resize_inspector(&mut state, 5, 20);
+        resize_inspector(&mut state, 5);
         update(&mut state, Action::MoveInspector(InspectorMove::Last));
-        assert_eq!(state.inspector().offset(), 15);
+        assert_eq!(state.inspector().offset(), 12);
 
         update(&mut state, Action::OpenSearch);
         edit_search_query(&mut state, "A");
         update(&mut state, Action::InspectSearchResult);
         assert_eq!(state.selected().value(), 0x0041);
-        assert_eq!(state.inspector().offset(), 15);
+        assert_eq!(state.inspector().offset(), 12);
 
         update(&mut state, Action::OpenSearch);
         update(&mut state, Action::EditSearch(InputRequest::DeleteLine));
         edit_search_query(&mut state, "U+2192");
         update(&mut state, Action::InspectSearchResult);
         assert_eq!(state.selected().value(), 0x2192);
-        assert_eq!(state.inspector().selected_index(), 19);
-        assert_eq!(state.inspector().offset(), 15);
+        assert_eq!(state.inspector().selected_index(), 16);
+        assert_eq!(state.inspector().offset(), 12);
     }
 
     #[test]
@@ -975,16 +1021,16 @@ mod tests {
     #[test]
     fn closing_and_reopening_other_views_preserves_the_inspector_offset() {
         let mut state = AppState::default();
-        resize_inspector(&mut state, 5, 20);
+        resize_inspector(&mut state, 5);
         update(&mut state, Action::MoveInspector(InspectorMove::Last));
 
         update(&mut state, Action::OpenSearch);
         update(&mut state, Action::CloseSearch);
-        assert_eq!(state.inspector().offset(), 15);
+        assert_eq!(state.inspector().offset(), 12);
 
         update(&mut state, Action::OpenBrowser(BrowseLevel::Plane));
         update(&mut state, Action::CloseBrowser);
-        assert_eq!(state.inspector().offset(), 15);
+        assert_eq!(state.inspector().offset(), 12);
     }
 
     #[test]
@@ -1019,7 +1065,7 @@ mod tests {
     #[test]
     fn table_movement_is_tentative_until_enter() {
         let mut state = AppState::with_selected(CodePoint::new(0x0041).unwrap());
-        resize_inspector(&mut state, 5, 20);
+        resize_inspector(&mut state, 5);
         update(&mut state, Action::MoveInspector(InspectorMove::Last));
         update(&mut state, Action::OpenBrowser(BrowseLevel::Plane));
         update(&mut state, Action::AdvanceBrowser);
@@ -1028,8 +1074,8 @@ mod tests {
         update(&mut state, Action::AdvanceBrowser);
         assert_eq!(state.selected().value(), 0x0041);
         assert_eq!(state.preview_code_point().unwrap().value(), 0x0141);
-        assert_eq!(state.inspector().selected_index(), 19);
-        assert_eq!(state.inspector().offset(), 15);
+        assert_eq!(state.inspector().selected_index(), 16);
+        assert_eq!(state.inspector().offset(), 12);
 
         update(&mut state, Action::MoveBrowser(BrowseMove::Right));
         assert_eq!(state.browse().unwrap().cursor().value(), 0x0142);
@@ -1298,7 +1344,7 @@ mod tests {
     #[test]
     fn inspecting_a_search_result_updates_the_shared_selection_and_closes_search() {
         let mut state = AppState::default();
-        resize_inspector(&mut state, 5, 20);
+        resize_inspector(&mut state, 5);
         update(&mut state, Action::MoveInspector(InspectorMove::Last));
         update(&mut state, Action::OpenSearch);
         edit_search_query(&mut state, "→");
@@ -1307,8 +1353,8 @@ mod tests {
 
         assert_eq!(state.view(), View::Inspector);
         assert_eq!(state.selected().value(), 0x2192);
-        assert_eq!(state.inspector().selected_index(), 19);
-        assert_eq!(state.inspector().offset(), 15);
+        assert_eq!(state.inspector().selected_index(), 16);
+        assert_eq!(state.inspector().offset(), 12);
         assert_eq!(state.search().unwrap().input().value(), "→");
     }
 
@@ -1366,7 +1412,7 @@ mod tests {
             Action::ShowFooterStatus(FooterStatus::info("Copied Code Point")),
         );
 
-        resize_inspector(&mut state, 10, 22);
+        resize_inspector(&mut state, 10);
         update(
             &mut state,
             Action::UpdateGlyphPreview(GlyphPreviewUpdate::Hidden),
@@ -1380,7 +1426,12 @@ mod tests {
         assert_eq!(state.footer_status(), None);
     }
 
-    fn resize_inspector(state: &mut AppState, viewport_height: usize, document_height: usize) {
+    fn resize_inspector(state: &mut AppState, viewport_height: usize) {
+        let document_height = crate::inspector::InspectorField::for_code_point(
+            state.selected(),
+            state.inspector().display_mode(),
+        )
+        .len();
         update(
             state,
             Action::ResizeInspectorViewport {

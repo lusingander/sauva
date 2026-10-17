@@ -8,7 +8,7 @@ use crate::unicode::{
 
 const UNASSIGNED: &str = "Unassigned";
 const NO_BLOCK: &str = "No Block";
-const UNAVAILABLE_ENCODING: &str = "Not available — not a Unicode scalar value";
+pub const UNAVAILABLE_ENCODING: &str = "Not available — not a Unicode scalar value";
 const NONE: &str = "None";
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -54,6 +54,7 @@ pub struct InspectorGroup {
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct InspectorState {
+    display_mode: InspectorDisplayMode,
     selected_index: usize,
     offset: usize,
     viewport_height: usize,
@@ -64,6 +65,45 @@ pub struct InspectorState {
 }
 
 impl InspectorState {
+    pub const fn display_mode(&self) -> InspectorDisplayMode {
+        self.display_mode
+    }
+
+    pub fn toggle_display_mode(&mut self, code_point: CodePoint) {
+        let previous = InspectorField::for_code_point(code_point, self.display_mode);
+        self.display_mode = self.display_mode.toggle();
+        let fields = InspectorField::for_code_point(code_point, self.display_mode);
+        self.follow_fields(&previous, &fields);
+    }
+
+    pub fn follow_code_point(&mut self, previous: CodePoint, code_point: CodePoint) {
+        let previous = InspectorField::for_code_point(previous, self.display_mode);
+        let fields = InspectorField::for_code_point(code_point, self.display_mode);
+        self.follow_fields(&previous, &fields);
+    }
+
+    fn follow_fields(&mut self, previous: &[InspectorField], fields: &[InspectorField]) {
+        let Some(selected) = previous.get(self.selected_index) else {
+            self.selected_index = 0;
+            return;
+        };
+        // Field IDs follow display order. Prefer the same section, then the
+        // nearest property, choosing the following property when distances tie.
+        let selected_order = selected.id() as usize;
+        self.selected_index = fields
+            .iter()
+            .enumerate()
+            .min_by_key(|(_, field)| {
+                let order = field.id() as usize;
+                (
+                    field.section() != selected.section(),
+                    order.abs_diff(selected_order),
+                    order < selected_order,
+                )
+            })
+            .map_or(0, |(index, _)| index);
+    }
+
     #[cfg(test)]
     pub const fn offset(&self) -> usize {
         self.offset
@@ -679,6 +719,106 @@ impl InspectorField {
 mod tests {
     use super::*;
     use crate::fixtures;
+
+    #[test]
+    fn selection_follows_property_identity_and_falls_back_to_nearby_visible_fields() {
+        use InspectorDisplayMode::{All, Relevant};
+        use InspectorFieldId as F;
+
+        let cases = [
+            (
+                0x0041,
+                All,
+                F::GeneralCategory,
+                0x0041,
+                Relevant,
+                F::GeneralCategory,
+            ),
+            (0x0041, All, F::Aliases, 0x0041, Relevant, F::Plane),
+            (
+                0x0041,
+                All,
+                F::CanonicalCombiningClass,
+                0x0041,
+                Relevant,
+                F::BidiClass,
+            ),
+            (
+                0x0041,
+                All,
+                F::DefaultIgnorable,
+                0x0041,
+                Relevant,
+                F::BidiClass,
+            ),
+            (
+                0x0041,
+                All,
+                F::DecompositionType,
+                0x0041,
+                Relevant,
+                F::UnicodeEscape,
+            ),
+            (
+                0x0041,
+                All,
+                F::Decomposition,
+                0x0041,
+                Relevant,
+                F::UnicodeVersion,
+            ),
+            (0xd800, All, F::Utf8, 0xd800, Relevant, F::BidiClass),
+            (
+                0x0021,
+                Relevant,
+                F::GeneralCategory,
+                0x0020,
+                Relevant,
+                F::GeneralCategory,
+            ),
+            (
+                0x00e9,
+                Relevant,
+                F::Decomposition,
+                0x00e8,
+                Relevant,
+                F::Decomposition,
+            ),
+            (
+                0x00e9,
+                Relevant,
+                F::Decomposition,
+                0x0041,
+                Relevant,
+                F::UnicodeVersion,
+            ),
+            (0xd7ff, Relevant, F::Utf8, 0xd800, Relevant, F::BidiClass),
+            (0x034f, Relevant, F::Aliases, 0x0350, Relevant, F::Plane),
+        ];
+        for (value, mode, selected, next, next_mode, expected) in cases {
+            let code_point = CodePoint::new(value).unwrap();
+            let fields = InspectorField::for_code_point(code_point, mode);
+            let mut state = InspectorState {
+                display_mode: mode,
+                selected_index: fields
+                    .iter()
+                    .position(|field| field.id() == selected)
+                    .unwrap(),
+                ..InspectorState::default()
+            };
+            let next = CodePoint::new(next).unwrap();
+            state.follow_code_point(code_point, next);
+            if mode != next_mode {
+                state.toggle_display_mode(next);
+            }
+            let fields = InspectorField::for_code_point(next, next_mode);
+            assert_eq!(
+                fields[state.selected_index()].id(),
+                expected,
+                "{code_point} {selected:?}"
+            );
+        }
+    }
 
     #[test]
     fn moves_between_fields_and_across_pages() {

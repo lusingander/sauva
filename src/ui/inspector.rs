@@ -8,7 +8,10 @@ use ratatui::{
 
 use crate::{
     app::AppState,
-    inspector::{InspectorDisplayMode, InspectorField, InspectorGroup},
+    inspector::{
+        InspectorDisplayMode, InspectorField, InspectorGroup, InspectorSection,
+        UNAVAILABLE_ENCODING,
+    },
     ui::{
         key_value, layout, padded_line, padded_line_content_width,
         scrollbar::{self, ViewportScrollbar},
@@ -34,7 +37,11 @@ pub fn viewport_metrics(area: Rect, state: &AppState) -> ViewportMetrics {
     };
     let details = layout::inspector(layout.main).details;
     let content = content_area(details);
-    let document = InspectorDocument::for_code_point(state.selected(), usize::from(content.width));
+    let document = InspectorDocument::for_code_point(
+        state.selected(),
+        usize::from(content.width),
+        state.inspector().display_mode(),
+    );
     ViewportMetrics {
         viewport_height: usize::from(content.height),
         document_height: document.lines.len(),
@@ -48,6 +55,7 @@ pub fn render(frame: &mut Frame, area: Rect, state: &AppState, color_theme: &Col
     let document = InspectorDocument::with_color_theme(
         state.selected(),
         usize::from(content.width),
+        state.inspector().display_mode(),
         state.inspector().selected_index(),
         color_theme,
     );
@@ -75,36 +83,49 @@ struct InspectorDocument {
 }
 
 impl InspectorDocument {
-    fn for_code_point(code_point: CodePoint, width: usize) -> Self {
-        Self::with_color_theme(code_point, width, 0, &ColorTheme::default())
+    fn for_code_point(code_point: CodePoint, width: usize, mode: InspectorDisplayMode) -> Self {
+        Self::with_color_theme(code_point, width, mode, 0, &ColorTheme::default())
     }
 
     fn with_color_theme(
         code_point: CodePoint,
         width: usize,
+        mode: InspectorDisplayMode,
         selected_index: usize,
         color_theme: &ColorTheme,
     ) -> Self {
         let mut builder = DocumentBuilder::new(width, color_theme);
         let mut field_ranges = Vec::new();
         let mut groups = Vec::new();
-        let mut previous_section = None;
-        for (index, field) in InspectorField::for_code_point(code_point, InspectorDisplayMode::All)
-            .into_iter()
-            .enumerate()
-        {
-            if previous_section != Some(field.section()) {
-                builder.section(field.section().label());
+        let fields = InspectorField::for_code_point(code_point, mode);
+        for section in [
+            InspectorSection::Identity,
+            InspectorSection::Classification,
+            InspectorSection::Encoding,
+            InspectorSection::Normalization,
+            InspectorSection::Data,
+        ] {
+            let mut section_fields = fields
+                .iter()
+                .enumerate()
+                .filter(|(_, field)| field.section() == section)
+                .peekable();
+            if let Some(&(index, _)) = section_fields.peek() {
+                builder.section(section.label());
                 groups.push(InspectorGroup {
                     first_field: index,
                     heading_line: builder.lines.len() - 1,
                 });
-                previous_section = Some(field.section());
+            } else if section == InspectorSection::Encoding && code_point.to_char().is_none() {
+                builder.section(section.label());
+                builder.note(UNAVAILABLE_ENCODING);
             }
-            let start = builder.lines.len();
-            let selected = index == selected_index;
-            builder.fields(field.label(), field.values().iter().cloned(), selected);
-            field_ranges.push(start..builder.lines.len());
+            for (index, field) in section_fields {
+                let start = builder.lines.len();
+                let selected = index == selected_index;
+                builder.fields(field.label(), field.values().iter().cloned(), selected);
+                field_ranges.push(start..builder.lines.len());
+            }
         }
 
         Self {
@@ -166,6 +187,19 @@ impl DocumentBuilder {
             }
         }));
     }
+
+    fn note(&mut self, text: &str) {
+        self.lines.extend(
+            key_value::wrap_value(text, padded_line_content_width(self.width))
+                .into_iter()
+                .map(|line| {
+                    padded_line(
+                        Line::styled(line, Style::new().fg(self.color_theme.muted)),
+                        self.width,
+                    )
+                }),
+        );
+    }
 }
 
 #[cfg(test)]
@@ -182,7 +216,8 @@ mod tests {
 
     #[test]
     fn builds_grouped_basic_details_in_the_agreed_order() {
-        let document = InspectorDocument::for_code_point(CodePoint::from('A'), 96);
+        let document =
+            InspectorDocument::for_code_point(CodePoint::from('A'), 96, InspectorDisplayMode::All);
         let text = document
             .lines
             .iter()
@@ -212,16 +247,24 @@ mod tests {
 
     #[test]
     fn expands_aliases_and_decomposition_mappings_into_independent_lines() {
-        let aliases = InspectorDocument::for_code_point(CodePoint::new(0).unwrap(), 96)
-            .lines
-            .into_iter()
-            .map(|line| line.to_string())
-            .collect::<Vec<_>>();
-        let decomposition = InspectorDocument::for_code_point(CodePoint::new(0x00e9).unwrap(), 96)
-            .lines
-            .into_iter()
-            .map(|line| line.to_string())
-            .collect::<Vec<_>>();
+        let aliases = InspectorDocument::for_code_point(
+            CodePoint::new(0).unwrap(),
+            96,
+            InspectorDisplayMode::All,
+        )
+        .lines
+        .into_iter()
+        .map(|line| line.to_string())
+        .collect::<Vec<_>>();
+        let decomposition = InspectorDocument::for_code_point(
+            CodePoint::new(0x00e9).unwrap(),
+            96,
+            InspectorDisplayMode::All,
+        )
+        .lines
+        .into_iter()
+        .map(|line| line.to_string())
+        .collect::<Vec<_>>();
 
         assert!(aliases.iter().any(|line| line.contains("NULL — control")));
         assert!(
@@ -244,7 +287,8 @@ mod tests {
     fn group_layout_tracks_headings_and_first_fields_after_wrapping() {
         for (code_point, width) in [(0, 96), (0xe9, 56), (0xd800, 32)] {
             let code_point = CodePoint::new(code_point).unwrap();
-            let document = InspectorDocument::for_code_point(code_point, width);
+            let document =
+                InspectorDocument::for_code_point(code_point, width, InspectorDisplayMode::All);
             let fields = InspectorField::for_code_point(code_point, InspectorDisplayMode::All);
             let expected = fields
                 .iter()
@@ -274,7 +318,7 @@ mod tests {
         for code_point in [CodePoint::from('A'), CodePoint::new(0xd800).unwrap()] {
             let mut state = AppState::with_selected(code_point);
             let area = Rect::new(0, 0, 60, 16);
-            let fields = InspectorField::for_code_point(code_point, InspectorDisplayMode::All);
+            let fields = InspectorField::for_code_point(code_point, InspectorDisplayMode::Relevant);
             let groups = viewport_metrics(area, &state).groups;
             for group in &groups[1..] {
                 let metrics = viewport_metrics(area, &state);
@@ -344,8 +388,16 @@ mod tests {
 
     #[test]
     fn wraps_values_before_the_viewport_is_applied() {
-        let wide = InspectorDocument::for_code_point(CodePoint::new(0xd800).unwrap(), 96);
-        let narrow = InspectorDocument::for_code_point(CodePoint::new(0xd800).unwrap(), 56);
+        let wide = InspectorDocument::for_code_point(
+            CodePoint::new(0xd800).unwrap(),
+            96,
+            InspectorDisplayMode::All,
+        );
+        let narrow = InspectorDocument::for_code_point(
+            CodePoint::new(0xd800).unwrap(),
+            56,
+            InspectorDisplayMode::All,
+        );
 
         assert!(narrow.lines.len() > wide.lines.len());
         assert_eq!(

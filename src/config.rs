@@ -561,6 +561,7 @@ mod tests {
             r#"
                 [keybindings.inspector]
                 next_code_point = ["right", "n"]
+                toggle_properties = ["t"]
                 search = []
             "#,
         )
@@ -575,6 +576,20 @@ mod tests {
                 crate::keybindings::KeyChord::new(KeyCode::Char('n'), KeyModifiers::NONE)
             ),
             Some(crate::keybindings::Command::NextCodePoint)
+        );
+        assert_eq!(
+            keymap.resolve(
+                crate::keybindings::Context::Inspector,
+                crate::keybindings::KeyChord::new(KeyCode::Char('t'), KeyModifiers::NONE)
+            ),
+            Some(crate::keybindings::Command::ToggleProperties)
+        );
+        assert_eq!(
+            keymap.resolve(
+                crate::keybindings::Context::Inspector,
+                crate::keybindings::KeyChord::new(KeyCode::Char('a'), KeyModifiers::NONE)
+            ),
+            None
         );
         assert!(
             keymap
