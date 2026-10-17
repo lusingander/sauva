@@ -80,7 +80,14 @@ fn property_page_opens_new_and_unavailable_fields_with_custom_bindings(
     let config = directory.path().join("config.toml");
     fs::write(
         &config,
-        "[keybindings.inspector]\nexplain_property = ['x']\n[keybindings.property]\nclose = ['backspace']\nmove_down = ['n']\n",
+        r#"
+            [keybindings.inspector]
+            explain_property = ['x']
+
+            [keybindings.property]
+            close = ['backspace']
+            move_down = ['n']
+        "#,
     )?;
     let mut terminal = termlens::bin!(
         "sauva",
