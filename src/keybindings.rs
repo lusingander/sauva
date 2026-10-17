@@ -963,6 +963,50 @@ fn named(code: KeyCode) -> KeyChord {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn property_bindings_are_customizable_and_checked_against_global_keys() {
+        let keymap = configured(
+            r#"
+            [inspector]
+            explain_property = ['e']
+            [property]
+            close = ['backspace']
+            move_down = ['n']
+            open_reference = []
+            copy_reference_url = ['Y']
+        "#,
+        )
+        .unwrap();
+        assert_eq!(
+            keymap.resolve(Context::Inspector, plain('e')),
+            Some(Command::ExplainProperty)
+        );
+        assert_eq!(
+            keymap.resolve(Context::Inspector, named(KeyCode::Enter)),
+            None
+        );
+        assert_eq!(
+            keymap.resolve(Context::Property, plain('n')),
+            Some(Command::MoveDown)
+        );
+        assert_eq!(
+            keymap.resolve(Context::Property, named(KeyCode::Backspace)),
+            Some(Command::Close)
+        );
+        assert!(
+            keymap
+                .keys_for(Context::Property, Command::OpenReference)
+                .is_empty()
+        );
+        assert!(matches!(
+            configured("[global]\nhelp=['o']"),
+            Err(KeybindingError::GlobalConflict {
+                context: Context::Property,
+                ..
+            })
+        ));
+    }
+
     use rstest::rstest;
 
     use super::*;

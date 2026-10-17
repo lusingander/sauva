@@ -1,0 +1,34 @@
+---
+source: src/ui/render.rs
+expression: text
+---
+ sauva / Property                                                                 Default Ignorable
+
+ Current value · U+200D
+   Yes
+   Included in Default_Ignorable_Code_Point.
+
+ Overview
+   Identifies code points normally omitted from fallback display when their intended behavior is
+   unsupported.
+
+ Values
+ > Yes — Included in Default_Ignorable_Code_Point.
+   No — Not included; this does not guarantee a visible glyph.
+
+ Notes
+   These characters can affect surrounding text. This property is not a recommendation to delete
+   them. Sauva may show a label to make them identifiable.
+
+ Reference
+   Unicode 17.0 · §5.21 Ignoring Characters in Processing
+   https://www.unicode.org/versions/Unicode17.0.0/core-spec/chapter-5/#G40025
+
+
+
+
+
+
+
+
+ k/j Move  C-u/C-d Page  g/G Ends  o Reference  y Copy URL  Esc Back                        F1 Help

@@ -9,6 +9,114 @@ fn spawn(graphics: &str) -> termlens::Result<Terminal> {
 }
 
 #[test]
+fn property_page_keeps_reading_position_and_restores_the_source_inspector() -> termlens::Result<()>
+{
+    let mut terminal = termlens::bin!("sauva", size(100, 30), args(["éß", "--graphics", "off"]))?;
+    terminal.wait_until(|screen| screen.row_text(0).contains("Sequence"))?;
+    terminal.send(Key::Enter)?;
+    terminal.wait_until(|screen| screen.row_text(0).contains("Inspector"))?;
+    terminal.send(Key::Char('a'))?;
+    for _ in 0..6 {
+        terminal.send(Key::Char('j'))?;
+    }
+    let original = terminal
+        .snapshot_after(|screen| {
+            screen.contains("All") && screen.contains("Ll — Lowercase Letter")
+        })?
+        .with_styles()
+        .to_string();
+    terminal.send(Key::Enter)?;
+    terminal.wait_until(|screen| {
+        screen.row_text(0).contains("sauva / Property")
+            && screen.row_text(0).trim_end().ends_with("General Category")
+    })?;
+    terminal.resize(60, 16)?;
+    let minimum = terminal.snapshot_after(|screen| {
+        screen.size() == (60, 16) && screen.contains("Current value · U+00E9")
+    })?;
+    insta::assert_snapshot!("property_page_minimum", minimum.with_styles());
+    terminal.send(Key::Char('G'))?;
+    let end = terminal
+        .snapshot_after(|screen| screen.contains("Reference") && !screen.contains("Current value"))?
+        .with_styles()
+        .to_string();
+    terminal.send(Key::F(1))?;
+    terminal.wait_until(|screen| screen.contains("Keybindings · Property"))?;
+    terminal.send(Key::Esc)?;
+    let resumed =
+        terminal.snapshot_after(|screen| screen.row_text(0).contains("sauva / Property"))?;
+    assert_eq!(resumed.with_styles().to_string(), end);
+    terminal.send(Key::Char('a'))?;
+    terminal.send(Key::Char('l'))?;
+    terminal.resize(100, 30)?;
+    terminal.wait_until(|screen| {
+        screen.size() == (100, 30) && screen.row_text(0).contains("General Category")
+    })?;
+    terminal.send(Key::Esc)?;
+    let restored = terminal.snapshot_after(|screen| {
+        screen.row_text(0).contains("Inspector") && screen.contains("All")
+    })?;
+    assert_eq!(restored.with_styles().to_string(), original);
+    terminal.send(Key::Backspace)?;
+    terminal.wait_until(|screen| {
+        screen.row_text(0).contains("Sequence") && screen.contains("2 code points")
+    })?;
+    terminal.send(Key::Char('q'))?;
+    assert!(terminal.wait_exit()?.success());
+    Ok(())
+}
+
+#[rstest]
+#[case("U+00DF", 13, "Uppercase Mapping", "U+0053 LATIN CAPITAL LETTER S")]
+#[case("U+00BC", 18, "Numeric Value", "1/4")]
+#[case("U+D800", 19, "UTF-8", "Not available")]
+fn property_page_opens_new_and_unavailable_fields_with_custom_bindings(
+    #[case] code_point: &str,
+    #[case] index: usize,
+    #[case] label: &str,
+    #[case] value: &str,
+) -> termlens::Result<()> {
+    let directory = tempdir()?;
+    let config = directory.path().join("config.toml");
+    fs::write(
+        &config,
+        "[keybindings.inspector]\nexplain_property = ['e']\n[keybindings.property]\nclose = ['backspace']\nmove_down = ['n']\n",
+    )?;
+    let mut terminal = termlens::bin!(
+        "sauva",
+        size(100, 30),
+        env("SAUVA_CONFIG_FILE", &config),
+        args([code_point, "--graphics", "off"])
+    )?;
+    terminal.wait_until(|screen| screen.row_text(0).contains(code_point))?;
+    terminal.send(Key::Char('a'))?;
+    for _ in 0..index {
+        terminal.send(Key::Char('j'))?;
+    }
+    terminal.send(Key::Enter)?;
+    terminal.send(Key::Char('e'))?;
+    terminal.wait_until(|screen| {
+        screen.row_text(0).contains("sauva / Property")
+            && screen.row_text(0).contains(label)
+            && screen.contains(value)
+    })?;
+    terminal.send(Key::F(1))?;
+    terminal.wait_until(|screen| {
+        screen.contains("Backspace") && screen.contains("Scroll down one line")
+    })?;
+    terminal.send(Key::Esc)?;
+    terminal.wait_until(|screen| screen.row_text(0).contains("sauva / Property"))?;
+    terminal.send(Key::Char('n'))?;
+    terminal.send(Key::Backspace)?;
+    terminal.wait_until(|screen| {
+        screen.row_text(0).contains("Inspector") && screen.row_text(0).contains(code_point)
+    })?;
+    terminal.send(Key::Char('q'))?;
+    assert!(terminal.wait_exit()?.success());
+    Ok(())
+}
+
+#[test]
 fn bookmarks_persist_and_show_configured_dates_and_restore_the_source_inspector()
 -> termlens::Result<()> {
     let directory = tempdir()?;

@@ -324,6 +324,79 @@ mod tests {
     };
 
     #[rstest::rstest]
+    #[case(
+        0x200d,
+        crate::inspector::InspectorFieldId::DefaultIgnorable,
+        100,
+        30,
+        false,
+        "property_page_standard"
+    )]
+    #[case(
+        0x301,
+        crate::inspector::InspectorFieldId::CanonicalCombiningClass,
+        60,
+        16,
+        false,
+        "property_page_minimum"
+    )]
+    #[case(
+        0xe9,
+        crate::inspector::InspectorFieldId::GeneralCategory,
+        60,
+        16,
+        true,
+        "property_page_reference_minimum"
+    )]
+    fn property_page_uses_the_shared_header_and_scrolls_the_whole_document(
+        #[case] value: u32,
+        #[case] field_id: crate::inspector::InspectorFieldId,
+        #[case] width: u16,
+        #[case] height: u16,
+        #[case] at_end: bool,
+        #[case] snapshot: &str,
+    ) {
+        use crate::{inspector::InspectorField, unicode::CodePoint, viewport::DocumentMove};
+        let mut state = AppState::with_selected(CodePoint::new(value).unwrap());
+        synchronize_inspector(&mut state, width, height);
+        let fields =
+            InspectorField::for_code_point(state.selected(), state.inspector().display_mode());
+        let index = fields
+            .iter()
+            .position(|field| field.id() == field_id)
+            .unwrap();
+        for _ in 0..index {
+            update(&mut state, Action::MoveInspector(InspectorMove::NextField));
+        }
+        update(&mut state, Action::OpenProperty);
+        synchronize_property(&mut state, width, height);
+        if at_end {
+            update(&mut state, Action::MoveProperty(DocumentMove::Last));
+        }
+        let theme = test_color_theme();
+        let buffer = render_to_buffer(&state, width, height, &theme);
+        let text = buffer_to_text(&buffer);
+        let label = state.property().unwrap().field().label();
+        assert!(
+            text.lines()
+                .next()
+                .unwrap()
+                .starts_with(" sauva / Property")
+        );
+        assert!(text.lines().next().unwrap().ends_with(label));
+        let label_x = width as usize - label.len() - 1;
+        assert_eq!(buffer.cell((label_x as u16, 0)).unwrap().fg, theme.muted);
+        if at_end {
+            assert!(!text.contains("Current value"));
+            assert!(text.contains("Reference\n"));
+        } else {
+            assert!(text.contains(&format!("Current value · {}", state.selected())));
+        }
+        assert!(!text.contains("lines"));
+        insta::assert_snapshot!(snapshot, text);
+    }
+
+    #[rstest::rstest]
     #[case(100, 30)]
     #[case(60, 16)]
     fn bookmark_details_show_the_configured_date_without_a_list_date_column(
@@ -535,6 +608,7 @@ mod tests {
         let mut state = state.clone();
         let keymap = ResolvedKeymap::default();
         synchronize_inspector(&mut state, width, height);
+        synchronize_property(&mut state, width, height);
         synchronize_help(&mut state, width, height, &keymap);
         update(
             &mut state,
@@ -583,6 +657,21 @@ mod tests {
                 document_height: metrics.document_height,
                 field_ranges: metrics.field_ranges,
                 groups: metrics.groups,
+            },
+        );
+    }
+
+    fn synchronize_property(state: &mut AppState, width: u16, height: u16) {
+        if state.property().is_none() {
+            return;
+        }
+        let (viewport_height, document_height) =
+            crate::ui::property::viewport_metrics(Rect::new(0, 0, width, height), state);
+        update(
+            state,
+            Action::ResizePropertyViewport {
+                viewport_height,
+                document_height,
             },
         );
     }
