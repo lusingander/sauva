@@ -4,12 +4,12 @@ expression: "render_to_text(&state, MINIMUM_SIZE.0, MINIMUM_SIZE.1 + 1)"
 ---
  sauva / Inspector                                 U+10FFFF
 
+ Properties                                       Relevant
  Identity                                                 ┃
   Character                  <NONCHARACTER>               ┃
   Code Point                 U+10FFFF                     ┃
   Primary Name               Unassigned                   ┃
-  Aliases                    None                         ┃
-  Plane
+  Plane                                                   ┃
     16 — Supplementary Private Use Area-B
   Block
     Supplementary Private Use Area-B

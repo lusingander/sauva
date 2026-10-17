@@ -146,6 +146,7 @@ fn custom_keybindings_appear_in_help_and_drive_the_app() -> termlens::Result<()>
 
             [keybindings.inspector]
             quit = ["x"]
+            toggle_properties = ["t"]
         "#,
     )?;
     let mut terminal = termlens::bin!(
@@ -155,6 +156,8 @@ fn custom_keybindings_appear_in_help_and_drive_the_app() -> termlens::Result<()>
         args(["--graphics", "off"])
     )?;
     terminal.snapshot_after(|screen| screen.contains("LATIN CAPITAL LETTER A"))?;
+    terminal.send(Key::Char('t'))?;
+    terminal.wait_until(|screen| screen.row_text(2).contains("All"))?;
 
     terminal.send(Key::F(2))?;
     terminal.send(Key::Char('G'))?;
@@ -172,8 +175,12 @@ fn custom_keybindings_appear_in_help_and_drive_the_app() -> termlens::Result<()>
     insta::assert_snapshot!(help.with_styles());
     terminal.send(Key::F(2))?;
     terminal.wait_until(|screen| {
-        screen.contains("Identity") && screen.contains("LATIN CAPITAL LETTER A")
+        screen.contains("Identity")
+            && screen.contains("LATIN CAPITAL LETTER A")
+            && screen.row_text(2).contains("All")
     })?;
+    terminal.send(Key::Char('t'))?;
+    terminal.wait_until(|screen| screen.row_text(2).contains("Relevant"))?;
 
     terminal.send(Key::Char('q'))?;
     terminal.send(Key::F(2))?;
@@ -211,32 +218,44 @@ fn inspector_group_keys_show_section_headings_and_select_their_first_properties(
 -> termlens::Result<()> {
     let mut terminal =
         termlens::bin!("sauva", size(60, 16), args(["U+D800", "--graphics", "off"]))?;
-    terminal.wait_until(|screen| screen.row_text(2).trim_start().starts_with("Identity"))?;
+    terminal.wait_until(|screen| screen.row_text(3).trim_start().starts_with("Identity"))?;
+    assert!(terminal.screen().row_text(2).contains("Relevant"));
+    terminal.send(Key::Char('a'))?;
+    terminal.wait_until(|screen| screen.row_text(2).contains("All"))?;
     terminal.send(Key::Char('j'))?;
     terminal.send(Key::Char(']'))?;
     let screen = terminal.snapshot_after(|screen| {
         screen
-            .row_text(2)
+            .row_text(3)
             .trim_start()
             .starts_with("Classification")
     })?;
-    assert!(screen.row_text(3).contains("General Category"), "{screen}");
-    assert_eq!(screen.cell(3, 3).unwrap().style().bg, Color::Indexed(6));
+    assert!(screen.row_text(4).contains("General Category"), "{screen}");
+    assert_eq!(screen.cell(4, 3).unwrap().style().bg, Color::Indexed(6));
 
     terminal.send(Key::Char('j'))?;
     terminal.send(Key::Char('['))?;
     let screen = terminal
-        .snapshot_after(|screen| screen.row_text(2).trim_start().starts_with("Identity"))?;
-    assert!(screen.row_text(3).contains("Character"), "{screen}");
-    assert_eq!(screen.cell(3, 3).unwrap().style().bg, Color::Indexed(6));
+        .snapshot_after(|screen| screen.row_text(3).trim_start().starts_with("Identity"))?;
+    assert!(screen.row_text(4).contains("Character"), "{screen}");
+    assert_eq!(screen.cell(4, 3).unwrap().style().bg, Color::Indexed(6));
 
     terminal.send(Key::Char(']'))?;
     terminal.send(Key::Char(']'))?;
     let screen = terminal
-        .snapshot_after(|screen| screen.row_text(2).trim_start().starts_with("Encoding"))?;
-    assert!(screen.row_text(3).contains("UTF-8"), "{screen}");
+        .snapshot_after(|screen| screen.row_text(3).trim_start().starts_with("Encoding"))?;
+    assert!(screen.row_text(4).contains("UTF-8"), "{screen}");
     assert!(screen.contains("Not available"), "{screen}");
-    assert_eq!(screen.cell(3, 3).unwrap().style().bg, Color::Indexed(6));
+    assert_eq!(screen.cell(4, 3).unwrap().style().bg, Color::Indexed(6));
+    assert!(screen.row_text(2).contains("Properties") && screen.row_text(2).contains("All"));
+    terminal.send(Key::Char('a'))?;
+    let relevant = terminal.snapshot_after(|screen| screen.row_text(2).contains("Relevant"))?;
+    assert_eq!(
+        (0..16)
+            .filter(|&row| relevant.row_text(row).contains("Not available"))
+            .count(),
+        1
+    );
     terminal.send(Key::Char('q'))?;
     assert!(terminal.wait_exit()?.success());
     Ok(())

@@ -4,11 +4,11 @@ expression: "render_to_text(&state, width, height)"
 ---
  sauva / Inspector                                                                                                                   U+3042
 
- Identity                                                                                           │ Glyph
-  Character                  あ                                                                      │  Font     Test Font Regular
-  Code Point                 U+3042                                                                 │  Version  —
+ Properties                                                                               Relevant  │ Glyph
+ Identity                                                                                           │  Font     Test Font Regular
+  Character                  あ                                                                      │  Version  —
+  Code Point                 U+3042                                                                 │
   Primary Name               HIRAGANA LETTER A                                                      │
-  Aliases                    None                                                                   │
   Plane                      0 — Basic Multilingual Plane                                           │
   Block                      Hiragana                                                               │
  ─────────────────────────────────────────────────────────────────────────────────────────────────  │
@@ -17,24 +17,24 @@ expression: "render_to_text(&state, width, height)"
   Script                     Hiragana                                                               │
   Age                        1.1                                                                    │
   East Asian Width           W — Wide                                                               │
-  Canonical Combining Class  0 — Not Reordered                                                      │
   Bidi Class                 L — Left To Right                                                      │
-  Default Ignorable          No                                                                     │
  ─────────────────────────────────────────────────────────────────────────────────────────────────  │
  Encoding                                                                                           │
-  UTF-8                      E3 81 82                                                               │        Preparing glyph preview
+  UTF-8                      E3 81 82                                                               │
   UTF-16                     3042                                                                   │
-  HTML Decimal               &#12354;                                                               │
+  HTML Decimal               &#12354;                                                               │        Preparing glyph preview
   HTML Hex                   &#x3042;                                                               │
   Rust char                  '\u{3042}'                                                             │
   Unicode Escape             \u3042                                                                 │
  ─────────────────────────────────────────────────────────────────────────────────────────────────  │
- Normalization                                                                                      │
-  Decomposition Type         None                                                                   │
-  Decomposition              None                                                                   │
- ─────────────────────────────────────────────────────────────────────────────────────────────────  │
  Data                                                                                               │
   Unicode Version            17.0.0                                                                 │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
+                                                                                                    │
                                                                                                     │
                                                                                                     │
                                                                                                     │

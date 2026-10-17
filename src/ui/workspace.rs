@@ -85,7 +85,7 @@ pub fn render_divider(frame: &mut Frame, area: Rect, color_theme: &ColorTheme) {
     );
 }
 
-fn render_heading(
+pub fn render_heading(
     frame: &mut Frame,
     area: Rect,
     title: &str,

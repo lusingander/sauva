@@ -13,15 +13,15 @@ size: 100x30  cursor: hidden
   ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
 
  Keybindings · Inspector
-  k  Up                    Select the previous property
   j  Down                  Select the next property
-  [                        Select the first property of the previous section                      ┃
-  ]                        Select the first property of the next section                          ┃
+  [                        Select the first property of the previous section
+  ]                        Select the first property of the next section
   Ctrl-u                   Move properties up one page                                            ┃
   Ctrl-d                   Move properties down one page                                          ┃
   g                        Select the first property                                              ┃
   G                        Select the last property                                               ┃
   y                        Copy the selected property value                                       ┃
+  t                        Toggle relevant or all properties                                      ┃
   /                        Open search                                                            ┃
   m                        Add or remove the code point's bookmark                                ┃
   M                        Open bookmarks                                                         ┃
@@ -39,12 +39,12 @@ styles:
 2: 1-97 fg=4 bold
 7: 2-37 fg=4
 9: 1-97 fg=4 bold
-10: 2 fg=3; 5-6 fg=3
-11: 2 fg=3; 5-8 fg=3
-12: 2 fg=3; 98 fg=8
-13: 2 fg=3; 98 fg=8
+10: 2 fg=3; 5-8 fg=3
+11: 2 fg=3
+12: 2 fg=3
+13: 2-7 fg=3; 98 fg=8
 14: 2-7 fg=3; 98 fg=8
-15: 2-7 fg=3; 98 fg=8
+15: 2 fg=3; 98 fg=8
 16: 2 fg=3; 98 fg=8
 17: 2 fg=3; 98 fg=8
 18: 2 fg=3; 98 fg=8

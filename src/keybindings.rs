@@ -1212,7 +1212,7 @@ mod tests {
         let keymap = configured(&format!(
             r#"
                 [{}]
-                previous_group = ['a']
+                previous_group = ['t']
                 next_group = []
                 move_down = [']']
             "#,
@@ -1220,7 +1220,7 @@ mod tests {
         ))
         .unwrap();
         assert_eq!(
-            keymap.resolve(context, plain('a')),
+            keymap.resolve(context, plain('t')),
             Some(Command::PreviousGroup)
         );
         assert_eq!(keymap.resolve(context, plain('[')), None);

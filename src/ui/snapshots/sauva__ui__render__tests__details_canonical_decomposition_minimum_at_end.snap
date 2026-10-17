@@ -4,7 +4,7 @@ expression: "render_to_text(&state, width, height)"
 ---
  sauva / Inspector                                   U+00E9
 
-  HTML Hex                   &#xE9;
+ Properties                                       Relevant
   Rust char                  '\u{E9}'
   Unicode Escape             \u00E9
  ─────────────────────────────────────────────────────────
@@ -12,7 +12,7 @@ expression: "render_to_text(&state, width, height)"
   Decomposition Type         Canonical
   Decomposition
     U+0065 LATIN SMALL LETTER E
-    U+0301 COMBINING ACUTE ACCENT                         ┃
+    U+0301 COMBINING ACUTE ACCENT
  ─────────────────────────────────────────────────────────┃
  Data                                                     ┃
   Unicode Version            17.0.0                       ┃
