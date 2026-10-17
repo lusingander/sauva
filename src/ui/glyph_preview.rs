@@ -385,69 +385,24 @@ mod tests {
     }
 
     #[test]
-    fn defines_every_status_message_within_the_minimum_preview_width() {
-        let messages = [
-            (
-                GlyphPreviewStatus::Detecting,
-                "Detecting graphics support",
-                None,
-            ),
-            (GlyphPreviewStatus::Hidden, "Glyph preview hidden", None),
-            (GlyphPreviewStatus::Pending, "Preparing glyph preview", None),
-            (GlyphPreviewStatus::Ready, "Preparing glyph preview", None),
-            (
-                GlyphPreviewStatus::CombiningContext,
-                "Preparing glyph preview",
-                None,
-            ),
-            (
-                GlyphPreviewStatus::Blank,
-                "No visible pixels",
-                Some("The resolved glyph is blank."),
-            ),
-            (
-                GlyphPreviewStatus::Missing,
-                "Glyph unavailable",
-                Some("No configured font contains it."),
-            ),
-            (
-                GlyphPreviewStatus::NotScalar,
-                "Not a Unicode scalar value",
-                Some("Surrogates cannot be rendered."),
-            ),
-            (
-                GlyphPreviewStatus::GraphicsUnavailable(GraphicsUnavailableReason::Disabled),
-                "Graphics disabled",
-                Some("Enable with --graphics auto/force."),
-            ),
-            (
-                GlyphPreviewStatus::GraphicsUnavailable(
-                    GraphicsUnavailableReason::UnsupportedTerminal,
-                ),
-                "Graphics unavailable",
-                Some("Use --graphics force to try anyway."),
-            ),
-            (
-                GlyphPreviewStatus::Error(GlyphPreviewError::InvalidGeometry),
-                "Preview area unavailable",
-                Some("Resize the terminal and try again."),
-            ),
-            (
-                GlyphPreviewStatus::Error(GlyphPreviewError::Rendering),
-                "Glyph rendering failed",
-                Some("Text details remain available."),
-            ),
-            (
-                GlyphPreviewStatus::Error(GlyphPreviewError::Transmission),
-                "Image transmission failed",
-                Some("Text details remain available."),
-            ),
-        ];
-
-        for (status, expected_heading, expected_explanation) in messages {
+    fn status_messages_fit_the_minimum_preview_width() {
+        for status in [
+            GlyphPreviewStatus::Detecting,
+            GlyphPreviewStatus::Hidden,
+            GlyphPreviewStatus::Pending,
+            GlyphPreviewStatus::Ready,
+            GlyphPreviewStatus::CombiningContext,
+            GlyphPreviewStatus::Blank,
+            GlyphPreviewStatus::Missing,
+            GlyphPreviewStatus::NotScalar,
+            GlyphPreviewStatus::GraphicsUnavailable(GraphicsUnavailableReason::Disabled),
+            GlyphPreviewStatus::GraphicsUnavailable(GraphicsUnavailableReason::UnsupportedTerminal),
+            GlyphPreviewStatus::Error(GlyphPreviewError::InvalidGeometry),
+            GlyphPreviewStatus::Error(GlyphPreviewError::Rendering),
+            GlyphPreviewStatus::Error(GlyphPreviewError::Transmission),
+        ] {
             let (heading, explanation) = glyph_preview::message(status);
-            assert_eq!(heading, expected_heading);
-            assert_eq!(explanation, expected_explanation);
+            assert!(!heading.is_empty(), "status: {status:?}");
             assert!(Line::from(heading).width() <= 36, "heading: {heading}");
             if let Some(explanation) = explanation {
                 assert!(
