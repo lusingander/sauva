@@ -58,8 +58,8 @@ fn property_page_keeps_reading_position_and_restores_the_source_inspector() -> t
     let resumed =
         terminal.snapshot_after(|screen| screen.row_text(0).contains("sauva / Property"))?;
     assert_eq!(resumed.with_styles().to_string(), end);
-    terminal.send(Key::Char('a'))?;
-    terminal.send(Key::Char('l'))?;
+    // Queued keys can redraw the new size before the resize notification is
+    // consumed, so keep the input queue empty before resizing.
     terminal.resize(100, 30)?;
     terminal.wait_until(|screen| {
         screen.size() == (100, 30)
