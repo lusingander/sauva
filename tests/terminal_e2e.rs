@@ -2,10 +2,29 @@ use std::fs;
 
 use rstest::rstest;
 use tempfile::tempdir;
-use termlens::{Color, Key, Terminal};
+use termlens::{Color, Key, Screen, Terminal};
 
 fn spawn(graphics: &str) -> termlens::Result<Terminal> {
     termlens::bin!("sauva", size(100, 30), args(["--graphics", graphics]))
+}
+
+fn selected_property(screen: &Screen, label: &str) -> bool {
+    (0..screen.rows()).any(|row| {
+        screen.row_text(row).trim_start().starts_with(label)
+            && screen.cell(row, 3).unwrap().style().bg == Color::Indexed(6)
+    })
+}
+
+fn footer_contains(screen: &Screen, texts: &[&str]) -> bool {
+    let footer = screen.row_text(screen.rows() - 1);
+    texts.iter().all(|text| footer.contains(text))
+}
+
+fn quit(terminal: &mut Terminal) -> termlens::Result<()> {
+    terminal.send(Key::Char('q'))?;
+    let status = terminal.wait_exit()?;
+    assert!(status.success(), "exit status: {status}");
+    Ok(())
 }
 
 #[test]
@@ -21,14 +40,7 @@ fn property_page_keeps_reading_position_and_restores_the_source_inspector() -> t
     }
     let original = terminal
         .snapshot_after(|screen| {
-            screen.row_text(2).contains("All")
-                && (0..screen.rows()).any(|row| {
-                    screen
-                        .row_text(row)
-                        .trim_start()
-                        .starts_with("General Category")
-                        && screen.cell(row, 3).unwrap().style().bg == Color::Indexed(6)
-                })
+            screen.row_text(2).contains("All") && selected_property(screen, "General Category")
         })?
         .with_styles()
         .to_string();
@@ -43,8 +55,7 @@ fn property_page_keeps_reading_position_and_restores_the_source_inspector() -> t
     let minimum = terminal.snapshot_after(|screen| {
         screen.size() == (60, 16)
             && screen.contains("Current value · U+00E9")
-            && screen.row_text(15).contains("Esc Back")
-            && screen.row_text(15).contains("F1 Help")
+            && footer_contains(screen, &["Esc Back", "F1 Help"])
     })?;
     insta::assert_snapshot!("property_page_minimum", minimum.with_styles());
     terminal.send(Key::Char('G'))?;
@@ -64,8 +75,7 @@ fn property_page_keeps_reading_position_and_restores_the_source_inspector() -> t
     terminal.wait_until(|screen| {
         screen.size() == (100, 30)
             && screen.row_text(0).contains("General Category")
-            && screen.row_text(29).contains("Esc Back")
-            && screen.row_text(29).contains("F1 Help")
+            && footer_contains(screen, &["Esc Back", "F1 Help"])
     })?;
     terminal.send(Key::Esc)?;
     let restored = terminal.snapshot_after(|screen| {
@@ -76,8 +86,7 @@ fn property_page_keeps_reading_position_and_restores_the_source_inspector() -> t
     terminal.wait_until(|screen| {
         screen.row_text(0).contains("Sequence") && screen.contains("2 code points")
     })?;
-    terminal.send(Key::Char('q'))?;
-    assert!(terminal.wait_exit()?.success());
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -133,8 +142,7 @@ fn property_page_opens_new_and_unavailable_fields_with_custom_bindings(
     terminal.wait_until(|screen| {
         screen.row_text(0).contains("Inspector") && screen.row_text(0).contains(code_point)
     })?;
-    terminal.send(Key::Char('q'))?;
-    assert!(terminal.wait_exit()?.success());
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -175,7 +183,7 @@ fn bookmarks_persist_and_show_configured_dates_and_restore_the_source_inspector(
     terminal.send(Key::Char('m'))?;
     terminal.wait_until(|screen| {
         screen.row_text(0).contains("U+0041  * Bookmarked")
-            && screen.row_text(29).contains("Bookmarked U+0041")
+            && footer_contains(screen, &["Bookmarked U+0041"])
     })?;
     terminal.send(Key::Char('M'))?;
     terminal.wait_until(|screen| screen.row_text(0).contains("2 bookmarks · U+0041"))?;
@@ -196,21 +204,20 @@ fn bookmarks_persist_and_show_configured_dates_and_restore_the_source_inspector(
     terminal.wait_until(|screen| screen.row_text(0).contains("2 bookmarks · U+2192"))?;
     terminal.resize(60, 16)?;
     terminal.wait_until(|screen| {
-        screen.row_text(15).contains("Esc Close") && screen.contains("02/01/2020 12:04:05 JST")
+        footer_contains(screen, &["Esc Close"]) && screen.contains("02/01/2020 12:04:05 JST")
     })?;
     terminal.send(Key::Char('m'))?;
     terminal.wait_until(|screen| {
-        screen.row_text(15).contains("Removed bookmark U+2192")
+        footer_contains(screen, &["Removed bookmark U+2192"])
             && screen.row_text(0).contains("1 bookmark · U+0041")
     })?;
     terminal.send(Key::Esc)?;
     terminal.wait_until(|screen| {
         screen.row_text(0).contains("Inspector")
             && screen.row_text(0).contains("U+0041  * Bookmarked")
-            && !screen.row_text(15).contains("Esc Close")
+            && !footer_contains(screen, &["Esc Close"])
     })?;
-    terminal.send(Key::Char('q'))?;
-    assert!(terminal.wait_exit()?.success());
+    quit(&mut terminal)?;
 
     let mut restored = launch()?;
     restored.wait_until(|screen| screen.row_text(0).contains("U+0041  * Bookmarked"))?;
@@ -226,8 +233,7 @@ fn bookmarks_persist_and_show_configured_dates_and_restore_the_source_inspector(
     restored.wait_until(|screen| {
         screen.contains("Identity") && !screen.row_text(0).contains("Bookmarked")
     })?;
-    restored.send(Key::Char('q'))?;
-    assert!(restored.wait_exit()?.success());
+    quit(&mut restored)?;
     let file: toml::Value =
         toml::from_str(&fs::read_to_string(data.join("bookmarks.toml"))?).unwrap();
     assert!(file["bookmarks"].as_array().unwrap().is_empty());
@@ -252,15 +258,14 @@ fn invalid_bookmark_files_report_save_failure_without_changing_registration() ->
         env("XDG_DATA_HOME", directory.path()),
         args(["--graphics", "off"])
     )?;
-    terminal.wait_until(|screen| screen.row_text(29).contains("Failed to read bookmarks"))?;
+    terminal.wait_until(|screen| footer_contains(screen, &["Failed to read bookmarks"]))?;
     terminal.send(Key::Char('m'))?;
-    let screen = terminal
-        .snapshot_after(|screen| screen.row_text(29).contains("Failed to save bookmarks"))?;
+    let screen =
+        terminal.snapshot_after(|screen| footer_contains(screen, &["Failed to save bookmarks"]))?;
     assert!(!screen.row_text(0).contains("* Bookmarked"), "{screen}");
     assert!(screen.contains("LATIN CAPITAL LETTER A"), "{screen}");
     assert_eq!(fs::read_to_string(&bookmarks)?, invalid);
-    terminal.send(Key::Char('q'))?;
-    assert!(terminal.wait_exit()?.success());
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -334,10 +339,7 @@ fn starts_and_restores_the_terminal_on_quit() -> termlens::Result<()> {
     assert!(screen.alternate_screen(), "{screen}");
     assert!(screen.contains("Graphics disabled"), "{screen}");
 
-    terminal.send(Key::Char('q'))?;
-    let status = terminal.wait_exit()?;
-
-    assert!(status.success(), "exit status: {status}");
+    quit(&mut terminal)?;
     assert!(!terminal.screen().alternate_screen());
     assert!(terminal.screen().cursor_visible());
     Ok(())
@@ -356,12 +358,6 @@ fn inspector_shows_case_expansions_and_numeric_zero_and_follows_property_selecti
         env("XDG_DATA_HOME", directory.path()),
         args(["ß0", "--graphics", "off"])
     )?;
-    let selected_property = |screen: &termlens::Screen, label: &str| {
-        (0..screen.rows()).any(|row| {
-            screen.row_text(row).trim_start().starts_with(label)
-                && screen.cell(row, 3).unwrap().style().bg == Color::Indexed(6)
-        })
-    };
     terminal.wait_until(|screen| screen.row_text(0).contains("1/2 · U+00DF"))?;
     terminal.send(Key::Enter)?;
     let case = terminal.snapshot_after(|screen| {
@@ -409,8 +405,7 @@ fn inspector_shows_case_expansions_and_numeric_zero_and_follows_property_selecti
     })?;
     assert!(!uncased.contains("Numeric Value"), "{uncased}");
     assert!(!uncased.contains("Case"), "{uncased}");
-    terminal.send(Key::Char('q'))?;
-    assert!(terminal.wait_exit()?.success());
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -427,12 +422,6 @@ fn inspector_property_modes_show_optional_fields_and_preserve_the_selected_prope
         env("XDG_DATA_HOME", directory.path()),
         args(["U+00C5", "--graphics", "off"])
     )?;
-    let selected_property = |screen: &termlens::Screen, label: &str| {
-        (0..screen.rows()).any(|row| {
-            screen.row_text(row).trim_start().starts_with(label)
-                && screen.cell(row, 3).unwrap().style().bg == Color::Indexed(6)
-        })
-    };
     let relevant = terminal.snapshot_after(|screen| {
         screen.contains("LATIN CAPITAL LETTER A WITH RING ABOVE")
             && screen.row_text(2).contains("Relevant")
@@ -494,8 +483,7 @@ fn inspector_property_modes_show_optional_fields_and_preserve_the_selected_prope
     assert!(!relevant.contains("Normalization"), "{relevant}");
     assert!(!relevant.contains("Decomposition"), "{relevant}");
     assert!(relevant.contains("Unicode Version"), "{relevant}");
-    terminal.send(Key::Char('q'))?;
-    assert!(terminal.wait_exit()?.success());
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -544,8 +532,7 @@ fn inspector_group_keys_show_section_headings_and_select_their_first_properties(
             .count(),
         1
     );
-    terminal.send(Key::Char('q'))?;
-    assert!(terminal.wait_exit()?.success());
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -578,8 +565,7 @@ fn sequence_group_keys_skip_cluster_members_and_preserve_selection_across_inspec
     terminal
         .wait_until(|screen| screen.contains("Select the first code point of the next grapheme"))?;
     terminal.send(Key::F(1))?;
-    terminal.send(Key::Char('q'))?;
-    assert!(terminal.wait_exit()?.success());
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -608,7 +594,7 @@ fn sequence_copy_dialog_preserves_source_and_candidate_across_help_and_resize()
     terminal.wait_until(|screen| {
         screen.size() == (60, 16)
             && screen.contains("Keybindings · Copy Dialog")
-            && screen.row_text(15).contains("F1 Close")
+            && footer_contains(screen, &["F1 Close"])
     })?;
     terminal.send(Key::Esc)?;
     let screen = terminal.snapshot_after(|screen| {
@@ -625,23 +611,21 @@ fn sequence_copy_dialog_preserves_source_and_candidate_across_help_and_resize()
     terminal.wait_until(|screen| {
         screen.size() == (100, 30)
             && screen.contains("Preview · 6 CP · 15 bytes")
-            && screen.row_text(29).contains("Enter Copy")
-            && screen.row_text(29).contains("F1 Help")
+            && footer_contains(screen, &["Enter Copy", "F1 Help"])
     })?;
     terminal.send(Key::Esc)?;
     // The source header is also visible behind the dialog. Its footer confirms
     // that Esc was handled before the next character can form an Alt chord.
     terminal.wait_until(|screen| {
-        screen.contains("2/6 · U+0301") && screen.row_text(29).contains("Y Copy...")
+        screen.contains("2/6 · U+0301") && footer_contains(screen, &["Y Copy..."])
     })?;
     terminal.send(Key::Char('Y'))?;
     terminal.wait_until(|screen| screen.contains("Preview · 1 CP · 2 bytes"))?;
     terminal.send(Key::Esc)?;
     terminal.wait_until(|screen| {
-        screen.contains("2/6 · U+0301") && screen.row_text(29).contains("Y Copy...")
+        screen.contains("2/6 · U+0301") && footer_contains(screen, &["Y Copy..."])
     })?;
-    terminal.send(Key::Char('q'))?;
-    assert!(terminal.wait_exit()?.success());
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -693,8 +677,7 @@ fn normalized_copy_dialog_uses_result_text_and_custom_bindings() -> termlens::Re
     terminal.wait_until(|screen| {
         screen.size() == (100, 30)
             && screen.contains("Preview · 4 CP · 5 bytes")
-            && screen.row_text(29).contains("y Copy")
-            && screen.row_text(29).contains("F1 Help")
+            && footer_contains(screen, &["y Copy", "F1 Help"])
     })?;
     terminal.send(Key::F(1))?;
     terminal.wait_until(|screen| {
@@ -705,14 +688,13 @@ fn normalized_copy_dialog_uses_result_text_and_custom_bindings() -> termlens::Re
     terminal.wait_until(|screen| screen.contains("Preview · 4 CP · 5 bytes"))?;
     terminal.send(Key::Char('x'))?;
     terminal.wait_until(|screen| {
-        screen.contains("2/4 · U+0066") && screen.row_text(29).contains("C Copy...")
+        screen.contains("2/4 · U+0066") && footer_contains(screen, &["C Copy..."])
     })?;
     terminal.send(Key::Esc)?;
     terminal.wait_until(|screen| screen.contains("Sequence / Normalization"))?;
     terminal.send(Key::Esc)?;
     terminal.wait_until(|screen| screen.contains("1/3 · U+0041"))?;
-    terminal.send(Key::Char('q'))?;
-    assert!(terminal.wait_exit()?.success());
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -747,8 +729,7 @@ fn normalization_group_keys_follow_result_clusters_and_update_the_original_highl
             && screen.contains("Select the first code point of the next grapheme")
     })?;
     terminal.send(Key::F(1))?;
-    terminal.send(Key::Char('q'))?;
-    assert!(terminal.wait_exit()?.success());
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -765,9 +746,7 @@ fn starts_at_the_code_point_from_the_command_line() -> termlens::Result<()> {
 
     assert!(screen.contains("Identity"), "{screen}");
 
-    terminal.send(Key::Char('q'))?;
-    let status = terminal.wait_exit()?;
-    assert!(status.success(), "exit status: {status}");
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -797,10 +776,7 @@ fn starts_from_piped_stdin_and_still_accepts_keys(
         .spawn("/bin/sh")?;
     terminal.snapshot_after(|screen| expected.iter().all(|text| screen.contains(text)))?;
 
-    terminal.send(Key::Char('q'))?;
-    let status = terminal.wait_exit()?;
-
-    assert!(status.success(), "exit status: {status}");
+    quit(&mut terminal)?;
     assert!(!terminal.screen().alternate_screen());
     assert!(terminal.screen().cursor_visible());
     Ok(())
@@ -846,9 +822,7 @@ fn inspects_a_text_sequence_and_preserves_its_position_across_search() -> termle
             && screen.contains("RIGHTWARDS ARROW")
     })?;
 
-    terminal.send(Key::Char('q'))?;
-    let status = terminal.wait_exit()?;
-    assert!(status.success(), "exit status: {status}");
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -908,8 +882,7 @@ fn normalization_comparison_highlights_changes_and_preserves_navigation() -> ter
     terminal.wait_until(|screen| {
         screen.contains("Sequence 2/7 / Inspector") && screen.contains("COMBINING ACUTE ACCENT")
     })?;
-    terminal.send(Key::Char('q'))?;
-    assert!(terminal.wait_exit()?.success());
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -939,8 +912,7 @@ fn normalization_fits_the_minimum_terminal_and_opens_single_point_results() -> t
     terminal.wait_until(|screen| screen.contains("Sequence / Normalization"))?;
     terminal.send(Key::Esc)?;
     terminal.wait_until(|screen| screen.contains("2 code points"))?;
-    terminal.send(Key::Char('q'))?;
-    assert!(terminal.wait_exit()?.success());
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -989,8 +961,7 @@ fn normalization_respects_custom_keys_colors_and_contextual_help() -> termlens::
     terminal.wait_until(|screen| screen.contains("Sequence / NFD Result"))?;
     terminal.send(Key::Char('b'))?;
     terminal.wait_until(|screen| screen.contains("Sequence / Normalization"))?;
-    terminal.send(Key::Char('q'))?;
-    assert!(terminal.wait_exit()?.success());
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -1032,8 +1003,7 @@ fn normalization_result_links_expansions_and_adjacent_changes_to_separate_origin
     terminal.send(Key::F(1))?;
     terminal.wait_until(|screen| screen.contains("Keybindings · Normalization Result"))?;
     terminal.send(Key::F(1))?;
-    terminal.send(Key::Char('q'))?;
-    assert!(terminal.wait_exit()?.success());
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -1073,8 +1043,7 @@ fn normalization_reference_scrolls_on_jumps_and_resizes_without_moving_the_origi
     terminal.wait_until(|screen| screen.contains("Sequence / Normalization"))?;
     terminal.send(Key::Esc)?;
     terminal.wait_until(|screen| screen.contains("3/50 · U+FB03"))?;
-    terminal.send(Key::Char('q'))?;
-    assert!(terminal.wait_exit()?.success());
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -1119,8 +1088,7 @@ fn sequence_highlights_follow_selection_across_clusters() -> termlens::Result<()
         assert_highlights(&screen, selected_row, selected_cluster);
     }
 
-    terminal.send(Key::Char('q'))?;
-    assert!(terminal.wait_exit()?.success());
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -1147,9 +1115,7 @@ fn searches_for_a_name_and_opens_the_result_in_the_inspector() -> termlens::Resu
             && screen.contains("RIGHTWARDS ARROW")
     })?;
 
-    terminal.send(Key::Char('q'))?;
-    let status = terminal.wait_exit()?;
-    assert!(status.success(), "exit status: {status}");
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -1176,9 +1142,7 @@ fn searches_for_a_name_alias_and_explains_the_match() -> termlens::Result<()> {
             && screen.contains("LATIN CAPITAL LETTER OI")
     })?;
 
-    terminal.send(Key::Char('q'))?;
-    let status = terminal.wait_exit()?;
-    assert!(status.success(), "exit status: {status}");
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -1220,9 +1184,7 @@ fn reopens_search_and_corrects_a_query_with_no_results() -> termlens::Result<()>
             && screen.contains("RIGHTWARDS ARROW")
     })?;
 
-    terminal.send(Key::Char('q'))?;
-    let status = terminal.wait_exit()?;
-    assert!(status.success(), "exit status: {status}");
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -1246,8 +1208,7 @@ fn keeps_the_search_result_selected_across_terminal_resizes() -> termlens::Resul
             && screen.contains("Search")
             && screen.contains("U+2192")
             && screen.contains("RIGHTWARDS ARROW")
-            && screen.row_text(15).contains("Esc Close")
-            && screen.row_text(15).contains("F1 Help")
+            && footer_contains(screen, &["Esc Close", "F1 Help"])
     })?;
     insta::assert_snapshot!(minimum.with_styles());
 
@@ -1257,8 +1218,7 @@ fn keeps_the_search_result_selected_across_terminal_resizes() -> termlens::Resul
             && screen.contains("Selection")
             && screen.contains("U+2192")
             && screen.contains("RIGHTWARDS ARROW")
-            && screen.row_text(29).contains("Esc Close")
-            && screen.row_text(29).contains("F1 Help")
+            && footer_contains(screen, &["Esc Close", "F1 Help"])
     })?;
     terminal.send(Key::Enter)?;
     terminal.snapshot_after(|screen| {
@@ -1267,9 +1227,7 @@ fn keeps_the_search_result_selected_across_terminal_resizes() -> termlens::Resul
             && screen.contains("RIGHTWARDS ARROW")
     })?;
 
-    terminal.send(Key::Char('q'))?;
-    let status = terminal.wait_exit()?;
-    assert!(status.success(), "exit status: {status}");
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -1307,9 +1265,7 @@ fn search_help_does_not_edit_the_query_or_lose_the_result() -> termlens::Result<
             && screen.contains("RIGHTWARDS ARROW")
     })?;
 
-    terminal.send(Key::Char('q'))?;
-    let status = terminal.wait_exit()?;
-    assert!(status.success(), "exit status: {status}");
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -1346,9 +1302,7 @@ fn browses_through_planes_and_ranges_to_inspect_a_code_point() -> termlens::Resu
     })?;
     insta::assert_snapshot!("inspector_after_browse_selection", inspector.with_styles());
 
-    terminal.send(Key::Char('q'))?;
-    let status = terminal.wait_exit()?;
-    assert!(status.success(), "exit status: {status}");
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -1375,9 +1329,7 @@ fn backs_out_of_a_block_table_without_changing_the_inspected_code_point() -> ter
             && screen.contains("LATIN CAPITAL LETTER A")
     })?;
 
-    terminal.send(Key::Char('q'))?;
-    let status = terminal.wait_exit()?;
-    assert!(status.success(), "exit status: {status}");
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -1397,9 +1349,7 @@ fn cancels_direct_code_point_browsing_without_changing_the_inspector() -> termle
             && screen.contains("LATIN CAPITAL LETTER A")
     })?;
 
-    terminal.send(Key::Char('q'))?;
-    let status = terminal.wait_exit()?;
-    assert!(status.success(), "exit status: {status}");
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -1418,9 +1368,7 @@ fn redraws_across_the_minimum_terminal_size_boundary() -> termlens::Result<()> {
         screen.size() == (60, 16) && screen.contains("LATIN CAPITAL LETTER A")
     })?;
 
-    terminal.send(Key::Char('q'))?;
-    let status = terminal.wait_exit()?;
-    assert!(status.success(), "exit status: {status}");
+    quit(&mut terminal)?;
     Ok(())
 }
 
@@ -1437,10 +1385,7 @@ fn transmits_and_deletes_the_kitty_glyph_preview() -> termlens::Result<()> {
 
     assert_eq!(screen.graphics().kitty(), 1, "{screen}");
 
-    terminal.send(Key::Char('q'))?;
-    let status = terminal.wait_exit()?;
-
-    assert!(status.success(), "exit status: {status}");
+    quit(&mut terminal)?;
     assert_eq!(terminal.screen().graphics().deletes(), 1);
     Ok(())
 }
