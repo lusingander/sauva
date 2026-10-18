@@ -1246,6 +1246,8 @@ fn keeps_the_search_result_selected_across_terminal_resizes() -> termlens::Resul
             && screen.contains("Search")
             && screen.contains("U+2192")
             && screen.contains("RIGHTWARDS ARROW")
+            && screen.row_text(15).contains("Esc Close")
+            && screen.row_text(15).contains("F1 Help")
     })?;
     insta::assert_snapshot!(minimum.with_styles());
 
@@ -1255,6 +1257,8 @@ fn keeps_the_search_result_selected_across_terminal_resizes() -> termlens::Resul
             && screen.contains("Selection")
             && screen.contains("U+2192")
             && screen.contains("RIGHTWARDS ARROW")
+            && screen.row_text(29).contains("Esc Close")
+            && screen.row_text(29).contains("F1 Help")
     })?;
     terminal.send(Key::Enter)?;
     terminal.snapshot_after(|screen| {
