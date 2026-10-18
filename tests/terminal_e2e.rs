@@ -21,7 +21,14 @@ fn property_page_keeps_reading_position_and_restores_the_source_inspector() -> t
     }
     let original = terminal
         .snapshot_after(|screen| {
-            screen.contains("All") && screen.contains("Ll — Lowercase Letter")
+            screen.row_text(2).contains("All")
+                && (0..screen.rows()).any(|row| {
+                    screen
+                        .row_text(row)
+                        .trim_start()
+                        .starts_with("General Category")
+                        && screen.cell(row, 3).unwrap().style().bg == Color::Indexed(6)
+                })
         })?
         .with_styles()
         .to_string();
@@ -31,8 +38,13 @@ fn property_page_keeps_reading_position_and_restores_the_source_inspector() -> t
             && screen.row_text(0).trim_end().ends_with("General Category")
     })?;
     terminal.resize(60, 16)?;
+    // The grid resizes immediately; the footer on its new bottom row
+    // confirms the application has handled the resize before the next key.
     let minimum = terminal.snapshot_after(|screen| {
-        screen.size() == (60, 16) && screen.contains("Current value · U+00E9")
+        screen.size() == (60, 16)
+            && screen.contains("Current value · U+00E9")
+            && screen.row_text(15).contains("Esc Back")
+            && screen.row_text(15).contains("F1 Help")
     })?;
     insta::assert_snapshot!("property_page_minimum", minimum.with_styles());
     terminal.send(Key::Char('G'))?;
@@ -50,7 +62,10 @@ fn property_page_keeps_reading_position_and_restores_the_source_inspector() -> t
     terminal.send(Key::Char('l'))?;
     terminal.resize(100, 30)?;
     terminal.wait_until(|screen| {
-        screen.size() == (100, 30) && screen.row_text(0).contains("General Category")
+        screen.size() == (100, 30)
+            && screen.row_text(0).contains("General Category")
+            && screen.row_text(29).contains("Esc Back")
+            && screen.row_text(29).contains("F1 Help")
     })?;
     terminal.send(Key::Esc)?;
     let restored = terminal.snapshot_after(|screen| {
