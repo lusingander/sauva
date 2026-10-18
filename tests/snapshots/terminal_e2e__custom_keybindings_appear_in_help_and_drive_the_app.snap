@@ -13,13 +13,13 @@ size: 100x30  cursor: hidden
   ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
 
  Keybindings · Inspector
-  j  Down                  Select the next property
   [                        Select the first property of the previous section
   ]                        Select the first property of the next section
-  Ctrl-u                   Move properties up one page                                            ┃
-  Ctrl-d                   Move properties down one page                                          ┃
+  Ctrl-u                   Move properties up one page
+  Ctrl-d                   Move properties down one page
   g                        Select the first property                                              ┃
   G                        Select the last property                                               ┃
+  e                        Explain the selected property                                          ┃
   y                        Copy the selected property value                                       ┃
   t                        Toggle relevant or all properties                                      ┃
   /                        Open search                                                            ┃
@@ -39,11 +39,11 @@ styles:
 2: 1-97 fg=4 bold
 7: 2-37 fg=4
 9: 1-97 fg=4 bold
-10: 2 fg=3; 5-8 fg=3
+10: 2 fg=3
 11: 2 fg=3
-12: 2 fg=3
-13: 2-7 fg=3; 98 fg=8
-14: 2-7 fg=3; 98 fg=8
+12: 2-7 fg=3
+13: 2-7 fg=3
+14: 2 fg=3; 98 fg=8
 15: 2 fg=3; 98 fg=8
 16: 2 fg=3; 98 fg=8
 17: 2 fg=3; 98 fg=8

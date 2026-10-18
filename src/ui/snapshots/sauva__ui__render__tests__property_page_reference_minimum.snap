@@ -1,0 +1,20 @@
+---
+source: src/ui/render.rs
+expression: text
+---
+ sauva / Property                          General Category
+
+   Co — Private Use
+   Cn — Unassigned
+
+ Notes
+   One-letter group labels are shown here for
+   organization; the Inspector displays a two-letter
+   value.
+
+ Reference
+   Unicode 17.0 · §4.5 General Category
+   https://www.unicode.org/versions/Unicode17.0.0/core-spe┃
+   c/chapter-4/#G124142                                   ┃
+
+ k/j Move  o Reference  y Copy URL  Esc Back        F1 Help

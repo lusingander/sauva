@@ -54,6 +54,7 @@ The glyph panel renders the selected code point and shows the font used, when sp
 | <kbd>[</kbd> / <kbd>]</kbd> | Select the first property of the previous / next section |
 | <kbd>Ctrl-U</kbd> / <kbd>Ctrl-D</kbd> | Move through properties by page |
 | <kbd>g</kbd> / <kbd>G</kbd> | Select the first / last property |
+| <kbd>e</kbd> | Explain the selected property |
 | <kbd>y</kbd> | Copy the selected value |
 | <kbd>a</kbd> | Toggle Relevant / All properties |
 | <kbd>/</kbd> | Open Search |
@@ -64,6 +65,16 @@ The glyph panel renders the selected code point and shows the font used, when sp
 Adjacent navigation follows code point values, even when the Inspector was opened from a sequence. <kbd>Backspace</kbd> returns to the sequence's existing selection.
 
 Code point navigation and display mode changes keep the same property selected when possible. If that property is hidden, selection moves to a nearby property, preferring the same section.
+
+## Property Explanations
+
+Select a property and press <kbd>e</kbd> to read its meaning, possible values or format, notes, and a specification reference. Explanations are bundled with Sauva and can be read offline, including for unavailable values shown in **All** mode.
+
+![Property explanation](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/property-explanation.png)
+
+**Current value** shows the selected code point and its value; it scrolls with the explanation.
+
+Press <kbd>o</kbd> to open the specification in your default browser, or <kbd>y</kbd> to copy its URL. Opening the reference uses the external browser; reading the explanation does not access the network.
 
 ## Copying Values
 

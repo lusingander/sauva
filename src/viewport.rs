@@ -1,5 +1,63 @@
 use std::ops::Range;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DocumentMove {
+    LineBackward,
+    LineForward,
+    PageBackward,
+    PageForward,
+    First,
+    Last,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct DocumentViewport {
+    offset: usize,
+    viewport_height: usize,
+    document_height: usize,
+}
+
+impl DocumentViewport {
+    pub fn visible_range(self) -> Range<usize> {
+        let end = self
+            .offset
+            .saturating_add(self.viewport_height)
+            .min(self.document_height);
+        self.offset..end
+    }
+
+    pub fn resize_viewport(&mut self, viewport_height: usize, document_height: usize) {
+        self.viewport_height = viewport_height;
+        self.document_height = document_height;
+        self.clamp();
+    }
+
+    pub fn move_viewport(&mut self, movement: DocumentMove) {
+        let page = self.viewport_height;
+        self.offset = match movement {
+            DocumentMove::LineBackward => self.offset.saturating_sub(1),
+            DocumentMove::LineForward => self.offset.saturating_add(1),
+            DocumentMove::PageBackward => self.offset.saturating_sub(page),
+            DocumentMove::PageForward => self.offset.saturating_add(page),
+            DocumentMove::First => 0,
+            DocumentMove::Last => self.maximum_offset(),
+        };
+        self.clamp();
+    }
+
+    const fn maximum_offset(self) -> usize {
+        if self.viewport_height == 0 {
+            0
+        } else {
+            self.document_height.saturating_sub(self.viewport_height)
+        }
+    }
+
+    fn clamp(&mut self) {
+        self.offset = self.offset.min(self.maximum_offset());
+    }
+}
+
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct ListViewport {
     offset: usize,

@@ -13,9 +13,11 @@ use crate::{
     inspector::{InspectorGroup, InspectorMove, InspectorState},
     normalization::{NormalizationMove, NormalizationState},
     preview::{GlyphPreviewState, GlyphPreviewUpdate},
+    property::PropertyState,
     search::{SearchMove, SearchState},
     sequence::{SequenceMove, SequenceState},
     unicode::CodePoint,
+    viewport::DocumentMove,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -28,6 +30,15 @@ pub enum Action {
         viewport_height: usize,
         document_height: usize,
     },
+    OpenProperty,
+    CloseProperty,
+    MoveProperty(DocumentMove),
+    ResizePropertyViewport {
+        viewport_height: usize,
+        document_height: usize,
+    },
+    OpenPropertyReference,
+    CopyPropertyReference,
     MoveCodePoint(CodePointMove),
     MoveInspector(InspectorMove),
     ToggleInspectorProperties,
@@ -86,6 +97,7 @@ impl Action {
         !matches!(
             self,
             Self::ResizeHelpViewport { .. }
+                | Self::ResizePropertyViewport { .. }
                 | Self::ResizeInspectorViewport { .. }
                 | Self::ResizeBrowserViewport(_)
                 | Self::ResizeSearchViewport(_)
@@ -191,6 +203,8 @@ pub struct AppState {
     #[default(CodePoint::from('A'))]
     selected: CodePoint,
     inspector: InspectorState,
+    property: Option<PropertyState>,
+    reference_request: Option<&'static str>,
     browse: Option<BrowseState>,
     search: Option<SearchState>,
     bookmarks: BookmarkState,
@@ -236,6 +250,14 @@ impl AppState {
 
     pub fn selected(&self) -> CodePoint {
         self.selected
+    }
+
+    pub fn property(&self) -> Option<&PropertyState> {
+        self.property.as_ref()
+    }
+
+    pub fn take_reference_request(&mut self) -> Option<&'static str> {
+        self.reference_request.take()
     }
 
     pub const fn inspector(&self) -> &InspectorState {
@@ -323,7 +345,7 @@ impl AppState {
     }
 
     pub fn preview_code_point(&self) -> Option<CodePoint> {
-        if self.help.is_open() || self.copy_dialog.is_some() {
+        if self.help.is_open() || self.copy_dialog.is_some() || self.property.is_some() {
             return None;
         }
 
@@ -346,6 +368,79 @@ impl AppState {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn property_page_preserves_the_inspector_and_sequence_while_owning_input() {
+        use crate::{inspector::InspectorMove, viewport::DocumentMove};
+        let mut state = super::AppState::with_sequence("éß".to_owned());
+        super::update(&mut state, super::Action::InspectSequenceCodePoint);
+        let metrics = crate::ui::inspector::viewport_metrics(
+            ratatui::layout::Rect::new(0, 0, 60, 16),
+            &state,
+        );
+        super::update(
+            &mut state,
+            super::Action::ResizeInspectorViewport {
+                viewport_height: metrics.viewport_height,
+                document_height: metrics.document_height,
+                field_ranges: metrics.field_ranges,
+                groups: metrics.groups,
+            },
+        );
+        super::update(
+            &mut state,
+            super::Action::MoveInspector(InspectorMove::Last),
+        );
+        let inspector = state.inspector().clone();
+        let code_point = state.selected();
+        super::update(&mut state, super::Action::OpenProperty);
+        assert_eq!(
+            state.property().unwrap().field().id(),
+            crate::inspector::InspectorFieldId::UnicodeVersion
+        );
+        assert!(state.preview_code_point().is_none());
+        super::update(
+            &mut state,
+            super::Action::ResizePropertyViewport {
+                viewport_height: 3,
+                document_height: 100,
+            },
+        );
+        super::update(&mut state, super::Action::MoveProperty(DocumentMove::Last));
+        super::update(
+            &mut state,
+            super::Action::MoveCodePoint(super::CodePointMove::Next),
+        );
+        super::update(&mut state, super::Action::ToggleInspectorProperties);
+        super::update(&mut state, super::Action::ReturnToSequence);
+        assert_eq!(state.selected(), code_point);
+        assert_eq!(state.inspector(), &inspector);
+        assert_eq!(state.view(), super::View::Inspector);
+        super::update(&mut state, super::Action::ToggleHelp);
+        super::update(&mut state, super::Action::CopyPropertyReference);
+        super::update(&mut state, super::Action::CloseProperty);
+        assert!(state.property().is_some());
+        assert!(state.take_clipboard_request().is_none());
+        super::update(&mut state, super::Action::CloseHelp);
+        assert_eq!(
+            state.property().unwrap().viewport().visible_range(),
+            97..100
+        );
+        super::update(
+            &mut state,
+            super::Action::ResizePropertyViewport {
+                viewport_height: 4,
+                document_height: 60,
+            },
+        );
+        assert_eq!(state.property().unwrap().viewport().visible_range(), 56..60);
+        super::update(&mut state, super::Action::CloseProperty);
+        assert_eq!(state.inspector(), &inspector);
+        assert_eq!(state.preview_code_point(), Some(code_point));
+        super::update(&mut state, super::Action::ReturnToSequence);
+        assert_eq!(state.view(), super::View::Sequence);
+        assert_eq!(state.sequence().unwrap().analysis().source(), "éß");
+    }
+
     use super::*;
 
     #[test]

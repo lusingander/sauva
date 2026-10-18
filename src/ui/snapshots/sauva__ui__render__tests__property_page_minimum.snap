@@ -1,0 +1,20 @@
+---
+source: src/ui/render.rs
+expression: text
+---
+ sauva / Property                 Canonical Combining Class
+
+ Current value · U+0301                                   ┃
+   230 — Above                                            ┃
+   Above: A common class for marks above a base.          ┃
+                                                          ┃
+ Overview                                                 ┃
+   A number used to order combining marks during Unicode  ┃
+   normalization.
+
+ Range and examples
+   0..254 — The defined numeric range; many values are
+   unused.
+   0 — Not Reordered: A starter for canonical ordering.
+
+ k/j Move  o Reference  y Copy URL  Esc Back        F1 Help

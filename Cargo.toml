@@ -23,6 +23,7 @@ fontdb = "0.24.0"
 fs2 = "0.4.3"
 garde = { version = "0.23.0", features = ["derive"] }
 jiff = { version = "0.2.38", features = ["serde"] }
+open = "5.4.4"
 png = "0.18.1"
 ratatui = { version = "0.30.2", default-features = false, features = ["crossterm_0_29", "serde"] }
 serde = { version = "1.0.229", features = ["derive"] }

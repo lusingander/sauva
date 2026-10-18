@@ -366,6 +366,7 @@ fn help_items(context: Context, has_inspector_parent: bool) -> Vec<HelpItem> {
             item(C::PageDown, "Move properties down one page"),
             item(C::First, "Select the first property"),
             item(C::Last, "Select the last property"),
+            item(C::ExplainProperty, "Explain the selected property"),
             item(C::CopyValue, "Copy the selected property value"),
             item(C::ToggleProperties, "Toggle relevant or all properties"),
             item(C::OpenSearch, "Open search"),
@@ -376,6 +377,18 @@ fn help_items(context: Context, has_inspector_parent: bool) -> Vec<HelpItem> {
             item(C::BrowseBlocks, "Browse blocks"),
             item(C::BrowseCodePoints, "Browse code points"),
             item(C::Back, "Return to the previous screen"),
+            item(C::Quit, "Quit"),
+        ],
+        Context::Property => vec![
+            item(C::MoveUp, "Scroll up one line"),
+            item(C::MoveDown, "Scroll down one line"),
+            item(C::PageUp, "Scroll up one page"),
+            item(C::PageDown, "Scroll down one page"),
+            item(C::First, "Go to the beginning"),
+            item(C::Last, "Go to the end"),
+            item(C::OpenReference, "Open the specification in a browser"),
+            item(C::CopyReferenceUrl, "Copy the specification URL"),
+            item(C::Close, "Return to the Inspector"),
             item(C::Quit, "Quit"),
         ],
         Context::Bookmarks => vec![
@@ -542,12 +555,21 @@ fn short_help_items(context: Context, has_inspector_parent: bool) -> Vec<ShortHe
             short(&[C::PreviousGroup, C::NextGroup], "Section", 2),
             short(&[C::PageUp, C::PageDown], "Page", 3),
             short(&[C::First, C::Last], "Ends", 3),
+            short(&[C::ExplainProperty], "Explain", 2),
             short(&[C::CopyValue], "Copy", 1),
             short(&[C::OpenSearch], "Search", 2),
             short(&[C::ToggleBookmark, C::OpenBookmarks], "Bookmarks", 3),
             short(&[C::BrowsePlanes, C::BrowseRanges, C::BrowseBlocks, C::BrowseCodePoints], "Browse", 2),
             short(&[C::Back], "Back", 1),
             short(&[C::Quit], "Quit", 0),
+        ],
+        Context::Property => vec![
+            short(&[C::MoveUp, C::MoveDown], "Move", 1),
+            short(&[C::PageUp, C::PageDown], "Page", 3),
+            short(&[C::First, C::Last], "Ends", 3),
+            short(&[C::OpenReference], "Reference", 1),
+            short(&[C::CopyReferenceUrl], "Copy URL", 2),
+            short(&[C::Close], "Back", 0),
         ],
         Context::Bookmarks => vec![
             short(&[C::MoveUp, C::MoveDown], "Move", 1),
@@ -714,6 +736,7 @@ pub fn context_label(context: Context) -> &'static str {
     match context {
         Context::Global => "Global",
         Context::Inspector => "Inspector",
+        Context::Property => "Property",
         Context::Search => "Search",
         Context::Bookmarks => "Bookmarks",
         Context::Sequence => "Sequence",
@@ -812,6 +835,9 @@ mod tests {
         assert!(Line::from(narrow.as_str()).width() <= 60);
         assert!(wide.contains("C-u/C-d Page"));
         assert!(!narrow.contains("C-u/C-d Page"));
+        assert!(wide.contains("Explain"));
+        assert!(!narrow.contains("Explain"));
+        assert!(narrow.contains("y Copy"));
         assert!(narrow.contains("q Quit"));
         assert!(narrow.contains("F1 Help"));
     }

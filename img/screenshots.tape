@@ -1,10 +1,10 @@
-Set Shell zsh
+# Run cargo build --release before recording.
 
-Output "./img/demo-bookmarks.gif"
+Set Shell zsh
 
 Set FontSize 11
 Set Width 800
-Set Height 400
+Set Height 450
 Set Padding 15
 Set WindowBar Colorful
 Set Theme "nord"
@@ -15,7 +15,7 @@ Env SAUVA_CONFIG_FILE "./img/config.toml"
 Env TZ "Asia/Tokyo"
 Env NO_COLOR ""
 
-# Keep the demo's bookmarks separate from personal data.
+# Keep the screenshots' bookmarks separate from personal data.
 # Leave this directory in place after recording for inspection.
 Type@1ms `sauva_bookmark_demo_dir=$(mktemp -d "${TMPDIR:-/tmp}/sauva-bookmarks.XXXXXX")`
 Enter
@@ -26,60 +26,51 @@ Enter
 Type@1ms `cp ./img/bookmarks.toml "$XDG_DATA_HOME/sauva/bookmarks.toml"`
 Enter
 
-Type "cargo run --release -- --graphics iterm2 U+0041"
+Type@1ms "./target/release/sauva --graphics iterm2 U+0042"
 Enter
-Sleep 2s
+Sleep 1s
 
 Show
 
-# Inspector: bookmark B and keep A unchanged for the loop.
-
-Sleep 2s
-
-Type "l"
-Sleep 500ms
+# Inspector: bookmark B.
 
 Type "m"
-Sleep 1s
+Sleep 300ms
 
 Screenshot "./img/bookmark-added.png"
 Sleep 100ms
 
 # Select a seeded bookmark so the screenshot has a fixed registration time.
 
-Type "M"
-Sleep 1s
-
-Type "j"
-Sleep 500ms
+Type@1ms "Mj"
+Sleep 300ms
 
 Screenshot "./img/bookmarks.png"
 Sleep 100ms
 
-Type@400ms "jjjj"
-Sleep 500ms
-
-Type "g"
-Sleep 500ms
-
-Type "j"
-Sleep 500ms
-
-Enter
-Sleep 1s
-
-Backspace
-Sleep 500ms
-
-Escape
-Sleep 500ms
-
-Type "h"
-Sleep 2s
-
 Hide
 
+Escape
 Sleep 100ms
 
 Type "q"
-Sleep 500ms
+Sleep 100ms
+
+# Property explanation: show every East Asian Width value and its reference.
+
+Type@1ms "./target/release/sauva --graphics iterm2 U+00E9"
+Enter
+Sleep 1s
+
+Show
+
+Type@1ms "]jjje"
+Sleep 300ms
+
+Screenshot "./img/property-explanation.png"
+Sleep 100ms
+
+Hide
+
+Type "q"
+Sleep 100ms
