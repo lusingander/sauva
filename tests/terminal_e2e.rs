@@ -20,6 +20,17 @@ fn footer_contains(screen: &Screen, texts: &[&str]) -> bool {
     texts.iter().all(|text| footer.contains(text))
 }
 
+fn resize_and_wait(
+    terminal: &mut Terminal,
+    columns: u16,
+    rows: u16,
+    mut ready: impl FnMut(&Screen) -> bool,
+) -> termlens::Result<Screen> {
+    // The grid resizes before the app repaints, so ready must identify the new layout.
+    terminal.resize(columns, rows)?;
+    terminal.snapshot_after(|screen| screen.size() == (columns, rows) && ready(screen))
+}
+
 fn quit(terminal: &mut Terminal) -> termlens::Result<()> {
     terminal.send(Key::Char('q'))?;
     let status = terminal.wait_exit()?;
@@ -46,12 +57,8 @@ fn property_page_keeps_reading_position_and_restores_the_source_inspector() -> t
         screen.row_text(0).contains("sauva / Property")
             && screen.row_text(0).trim_end().ends_with("General Category")
     })?;
-    terminal.resize(60, 16)?;
-    // The grid resizes immediately; the footer on its new bottom row
-    // confirms the application has handled the resize before the next key.
-    let minimum = terminal.snapshot_after(|screen| {
-        screen.size() == (60, 16)
-            && screen.contains("Current value · U+00E9")
+    let minimum = resize_and_wait(&mut terminal, 60, 16, |screen| {
+        screen.contains("Current value · U+00E9")
             && footer_contains(screen, &["Esc Back", "F1 Help"])
     })?;
     insta::assert_snapshot!("property_page_minimum", minimum.with_styles());
@@ -66,12 +73,8 @@ fn property_page_keeps_reading_position_and_restores_the_source_inspector() -> t
             && screen.contains("Reference")
             && !screen.contains("Current value")
     })?;
-    // Queued keys can redraw the new size before the resize notification is
-    // consumed, so keep the input queue empty before resizing.
-    terminal.resize(100, 30)?;
-    terminal.wait_until(|screen| {
-        screen.size() == (100, 30)
-            && screen.row_text(0).contains("General Category")
+    resize_and_wait(&mut terminal, 100, 30, |screen| {
+        screen.row_text(0).contains("General Category")
             && footer_contains(screen, &["Esc Back", "F1 Help"])
     })?;
     terminal.send(Key::Esc)?;
@@ -201,8 +204,7 @@ fn bookmarks_persist_and_show_configured_dates_and_restore_the_source_inspector(
     })?;
     terminal.send(Key::Backspace)?;
     terminal.wait_until(|screen| screen.row_text(0).contains("2 bookmarks · U+2192"))?;
-    terminal.resize(60, 16)?;
-    terminal.wait_until(|screen| {
+    resize_and_wait(&mut terminal, 60, 16, |screen| {
         footer_contains(screen, &["Esc Close"]) && screen.contains("02/01/2020 12:04:05 JST")
     })?;
     terminal.send(Key::Char('m'))?;
@@ -504,13 +506,8 @@ fn sequence_copy_dialog_preserves_source_and_candidate_across_help_and_resize()
     terminal.wait_until(|screen| screen.contains("Preview · 2 CP · 3 bytes"))?;
     terminal.send(Key::F(1))?;
     terminal.wait_until(|screen| screen.contains("Keybindings · Copy Dialog"))?;
-    terminal.resize(60, 16)?;
-    // The emulator resizes before the app repaints. Wait for its footer on
-    // the new bottom row before sending another key.
-    terminal.wait_until(|screen| {
-        screen.size() == (60, 16)
-            && screen.contains("Keybindings · Copy Dialog")
-            && footer_contains(screen, &["F1 Close"])
+    resize_and_wait(&mut terminal, 60, 16, |screen| {
+        screen.contains("Keybindings · Copy Dialog") && footer_contains(screen, &["F1 Close"])
     })?;
     terminal.send(Key::Esc)?;
     let screen = terminal.snapshot_after(|screen| {
@@ -520,10 +517,8 @@ fn sequence_copy_dialog_preserves_source_and_candidate_across_help_and_resize()
 
     terminal.send(Key::Char('G'))?;
     terminal.wait_until(|screen| screen.contains("Preview · 6 CP · 15 bytes"))?;
-    terminal.resize(100, 30)?;
-    terminal.wait_until(|screen| {
-        screen.size() == (100, 30)
-            && screen.contains("Preview · 6 CP · 15 bytes")
+    resize_and_wait(&mut terminal, 100, 30, |screen| {
+        screen.contains("Preview · 6 CP · 15 bytes")
             && footer_contains(screen, &["Enter Copy", "F1 Help"])
     })?;
     terminal.send(Key::Esc)?;
@@ -586,10 +581,8 @@ fn normalized_copy_dialog_uses_result_text_and_custom_bindings() -> termlens::Re
     assert!(screen.contains("U+00C1 U+0066 U+0066 U+0069"), "{screen}");
     assert!(screen.contains("y Copy"), "{screen}");
     assert!(screen.contains("x Cancel"), "{screen}");
-    terminal.resize(100, 30)?;
-    terminal.wait_until(|screen| {
-        screen.size() == (100, 30)
-            && screen.contains("Preview · 4 CP · 5 bytes")
+    resize_and_wait(&mut terminal, 100, 30, |screen| {
+        screen.contains("Preview · 4 CP · 5 bytes")
             && footer_contains(screen, &["y Copy", "F1 Help"])
     })?;
     terminal.send(Key::F(1))?;
@@ -893,11 +886,9 @@ fn normalization_reference_scrolls_on_jumps_and_resizes_without_moving_the_origi
     terminal.send(Key::Char('G'))?;
     let screen = terminal.snapshot_after(|screen| screen.contains("150/150 · U+0069"))?;
     assert_eq!(screen.cell(13, 7).unwrap().style().bg, Color::Indexed(6));
-    terminal.resize(60, 16)?;
-    let screen = terminal.snapshot_after(|screen| {
-        screen.size() == (60, 16)
-            && screen.contains("150/150 · U+0069")
-            && screen.contains("150 CP · 150 GC")
+    let screen = resize_and_wait(&mut terminal, 60, 16, |screen| {
+        // The compact counts appear only after the app redraws at this width.
+        screen.contains("150/150 · U+0069") && screen.contains("150 CP · 150 GC")
     })?;
     assert_eq!(screen.cell(13, 7).unwrap().style().bg, Color::Indexed(6));
     insta::assert_snapshot!(screen.with_styles());
@@ -1046,20 +1037,16 @@ fn keeps_the_search_result_selected_across_terminal_resizes() -> termlens::Resul
             && screen.contains("RIGHTWARDS ARROW")
     })?;
 
-    terminal.resize(60, 16)?;
-    let minimum = terminal.snapshot_after(|screen| {
-        screen.size() == (60, 16)
-            && screen.contains("Search")
+    let minimum = resize_and_wait(&mut terminal, 60, 16, |screen| {
+        screen.contains("Search")
             && screen.contains("U+2192")
             && screen.contains("RIGHTWARDS ARROW")
             && footer_contains(screen, &["Esc Close", "F1 Help"])
     })?;
     insta::assert_snapshot!(minimum.with_styles());
 
-    terminal.resize(100, 30)?;
-    terminal.snapshot_after(|screen| {
-        screen.size() == (100, 30)
-            && screen.contains("Selection")
+    resize_and_wait(&mut terminal, 100, 30, |screen| {
+        screen.contains("Selection")
             && screen.contains("U+2192")
             && screen.contains("RIGHTWARDS ARROW")
             && footer_contains(screen, &["Esc Close", "F1 Help"])
@@ -1202,14 +1189,12 @@ fn redraws_across_the_minimum_terminal_size_boundary() -> termlens::Result<()> {
     let mut terminal = spawn("off")?;
     terminal.snapshot_after(|screen| screen.contains("LATIN CAPITAL LETTER A"))?;
 
-    terminal.resize(59, 15)?;
-    terminal.snapshot_after(|screen| {
-        screen.size() == (59, 15) && screen.contains("Terminal too small")
+    resize_and_wait(&mut terminal, 59, 15, |screen| {
+        screen.contains("Terminal too small")
     })?;
 
-    terminal.resize(60, 16)?;
-    terminal.snapshot_after(|screen| {
-        screen.size() == (60, 16) && screen.contains("LATIN CAPITAL LETTER A")
+    resize_and_wait(&mut terminal, 60, 16, |screen| {
+        screen.contains("LATIN CAPITAL LETTER A")
     })?;
 
     quit(&mut terminal)?;
