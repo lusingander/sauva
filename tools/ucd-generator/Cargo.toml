@@ -7,4 +7,4 @@ publish = false
 [dependencies]
 
 [dev-dependencies]
-rstest = { version = "0.27.0", default-features = false }
+rstest = { version = "0.28.0", default-features = false }
