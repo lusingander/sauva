@@ -124,6 +124,10 @@ macOS and Linux are supported. Glyph images are automatically enabled in kitty a
 
 Text information and analysis remain available without glyph images. Sauva uses installed system fonts and does not bundle fonts. See [Compatibility](https://lusingander.github.io/sauva/getting-started/compatibility.html) for details.
 
+## Contributing
+
+Please review [CONTRIBUTING.md](CONTRIBUTING.md) before opening an issue or pull request.
+
 ## License
 
 Sauva is distributed under the [MIT License](LICENSE).
