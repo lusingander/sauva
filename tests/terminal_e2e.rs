@@ -268,7 +268,13 @@ fn bookmarks_persist_and_show_configured_dates_and_restore_the_source_inspector(
 fn bookmark_sort_switches_with_a_custom_key_without_writing_the_file() -> termlens::Result<()> {
     let directory = tempdir()?;
     let config = directory.path().join("config.toml");
-    fs::write(&config, "[keybindings.bookmarks]\nswitch_sort = ['o']\n")?;
+    fs::write(
+        &config,
+        r#"
+            [keybindings.bookmarks]
+            switch_sort = ['o']
+        "#,
+    )?;
     let data = directory.path().join("sauva");
     fs::create_dir(&data)?;
     let path = data.join("bookmarks.toml");
