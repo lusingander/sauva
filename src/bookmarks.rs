@@ -70,9 +70,43 @@ pub enum BookmarkMove {
     Last,
 }
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum BookmarkSort {
+    #[default]
+    NewestFirst,
+    OldestFirst,
+    CodePointAscending,
+    CodePointDescending,
+}
+
+impl BookmarkSort {
+    const fn next(self) -> Self {
+        match self {
+            Self::NewestFirst => Self::OldestFirst,
+            Self::OldestFirst => Self::CodePointAscending,
+            Self::CodePointAscending => Self::CodePointDescending,
+            Self::CodePointDescending => Self::NewestFirst,
+        }
+    }
+
+    fn sort(self, entries: &mut [Bookmark]) {
+        match self {
+            Self::NewestFirst => {
+                entries.sort_by_key(|entry| (Reverse(entry.added_at), entry.code_point));
+            }
+            Self::OldestFirst => {
+                entries.sort_by_key(|entry| (entry.added_at, entry.code_point));
+            }
+            Self::CodePointAscending => entries.sort_by_key(|entry| entry.code_point),
+            Self::CodePointDescending => entries.sort_by_key(|entry| Reverse(entry.code_point)),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Default)]
 pub struct BookmarkState {
     entries: Vec<Bookmark>,
+    sort: BookmarkSort,
     selected_index: usize,
     viewport: ListViewport,
 }
@@ -100,10 +134,24 @@ impl BookmarkState {
         self.viewport.visible_range(self.entries.len())
     }
 
-    pub fn replace(&mut self, mut entries: Vec<Bookmark>) {
+    pub const fn sort(&self) -> BookmarkSort {
+        self.sort
+    }
+
+    pub fn cycle_sort(&mut self) {
         let selected = self.selected().map(Bookmark::code_point);
-        entries.sort_by_key(|entry| (Reverse(entry.added_at), entry.code_point));
+        self.sort = self.sort.next();
+        self.sort_and_select(selected);
+    }
+
+    pub fn replace(&mut self, entries: Vec<Bookmark>) {
+        let selected = self.selected().map(Bookmark::code_point);
         self.entries = entries;
+        self.sort_and_select(selected);
+    }
+
+    fn sort_and_select(&mut self, selected: Option<CodePoint>) {
+        self.sort.sort(&mut self.entries);
         self.selected_index = self
             .entries
             .iter()
@@ -239,7 +287,7 @@ fn update_file(
     } else {
         bookmarks.retain(|entry| entry.code_point != code_point);
     }
-    bookmarks.sort_by_key(|entry| (Reverse(entry.added_at), entry.code_point));
+    BookmarkSort::NewestFirst.sort(&mut bookmarks);
     let text = toml::to_string(&BookmarkFile {
         bookmarks: bookmarks.clone(),
     })
@@ -335,7 +383,69 @@ mod tests {
     }
 
     #[test]
-    fn selection_survives_reordering_and_removal_and_scrolls_with_the_viewport() {
+    fn cycles_through_all_orders_and_breaks_date_ties_by_numeric_code_point() {
+        let mut state = BookmarkState::default();
+        state.replace(
+            [
+                (0x10000, 2),
+                (0xe000, 1),
+                (0xd800, 2),
+                (0x41, 3),
+                (0x378, 1),
+            ]
+            .map(|(value, seconds)| {
+                Bookmark::new(
+                    CodePoint::new(value).unwrap(),
+                    Timestamp::from_second(seconds).unwrap(),
+                )
+            })
+            .to_vec(),
+        );
+        for (sort, expected) in [
+            (
+                BookmarkSort::NewestFirst,
+                [0x41, 0xd800, 0x10000, 0x378, 0xe000],
+            ),
+            (
+                BookmarkSort::OldestFirst,
+                [0x378, 0xe000, 0xd800, 0x10000, 0x41],
+            ),
+            (
+                BookmarkSort::CodePointAscending,
+                [0x41, 0x378, 0xd800, 0xe000, 0x10000],
+            ),
+            (
+                BookmarkSort::CodePointDescending,
+                [0x10000, 0xe000, 0xd800, 0x378, 0x41],
+            ),
+            (
+                BookmarkSort::NewestFirst,
+                [0x41, 0xd800, 0x10000, 0x378, 0xe000],
+            ),
+        ] {
+            assert_eq!(state.sort(), sort);
+            assert_eq!(
+                state
+                    .entries()
+                    .iter()
+                    .map(|entry| entry.code_point().value())
+                    .collect::<Vec<_>>(),
+                expected,
+            );
+            state.cycle_sort();
+        }
+    }
+
+    #[rstest::rstest]
+    #[case(0, 5, 0)]
+    #[case(1, 7, 10)]
+    #[case(2, 7, 10)]
+    #[case(3, 5, 0)]
+    fn selection_survives_sorting_and_removal_and_scrolls_with_the_viewport(
+        #[case] cycles: usize,
+        #[case] after_removal: u32,
+        #[case] added_index: usize,
+    ) {
         let mut state = BookmarkState::default();
         let entries = (0..10)
             .map(|value| {
@@ -351,10 +461,25 @@ mod tests {
         assert_eq!(state.selected().unwrap().code_point().value(), 6);
         assert_eq!(state.visible_range(), 1..4);
         let selected = state.selected().unwrap();
+        for _ in 0..cycles {
+            state.cycle_sort();
+            assert_eq!(state.selected(), Some(selected));
+            assert!(state.visible_range().contains(&state.selected_index()));
+        }
+        let sort = state.sort();
         let mut entries = state.entries().to_vec();
-        entries.push(Bookmark::new(CodePoint::from('A'), Timestamp::now()));
+        entries.push(Bookmark::new(
+            CodePoint::from('A'),
+            Timestamp::from_second(10).unwrap(),
+        ));
         state.replace(entries);
+        assert_eq!(state.sort(), sort);
+        assert_eq!(
+            state.entries()[added_index].code_point(),
+            CodePoint::from('A')
+        );
         assert_eq!(state.selected(), Some(selected));
+        assert!(state.visible_range().contains(&state.selected_index()));
         let remaining = state
             .entries()
             .iter()
@@ -362,10 +487,37 @@ mod tests {
             .filter(|entry| *entry != selected)
             .collect();
         state.replace(remaining);
-        assert_eq!(state.selected().unwrap().code_point().value(), 5);
+        assert_eq!(state.sort(), sort);
+        assert_eq!(
+            state.selected().unwrap().code_point().value(),
+            after_removal
+        );
+        assert!(state.visible_range().contains(&state.selected_index()));
         state.replace(Vec::new());
         state.move_selection(BookmarkMove::Last);
         assert!(state.selected().is_none());
         assert_eq!(state.visible_range(), 0..0);
+    }
+
+    #[test]
+    fn empty_and_single_bookmark_lists_can_cycle_sort() {
+        let bookmark = Bookmark::new(CodePoint::from('A'), Timestamp::UNIX_EPOCH);
+        for entries in [Vec::new(), vec![bookmark]] {
+            let mut state = BookmarkState::default();
+            state.replace(entries.clone());
+            state.resize_viewport(3);
+            for sort in [
+                BookmarkSort::OldestFirst,
+                BookmarkSort::CodePointAscending,
+                BookmarkSort::CodePointDescending,
+                BookmarkSort::NewestFirst,
+            ] {
+                state.cycle_sort();
+                assert_eq!(state.sort(), sort);
+                assert_eq!(state.entries(), entries);
+                assert_eq!(state.selected(), entries.first().copied());
+                assert_eq!(state.visible_range(), 0..entries.len());
+            }
+        }
     }
 }
