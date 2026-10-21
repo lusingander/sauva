@@ -6,7 +6,7 @@ Save code points to revisit them across sessions. In the Inspector, press <kbd>m
 
 ## Bookmark List
 
-Press <kbd>M</kbd> in the Inspector to open Bookmarks. Entries show the character, code point, and Unicode name, initially ordered by registration time with the newest first. The selected entry's details include its registration time; narrow terminals show these details below the list.
+Press <kbd>M</kbd> in the Inspector to open Bookmarks. Entries show the character, code point, and Unicode name. The selected entry's details include its registration time; narrow terminals show these details below the list.
 
 ![Bookmark list](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/bookmarks.png)
 
@@ -21,9 +21,7 @@ Press <kbd>M</kbd> in the Inspector to open Bookmarks. Entries show the characte
 | <kbd>Esc</kbd> | Close Bookmarks and restore the Inspector where it was opened |
 | <kbd>q</kbd> | Quit |
 
-Press <kbd>s</kbd> to cycle through newest first, oldest first, code point ascending, and code point descending, then back to newest first. The list heading shows the current order. Sorting keeps the same bookmark selected and scrolls to keep it visible. When sorting by registration time, entries with the same time are ordered by code point ascending.
-
-The sort order is kept while Sauva is running, including when closing and reopening the list or adding and removing bookmarks. Restarting Sauva restores newest first. Changing the sort order does not rewrite the bookmark file.
+Bookmarks can be sorted by registration time or code point, in ascending or descending order.
 
 Press <kbd>Backspace</kbd> in the Inspector to return to the bookmark list. Closing the list restores the original Inspector, including its return path to Sequence when one is open. Keybindings can be changed in the `inspector` and `bookmarks` contexts; see [Custom Keybindings](../keybindings/custom-keybindings.md).
 
