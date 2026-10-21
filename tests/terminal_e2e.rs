@@ -265,10 +265,10 @@ fn bookmarks_persist_and_show_configured_dates_and_restore_the_source_inspector(
 }
 
 #[test]
-fn bookmark_sort_cycles_with_a_custom_key_without_writing_the_file() -> termlens::Result<()> {
+fn bookmark_sort_switches_with_a_custom_key_without_writing_the_file() -> termlens::Result<()> {
     let directory = tempdir()?;
     let config = directory.path().join("config.toml");
-    fs::write(&config, "[keybindings.bookmarks]\ncycle_sort = ['o']\n")?;
+    fs::write(&config, "[keybindings.bookmarks]\nswitch_sort = ['o']\n")?;
     let data = directory.path().join("sauva");
     fs::create_dir(&data)?;
     let path = data.join("bookmarks.toml");
@@ -302,8 +302,7 @@ fn bookmark_sort_cycles_with_a_custom_key_without_writing_the_file() -> termlens
     })?;
     terminal.send(Key::F(1))?;
     terminal.wait_until(|screen| {
-        screen.contains("Keybindings · Bookmarks")
-            && screen.contains("Cycle the bookmark sort order")
+        screen.contains("Keybindings · Bookmarks") && screen.contains("Switch sort order")
     })?;
     terminal.send(Key::Esc)?;
     terminal.wait_until(|screen| {

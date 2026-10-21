@@ -64,7 +64,7 @@ pub enum Action {
     OpenBookmarks,
     CloseBookmarks,
     MoveBookmarks(BookmarkMove),
-    CycleBookmarkSort,
+    SwitchBookmarkSort,
     ResizeBookmarksViewport(usize),
     InspectBookmark,
     ReturnToBookmarks,
@@ -447,7 +447,7 @@ mod tests {
     #[test]
     fn bookmarks_request_persistence_before_changing_state_and_keep_status_on_resize() {
         let mut state = AppState::default();
-        update(&mut state, Action::CycleBookmarkSort);
+        update(&mut state, Action::SwitchBookmarkSort);
         assert_eq!(
             state.bookmarks().sort(),
             crate::bookmarks::BookmarkSort::NewestFirst
@@ -479,7 +479,7 @@ mod tests {
             "Bookmarked U+0041"
         );
         update(&mut state, Action::OpenBookmarks);
-        update(&mut state, Action::CycleBookmarkSort);
+        update(&mut state, Action::SwitchBookmarkSort);
         assert_eq!(
             state.bookmarks().sort(),
             crate::bookmarks::BookmarkSort::OldestFirst
@@ -487,7 +487,7 @@ mod tests {
         assert_eq!(state.preview_code_point(), Some(state.selected()));
         assert!(state.take_bookmark_request().is_none());
         update(&mut state, Action::ToggleHelp);
-        update(&mut state, Action::CycleBookmarkSort);
+        update(&mut state, Action::SwitchBookmarkSort);
         assert_eq!(
             state.bookmarks().sort(),
             crate::bookmarks::BookmarkSort::OldestFirst
@@ -529,7 +529,7 @@ mod tests {
             jiff::Timestamp::UNIX_EPOCH,
         )]);
         update(&mut state, Action::OpenBookmarks);
-        update(&mut state, Action::CycleBookmarkSort);
+        update(&mut state, Action::SwitchBookmarkSort);
         assert_eq!(state.selected(), CodePoint::from('A'));
         assert_eq!(state.preview_code_point(), Some(CodePoint::from('→')));
         update(&mut state, Action::CloseBookmarks);

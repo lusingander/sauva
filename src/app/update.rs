@@ -335,7 +335,7 @@ fn update_search(state: &mut AppState, action: Action) {
 
 fn update_bookmarks(state: &mut AppState, action: Action) {
     match action {
-        Action::CycleBookmarkSort if !state.help.is_open() => state.bookmarks.cycle_sort(),
+        Action::SwitchBookmarkSort if !state.help.is_open() => state.bookmarks.switch_sort(),
         Action::CloseBookmarks => {
             let previous_preview = state.preview_code_point();
             if let Some(origin) = state.bookmark_origin.take() {

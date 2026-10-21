@@ -31,7 +31,7 @@ const ALL_COMMANDS: [Command; 35] = [
     Command::OpenSearch,
     Command::OpenBookmarks,
     Command::ToggleBookmark,
-    Command::CycleSort,
+    Command::SwitchSort,
     Command::BrowsePlanes,
     Command::BrowseRanges,
     Command::BrowseBlocks,
@@ -109,7 +109,7 @@ pub enum Command {
     OpenSearch,
     OpenBookmarks,
     ToggleBookmark,
-    CycleSort,
+    SwitchSort,
     BrowsePlanes,
     BrowseRanges,
     BrowseBlocks,
@@ -169,7 +169,7 @@ impl Command {
             Self::OpenSearch => "search",
             Self::OpenBookmarks => "bookmarks",
             Self::ToggleBookmark => "toggle_bookmark",
-            Self::CycleSort => "cycle_sort",
+            Self::SwitchSort => "switch_sort",
             Self::BrowsePlanes => "browse_planes",
             Self::BrowseRanges => "browse_ranges",
             Self::BrowseBlocks => "browse_blocks",
@@ -466,7 +466,7 @@ keybinding_context!(BookmarkKeybindings, Context::Bookmarks, {
     last => (Command::Last, ["G"]),
     activate => (Command::Activate, ["enter"]),
     toggle_bookmark => (Command::ToggleBookmark, ["m"]),
-    cycle_sort => (Command::CycleSort, ["s"]),
+    switch_sort => (Command::SwitchSort, ["s"]),
 });
 
 keybinding_context!(SequenceKeybindings, Context::Sequence, {
@@ -1027,7 +1027,7 @@ mod tests {
 
                 [bookmarks]
                 activate = ['l']
-                cycle_sort = ['o']
+                switch_sort = ['o']
             "#,
         )
         .unwrap();
@@ -1047,14 +1047,14 @@ mod tests {
         );
         assert_eq!(
             keymap.resolve(Context::Bookmarks, plain('o')),
-            Some(Command::CycleSort)
+            Some(Command::SwitchSort)
         );
         assert_eq!(keymap.resolve(Context::Bookmarks, plain('s')), None);
         assert!(matches!(
             configured(
                 r#"
                     [bookmarks]
-                    cycle_sort = ['ctrl-c']
+                    switch_sort = ['ctrl-c']
                 "#,
             ),
             Err(KeybindingError::GlobalConflict {

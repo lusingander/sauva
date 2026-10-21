@@ -153,7 +153,7 @@ fn action_for_command(context: Context, command: Command) -> Option<Action> {
         (X::Bookmarks, C::First) => Some(Action::MoveBookmarks(BookmarkMove::First)),
         (X::Bookmarks, C::Last) => Some(Action::MoveBookmarks(BookmarkMove::Last)),
         (X::Bookmarks, C::Activate) => Some(Action::InspectBookmark),
-        (X::Bookmarks, C::CycleSort) => Some(Action::CycleBookmarkSort),
+        (X::Bookmarks, C::SwitchSort) => Some(Action::SwitchBookmarkSort),
         (X::Inspector, C::BrowsePlanes) => Some(Action::OpenBrowser(BrowseLevel::Plane)),
         (X::Inspector, C::BrowseRanges) => Some(Action::OpenBrowser(BrowseLevel::Range)),
         (X::Inspector, C::BrowseBlocks) => Some(Action::OpenBrowser(BrowseLevel::Block)),
@@ -242,7 +242,7 @@ mod tests {
         );
         assert_eq!(
             action_for_key(&state, key('s')),
-            Some(Action::CycleBookmarkSort)
+            Some(Action::SwitchBookmarkSort)
         );
         let mut repeat = key('s');
         repeat.kind = KeyEventKind::Repeat;

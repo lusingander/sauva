@@ -17,7 +17,7 @@ Press <kbd>M</kbd> in the Inspector to open Bookmarks. Entries show the characte
 | <kbd>g</kbd> / <kbd>G</kbd> | Select the first / last bookmark |
 | <kbd>Enter</kbd> | Inspect the selected code point |
 | <kbd>m</kbd> | Remove the selected bookmark |
-| <kbd>s</kbd> | Cycle the sort order |
+| <kbd>s</kbd> | Switch sort order |
 | <kbd>Esc</kbd> | Close Bookmarks and restore the Inspector where it was opened |
 | <kbd>q</kbd> | Quit |
 

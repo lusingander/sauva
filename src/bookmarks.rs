@@ -147,7 +147,7 @@ impl BookmarkState {
         self.sort
     }
 
-    pub fn cycle_sort(&mut self) {
+    pub fn switch_sort(&mut self) {
         let selected = self.selected().map(Bookmark::code_point);
         self.sort = self.sort.next();
         self.sort_and_select(selected);
@@ -392,7 +392,7 @@ mod tests {
     }
 
     #[test]
-    fn cycles_through_all_orders_and_breaks_date_ties_by_numeric_code_point() {
+    fn switches_between_all_orders_and_breaks_date_ties_by_numeric_code_point() {
         let mut state = BookmarkState::default();
         state.replace(
             [
@@ -441,7 +441,7 @@ mod tests {
                     .collect::<Vec<_>>(),
                 expected,
             );
-            state.cycle_sort();
+            state.switch_sort();
         }
     }
 
@@ -451,7 +451,7 @@ mod tests {
     #[case(2, 7, 10)]
     #[case(3, 5, 0)]
     fn selection_survives_sorting_and_removal_and_scrolls_with_the_viewport(
-        #[case] cycles: usize,
+        #[case] switches: usize,
         #[case] after_removal: u32,
         #[case] added_index: usize,
     ) {
@@ -470,8 +470,8 @@ mod tests {
         assert_eq!(state.selected().unwrap().code_point().value(), 6);
         assert_eq!(state.visible_range(), 1..4);
         let selected = state.selected().unwrap();
-        for _ in 0..cycles {
-            state.cycle_sort();
+        for _ in 0..switches {
+            state.switch_sort();
             assert_eq!(state.selected(), Some(selected));
             assert!(state.visible_range().contains(&state.selected_index()));
         }
@@ -509,7 +509,7 @@ mod tests {
     }
 
     #[test]
-    fn empty_and_single_bookmark_lists_can_cycle_sort() {
+    fn empty_and_single_bookmark_lists_can_switch_sort() {
         let bookmark = Bookmark::new(CodePoint::from('A'), Timestamp::UNIX_EPOCH);
         for entries in [Vec::new(), vec![bookmark]] {
             let mut state = BookmarkState::default();
@@ -521,7 +521,7 @@ mod tests {
                 BookmarkSort::CodePointDescending,
                 BookmarkSort::NewestFirst,
             ] {
-                state.cycle_sort();
+                state.switch_sort();
                 assert_eq!(state.sort(), sort);
                 assert_eq!(state.entries(), entries);
                 assert_eq!(state.selected(), entries.first().copied());

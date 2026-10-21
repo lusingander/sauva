@@ -443,7 +443,7 @@ mod tests {
             "Code point desc",
             "Newest first",
         ] {
-            update(&mut state, Action::CycleBookmarkSort);
+            update(&mut state, Action::SwitchBookmarkSort);
             let text = render_to_text(&state, width, height);
             assert!(text.lines().nth(2).unwrap().contains(label), "{text}");
         }
