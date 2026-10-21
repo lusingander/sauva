@@ -311,8 +311,8 @@ fn bookmark_sort_cycles_with_a_custom_key_without_writing_the_file() -> termlens
     })?;
     for (label, first) in [
         ("Oldest first", "U+0041"),
-        ("Code point ↑", "U+0041"),
-        ("Code point ↓", "U+0043"),
+        ("Code point asc", "U+0041"),
+        ("Code point desc", "U+0043"),
         ("Newest first", "U+0042"),
     ] {
         terminal.send(Key::Char('o'))?;

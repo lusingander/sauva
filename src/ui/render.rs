@@ -439,8 +439,8 @@ mod tests {
         insta::assert_snapshot!(format!("bookmarks_{width}x{height}"), text);
         for label in [
             "Oldest first",
-            "Code point ↑",
-            "Code point ↓",
+            "Code point asc",
+            "Code point desc",
             "Newest first",
         ] {
             update(&mut state, Action::CycleBookmarkSort);

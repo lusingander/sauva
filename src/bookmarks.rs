@@ -84,8 +84,8 @@ impl BookmarkSort {
         match self {
             Self::NewestFirst => "Newest first",
             Self::OldestFirst => "Oldest first",
-            Self::CodePointAscending => "Code point ↑",
-            Self::CodePointDescending => "Code point ↓",
+            Self::CodePointAscending => "Code point asc",
+            Self::CodePointDescending => "Code point desc",
         }
     }
 
