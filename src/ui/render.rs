@@ -446,7 +446,6 @@ mod tests {
             update(&mut state, Action::CycleBookmarkSort);
             let text = render_to_text(&state, width, height);
             assert!(text.lines().nth(2).unwrap().contains(label), "{text}");
-            assert!(text.lines().last().unwrap().contains("s Sort"), "{text}");
         }
     }
 

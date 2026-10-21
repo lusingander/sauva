@@ -578,7 +578,7 @@ fn short_help_items(context: Context, has_inspector_parent: bool) -> Vec<ShortHe
             short(&[C::First, C::Last], "Ends", 3),
             short(&[C::Activate], "Inspect", 0),
             short(&[C::ToggleBookmark], "Remove", 0),
-            short(&[C::CycleSort], "Sort", 0),
+            short(&[C::CycleSort], "Sort", 1),
             short(&[C::Close], "Close", 0),
             short(&[C::Quit], "Quit", 3),
         ],
