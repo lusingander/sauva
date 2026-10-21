@@ -98,6 +98,7 @@ For input interpretation, stdin handling, and graphics modes, see [Command Line 
 | <kbd>j</kbd> / <kbd>k</kbd> or arrow keys | Move the selection; use <kbd>Up</kbd> / <kbd>Down</kbd> in Search |
 | <kbd>/</kbd> | Open Search from the Inspector |
 | <kbd>m</kbd> / <kbd>M</kbd> | Toggle a bookmark / open Bookmarks from the Inspector |
+| <kbd>s</kbd> | Cycle the sort order in Bookmarks |
 | <kbd>p</kbd>, <kbd>r</kbd>, <kbd>b</kbd>, <kbd>c</kbd> | Open Browse from the Inspector |
 | <kbd>Enter</kbd> | Open the selected item or inspect a code point |
 | <kbd>Backspace</kbd> | Go back in Browse or return from the Inspector to its Sequence or Bookmarks |
