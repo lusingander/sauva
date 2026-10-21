@@ -416,7 +416,8 @@
         "first": { "$ref": "#/definitions/keyArray" },
         "last": { "$ref": "#/definitions/keyArray" },
         "activate": { "$ref": "#/definitions/keyArray" },
-        "toggle_bookmark": { "$ref": "#/definitions/keyArray" }
+        "toggle_bookmark": { "$ref": "#/definitions/keyArray" },
+        "cycle_sort": { "$ref": "#/definitions/keyArray" }
       },
       "additionalProperties": false
     },

@@ -80,6 +80,15 @@ pub enum BookmarkSort {
 }
 
 impl BookmarkSort {
+    pub const fn label(self) -> &'static str {
+        match self {
+            Self::NewestFirst => "Newest first",
+            Self::OldestFirst => "Oldest first",
+            Self::CodePointAscending => "Code point ↑",
+            Self::CodePointDescending => "Code point ↓",
+        }
+    }
+
     const fn next(self) -> Self {
         match self {
             Self::NewestFirst => Self::OldestFirst,
