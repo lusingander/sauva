@@ -52,14 +52,11 @@ Pass a string to inspect its code points and grapheme clusters:
 sauva 'Á👩‍💻'
 ```
 
-Press <kbd>Enter</kbd> to inspect a selected code point, or <kbd>n</kbd> to compare normalization forms.
-
 <img src="./img/demo-sequence.gif" alt="Sauva Sequence and normalization demo">
 
-Use `--text` when the input would otherwise be interpreted as code point notation, or `--text -` to read literal UTF-8 text from stdin:
+Use `--text -` to read literal UTF-8 text from stdin:
 
 ```sh
-sauva --text 41
 printf 'Á👩‍💻' | sauva --text -
 ```
 
