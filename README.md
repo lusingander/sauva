@@ -65,25 +65,7 @@ printf 'Á👩‍💻' | sauva --text -
 
 See [Sequence](https://lusingander.github.io/sauva/features/sequence.html), [Normalization](https://lusingander.github.io/sauva/features/normalization.html), and [Basic Usage](https://lusingander.github.io/sauva/getting-started/basic-usage.html) for more examples.
 
-### Options
-
-```text
-Sauva - Terminal Unicode Explorer 🪄
-
-Usage: sauva [OPTIONS] [INPUT]
-
-Arguments:
-  [INPUT]  Text or code point to inspect, or - to read stdin
-
-Options:
-  -t, --text <TEXT>           Treat the input as literal text, without code point notation parsing; - reads stdin
-  -g, --graphics <MODE>       Control glyph preview graphics [default: auto] [possible values: auto, force, iterm2, off]
-      --print-default-config  Print the complete default configuration to standard output
-  -h, --help                  Print help
-  -V, --version               Print version
-```
-
-For input interpretation, stdin handling, and graphics modes, see [Command Line Options](https://lusingander.github.io/sauva/getting-started/command-line-options.html).
+For all command line options, run `sauva --help` or see [Command Line Options](https://lusingander.github.io/sauva/getting-started/command-line-options.html).
 
 ### Keybindings
 
