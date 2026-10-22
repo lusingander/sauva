@@ -62,9 +62,7 @@ The glyph panel renders the selected code point and shows the font used, when sp
 | <kbd>Backspace</kbd> | Return to the original or normalized sequence, when one is open |
 | <kbd>q</kbd>, <kbd>Esc</kbd> | Quit |
 
-Adjacent navigation follows code point values, even when the Inspector was opened from a sequence. <kbd>Backspace</kbd> returns to the sequence's existing selection.
-
-Code point navigation and display mode changes keep the same property selected when possible. If that property is hidden, selection moves to a nearby property, preferring the same section.
+Adjacent navigation follows code point values, even when the Inspector was opened from a sequence.
 
 ## Property Explanations
 
