@@ -28,25 +28,9 @@ activate = ["enter", "y"]
 - An empty array disables that command in that context.
 - Help and the footer display the resulting bindings.
 
-Use `sauva --print-default-config` to see every context, command, and default binding. The command names are also listed in [Keybindings](./index.md).
+See [Keybindings](./index.md) for all contexts and command names, or use `sauva --print-default-config` to see the default bindings.
 
-## Contexts
-
-| Context | Applies to |
-| --- | --- |
-| `global` | Every screen; supports `quit` and `help` |
-| `inspector` | Code point properties |
-| `property` | The selected property's explanation |
-| `search` | Search results |
-| `sequence` | The original input sequence |
-| `normalization` | Normalization form comparison |
-| `normalization_result` | A normalized sequence |
-| `copy_dialog` | Copy candidate list in Sequence and Normalization Result |
-| `browse_plane` | Plane list |
-| `browse_range` | Range list |
-| `browse_block` | Block list |
-| `browse_code_points` | Code point grid |
-| `help` | Contextual help |
+## Global Bindings
 
 Global bindings remain active in all contexts. When help is open, only its own bindings and the global bindings are active.
 

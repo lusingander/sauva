@@ -6,7 +6,7 @@ The tables below list the built-in bindings and the command names used in [Custo
 
 ## Global
 
-These bindings apply in every screen, including help.
+Context: `global`. These bindings apply in every screen, including help.
 
 | Command | Keys | Action |
 | --- | --- | --- |
