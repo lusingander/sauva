@@ -11,7 +11,7 @@ sauva U+2192
 
 ## Properties
 
-The fixed **Properties** heading shows the current display mode. The Inspector starts in **Relevant** mode; press <kbd>a</kbd> to toggle between **Relevant** and **All**. The mode is kept while navigating code points or returning from another screen.
+The Inspector starts in **Relevant** mode; press <kbd>a</kbd> to toggle between **Relevant** and **All**.
 
 | Section | Fields |
 | --- | --- |
