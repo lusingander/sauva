@@ -13,7 +13,6 @@ You can also specify a character or code point:
 ```sh
 sauva あ
 sauva U+2192
-sauva 0x1F600
 ```
 
 The [Inspector](../features/inspector.md) shows the selected code point's properties and glyph preview.
@@ -44,21 +43,17 @@ Use `--text` when a string would otherwise be interpreted as code point notation
 
 ```sh
 sauva --text 41
-sauva --text U+2192
 ```
-
-A single code point opens the Inspector, even with `--text`.
 
 ## Read from a Pipe or File
 
-Specify `-` to read UTF-8 input from stdin:
+Use `--text -` to read literal UTF-8 text from a pipe or file:
 
 ```sh
-printf 'Á👩‍💻' | sauva -
-printf 'U+2192' | sauva -
+printf 'Á👩‍💻' | sauva --text -
 sauva --text - < input.txt
 ```
 
-Sauva waits for EOF before opening the TUI. Whitespace and trailing newlines are preserved. For code point notation, use `printf` without a trailing newline; use `--text -` to inspect text exactly as supplied.
+Whitespace and trailing newlines are preserved.
 
 For all input rules and options, see [Command Line Options](./command-line-options.md). The complete controls are listed in [Keybindings](../keybindings/index.md).

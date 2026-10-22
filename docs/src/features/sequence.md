@@ -4,29 +4,13 @@ Sequence mode analyzes a string as an ordered list of code points, grouped into 
 
 ## Start in Sequence Mode
 
-Pass text containing multiple code points:
+Pass a string to analyze its code points and grapheme clusters:
 
 ```sh
 sauva 'Á👩‍💻'
 ```
 
-Use `--text` to prevent code point notation parsing:
-
-```sh
-sauva --text 41
-sauva --text U+2192
-```
-
-Read text from a pipe or file:
-
-```sh
-printf 'Á👩‍💻' | sauva --text -
-sauva --text - < input.txt
-```
-
-A single code point opens the Inspector. Sequence opens for multiple code points, even when they form a single visible character. Empty input is rejected.
-
-See [Command Line Options](../getting-started/command-line-options.md) for the complete input rules.
+See [Basic Usage](../getting-started/basic-usage.md#analyze-a-string) for literal text and piped input examples, and [Command Line Options](../getting-started/command-line-options.md#input) for input interpretation rules.
 
 ![Sequence and normalization demo](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/demo-sequence.gif)
 
