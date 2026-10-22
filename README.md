@@ -84,9 +84,7 @@ Customize colors, fonts, and keybindings in the [configuration file](https://lus
 
 ## Compatibility
 
-macOS and Linux are supported. Glyph images are automatically enabled in kitty and Ghostty, using the Kitty graphics protocol. The iTerm2 inline image protocol is available through `--graphics iterm2` with no guarantee of compatibility or future support.
-
-Text information and analysis remain available without glyph images. Sauva uses installed system fonts and does not bundle fonts. See [Compatibility](https://lusingander.github.io/sauva/getting-started/compatibility.html) for details.
+Sauva supports macOS and Linux. Glyph previews are supported in kitty and Ghostty. Text features remain available without glyph images. See [Compatibility](https://lusingander.github.io/sauva/getting-started/compatibility.html) for details.
 
 ## Contributing
 
