@@ -70,8 +70,6 @@ Select a property and press <kbd>e</kbd> to read its meaning, possible values or
 
 ![Property explanation](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/property-explanation.png)
 
-**Current value** shows the selected code point and its value; it scrolls with the explanation.
-
 Press <kbd>o</kbd> to open the specification in your default browser, or <kbd>y</kbd> to copy its URL. Opening the reference uses the external browser; reading the explanation does not access the network.
 
 ## Copying Values
