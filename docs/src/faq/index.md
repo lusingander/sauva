@@ -12,7 +12,7 @@ If the panel is hidden or reports **Preview area unavailable**, enlarge the term
 
 Glyph images use their own font settings. Set `glyph_preview.font_families` and `glyph_preview.emoji_font_families` to installed family names. See [Glyph Preview](../configurations/glyph-preview.md#font-selection) for the selection order and examples.
 
-## Why does `sauva 41` open one character?
+## Why does `sauva 41` open the letter A?
 
 `41` is interpreted as hexadecimal code point notation for `U+0041`, the letter A.
 
