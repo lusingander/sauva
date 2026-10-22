@@ -49,8 +49,6 @@ The accented A in the command above is `U+0041` followed by `U+0301`.
 
 - Each row shows the input position, code point, display representation, and Unicode name.
 - The left gutter numbers grapheme clusters and connects their member code points. A dot marks a cluster containing one code point.
-- The selected cluster is emphasized in the gutter.
-- The heading shows code point and grapheme counts, abbreviated as `CP` and `GC` in compact layouts.
 - When space is available, the selection panel shows the selected code point's properties and position within its cluster. The glyph image renders that individual code point.
 
 Input order, repeated characters, spaces, and newlines are preserved. Labels and dotted circles make otherwise hard-to-see characters visible in the list.
