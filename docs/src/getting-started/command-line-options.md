@@ -20,12 +20,12 @@ Options:
 
 Input is interpreted in this order:
 
-1. A single character opens that character in the Inspector.
+1. An input containing a single code point opens the Inspector.
 2. `U+` or `0x` followed by one to six hexadecimal digits selects a code point. The prefixes are case-insensitive.
 3. An argument made entirely of hexadecimal digits is interpreted as a code point. It must contain two to six digits.
-4. Other nonempty text opens Sequence mode if it contains multiple code points.
+4. Other nonempty text opens Sequence mode when it contains multiple code points, even if it looks like one character.
 
-Code point values must be between `U+0000` and `U+10FFFF`.
+Code point values must be between `U+0000` and `U+10FFFF`. Empty input is rejected.
 
 | Example | Interpretation |
 | --- | --- |
@@ -47,7 +47,7 @@ sauva --text 41
 sauva -t U+2192
 ```
 
-These inputs open Sequence with the characters `4`, `1`, or `U`, `+`, `2`, `1`, `9`, `2`, respectively. A single character still opens the Inspector. Empty text is rejected.
+A single code point still opens the Inspector; multiple code points open Sequence mode. Empty text is rejected.
 
 `INPUT` and `--text` cannot be supplied together.
 

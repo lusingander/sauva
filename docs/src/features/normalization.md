@@ -41,31 +41,32 @@ Changed regions use the configured difference colors and underlining. Spaces and
 
 ## Inspect a Result
 
-Select a form and press <kbd>Enter</kbd> to open its code point list.
+Each normalized result can be opened as a code point list.
 
 ![Normalization result](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/sequence-normalization-result.png)
 
 The result is shown alongside the original code point list. As you select a result code point, the corresponding region in the original is highlighted and brought into view. This makes compositions and expansions easier to follow.
 
-Press <kbd>Enter</kbd> again to inspect a result code point. <kbd>Backspace</kbd> in the Inspector returns to the result list; <kbd>Backspace</kbd> or <kbd>Esc</kbd> in the result list returns to the form comparison.
+Result code points can be opened in the [Inspector](./inspector.md) to read their properties.
 
-The original input is preserved throughout these operations.
+## Copying
+
+Copying from the form comparison includes the whole normalized result, preserving whitespace and newlines.
+
+The result list uses the same [copy dialog as Sequence](./sequence.md#copying), offering the selected code point, its entire grapheme cluster, or the whole normalized result. Each candidate uses the normalized text; the original input remains unchanged.
+
+![Normalization result Copy](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/sequence-normalization-result-copy.png)
 
 ## Operations
 
 | Keys | In form comparison | In a result list |
 | --- | --- | --- |
-| <kbd>j</kbd> / <kbd>k</kbd>, <kbd>Down</kbd> / <kbd>Up</kbd> | Select a form | Select a code point |
-| <kbd>[</kbd> / <kbd>]</kbd> | — | Select the first code point of the previous / next grapheme cluster |
-| <kbd>g</kbd> / <kbd>G</kbd> | Select NFC / NFKD | Select the first / last code point |
-| <kbd>Enter</kbd> | Open the selected result | Inspect the selected code point |
-| <kbd>y</kbd> | Copy the exact normalized text | — |
-| <kbd>Y</kbd> | — | Open copy candidates |
-| <kbd>Backspace</kbd>, <kbd>Esc</kbd> | Return to the original sequence | Return to form comparison |
-| <kbd>q</kbd> | Quit | Quit |
+| <kbd>Up</kbd> / <kbd>Down</kbd> | Select a form | Select a code point |
+| <kbd>Enter</kbd> | Open the selected result | Open the selected code point in the Inspector |
+| <kbd>y</kbd> | Copy the whole normalized result | — |
+| <kbd>Y</kbd> | — | Open the copy dialog |
+| <kbd>Esc</kbd> | Return to the original sequence | Return to form comparison |
 
-Copying includes whitespace and newlines in the normalized result. Select a form and press <kbd>y</kbd> in the comparison screen to copy the whole result.
+<kbd>Backspace</kbd> in the Inspector returns to the result list.
 
-In a result list, press <kbd>Y</kbd> to open the same [copy dialog as Sequence](./sequence.md#copying). The candidates are the selected result code point, its entire grapheme cluster, and **Whole NFC / NFD / NFKC / NFKD Result**, depending on the active form. Each candidate uses the normalized text; the original input remains unchanged. The dialog identifies the active form above the candidates.
-
-![Normalization result Copy](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/sequence-normalization-result-copy.png)
+See [Keybindings](../keybindings/index.md#normalization) for all comparison, result list, and copy dialog controls.

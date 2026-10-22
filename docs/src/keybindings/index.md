@@ -6,7 +6,7 @@ The tables below list the built-in bindings and the command names used in [Custo
 
 ## Global
 
-These bindings apply in every screen, including help.
+Context: `global`. These bindings apply in every screen, including help.
 
 | Command | Keys | Action |
 | --- | --- | --- |
@@ -78,7 +78,7 @@ Context: `bookmarks`.
 | Command | Keys | Action |
 | --- | --- | --- |
 | `quit` | <kbd>q</kbd> | Quit |
-| `close` | <kbd>Esc</kbd> | Close Bookmarks and restore the original Inspector |
+| `close` | <kbd>Esc</kbd> | Close Bookmarks and return to the Inspector |
 | `move_up` | <kbd>k</kbd>, <kbd>Up</kbd> | Select the previous bookmark |
 | `move_down` | <kbd>j</kbd>, <kbd>Down</kbd> | Select the next bookmark |
 | `page_up` | <kbd>Ctrl-U</kbd> | Move up one page |
@@ -157,7 +157,7 @@ Context: `copy_dialog`. These bindings apply to the candidate list opened from S
 | `activate` | <kbd>Enter</kbd> | Copy the selected candidate |
 | `close` | <kbd>Esc</kbd> | Cancel and return to the source screen |
 
-Global <kbd>F1</kbd> opens the shared Copy Dialog help. Closing help restores the candidate selection. Global <kbd>Ctrl-C</kbd> still quits.
+Global <kbd>F1</kbd> opens the shared Copy Dialog help. Global <kbd>Ctrl-C</kbd> still quits.
 
 ## Browse Lists
 

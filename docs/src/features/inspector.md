@@ -1,6 +1,6 @@
 # Inspector
 
-The Inspector shows the properties of one Unicode code point. Open it at startup with a character or code point argument, or select a code point from Search, Browse, or Sequence.
+The Inspector shows the properties of one Unicode code point. Open it at startup with a character or code point argument, or select a code point from Search, Browse, Bookmarks, or Sequence.
 
 ```sh
 sauva あ
@@ -11,7 +11,7 @@ sauva U+2192
 
 ## Properties
 
-The fixed **Properties** heading shows the current display mode. The Inspector starts in **Relevant** mode; press <kbd>a</kbd> to toggle between **Relevant** and **All**. The mode is kept while navigating code points or returning from another screen.
+The Inspector starts in **Relevant** mode.
 
 | Section | Fields |
 | --- | --- |
@@ -45,40 +45,17 @@ Some useful distinctions:
 
 The glyph panel renders the selected code point and shows the font used, when space is available. See [Glyph Preview](../configurations/glyph-preview.md) for font settings and special cases.
 
-## Operations
-
-| Keys | Action |
-| --- | --- |
-| <kbd>h</kbd> / <kbd>l</kbd>, <kbd>Left</kbd> / <kbd>Right</kbd> | Inspect the previous / next code point |
-| <kbd>j</kbd> / <kbd>k</kbd>, <kbd>Down</kbd> / <kbd>Up</kbd> | Select a property |
-| <kbd>[</kbd> / <kbd>]</kbd> | Select the first property of the previous / next section |
-| <kbd>Ctrl-U</kbd> / <kbd>Ctrl-D</kbd> | Move through properties by page |
-| <kbd>g</kbd> / <kbd>G</kbd> | Select the first / last property |
-| <kbd>e</kbd> | Explain the selected property |
-| <kbd>y</kbd> | Copy the selected value |
-| <kbd>a</kbd> | Toggle Relevant / All properties |
-| <kbd>/</kbd> | Open Search |
-| <kbd>p</kbd>, <kbd>r</kbd>, <kbd>b</kbd>, <kbd>c</kbd> | Open Browse at the corresponding level |
-| <kbd>Backspace</kbd> | Return to the original or normalized sequence, when one is open |
-| <kbd>q</kbd>, <kbd>Esc</kbd> | Quit |
-
-Adjacent navigation follows code point values, even when the Inspector was opened from a sequence. <kbd>Backspace</kbd> returns to the sequence's existing selection.
-
-Code point navigation and display mode changes keep the same property selected when possible. If that property is hidden, selection moves to a nearby property, preferring the same section.
-
 ## Property Explanations
 
-Select a property and press <kbd>e</kbd> to read its meaning, possible values or format, notes, and a specification reference. Explanations are bundled with Sauva and can be read offline, including for unavailable values shown in **All** mode.
+Property explanations cover a property's meaning, possible values or format, notes, and a specification reference. Explanations are bundled with Sauva and can be read offline, including for unavailable values shown in **All** mode.
 
 ![Property explanation](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/property-explanation.png)
 
-**Current value** shows the selected code point and its value; it scrolls with the explanation.
-
-Press <kbd>o</kbd> to open the specification in your default browser, or <kbd>y</kbd> to copy its URL. Opening the reference uses the external browser; reading the explanation does not access the network.
+Specification references can be opened in your default browser or copied as URLs.
 
 ## Copying Values
 
-Select a property and press <kbd>y</kbd> to copy it to the system clipboard. Selecting **Character** copies the actual character, including invisible characters and combining marks. Display aids such as a dotted circle or a `<SPACE>` label are not included in that value.
+The selected property value can be copied to the system clipboard. Selecting **Character** copies the actual character, including invisible characters and combining marks. Display aids such as a dotted circle or a `<SPACE>` label are not included in that value.
 
 Unavailable values, such as an encoding for a surrogate, cannot be copied. A status message reports whether copying succeeded or why it failed.
 
@@ -89,3 +66,21 @@ Case mappings copy the displayed code points and names, preserving their order a
 Sauva can inspect the full code point range, including unassigned code points, private-use characters, and surrogates.
 
 Surrogates are not Unicode scalar values, so UTF-8 / UTF-16 encodings and character images are unavailable for them. Empty or invisible characters may have property data without visible pixels in the preview.
+
+## Operations
+
+| Keys | Action |
+| --- | --- |
+| <kbd>Left</kbd> / <kbd>Right</kbd> | Inspect the previous / next code point |
+| <kbd>Up</kbd> / <kbd>Down</kbd> | Select a property |
+| <kbd>e</kbd> | Open the selected property's explanation |
+| <kbd>y</kbd> | Copy the selected property value |
+| <kbd>a</kbd> | Toggle Relevant / All properties |
+| <kbd>/</kbd> | Open Search |
+| <kbd>p</kbd>, <kbd>r</kbd>, <kbd>b</kbd>, <kbd>c</kbd> | Open Browse at the corresponding level |
+| <kbd>m</kbd> / <kbd>M</kbd> | Toggle a bookmark / open Bookmarks |
+| <kbd>Backspace</kbd> | Return to the bookmark list or sequence that opened the Inspector |
+
+Adjacent navigation follows code point values, even when the Inspector was opened from a sequence.
+
+See [Keybindings](../keybindings/index.md#inspector) for all Inspector and property explanation controls.

@@ -1,43 +1,13 @@
 # Config File Format
 
-All configuration settings are optional. The following example contains the default colors, glyph preview settings, and UI settings:
+All configuration settings are optional. Specify only the values you want to change, for example:
 
 ```toml
 [color]
-fg = "reset"
-bg = "reset"
-muted = "darkgray"
-accent = "cyan"
-heading = "blue"
-border = "darkgray"
-match = "yellow"
-key = "yellow"
-link = "blue"
-
-[color.selection]
-fg = "black"
-bg = "cyan"
-
-[color.difference]
-fg = "black"
-bg = "yellow"
-
-[color.status]
-info = "green"
-warning = "yellow"
-
-[glyph_preview]
-font_families = []
-emoji_font_families = []
-fg = "#f5f7fa"
-bg = "#00000000"
-
-[ui]
-input_cursor = "native"
-bookmark_date_format = "%Y-%m-%d %H:%M %Z"
+accent = "magenta"
 ```
 
-Use `sauva --print-default-config` to print the full configuration, including every default keybinding.
+The sections below list the settings and their defaults. Use `sauva --print-default-config` to print the full configuration, including every default keybinding.
 
 The configuration structure is also described by [config.schema.json](https://github.com/lusingander/sauva/blob/master/config.schema.json). Sauva validates the configuration at startup, including terminal cell widths and keybinding conflicts.
 
@@ -94,7 +64,7 @@ bg = "light-blue"
 | `fg` | RGB or RGBA color string | `"#f5f7fa"` |
 | `bg` | RGB or RGBA color string | `"#00000000"` |
 
-Font lists are tried in the order given. Empty or whitespace-only family names are rejected. Image colors accept `#RRGGBB` or `#RRGGBBAA`, including an alpha channel.
+Empty or whitespace-only family names are rejected. Image colors accept `#RRGGBB` or `#RRGGBBAA`, including an alpha channel.
 
 See [Glyph Preview](./glyph-preview.md) for examples and the complete font selection order.
 
@@ -117,7 +87,7 @@ input_cursor = { text = "|" }
 The [strftime format](https://docs.rs/jiff/latest/jiff/fmt/strtime/index.html) for bookmark registration times, shown in the selected entry's details. Times use the local time zone.
 
 - Default: `"%Y-%m-%d %H:%M %Z"`, such as `2026-10-16 14:32 JST`.
-- The format must produce nonempty text without control characters.
+- The format must produce nonempty text without control characters. Invalid formats are rejected at startup.
 
 ```toml
 [ui]
@@ -128,15 +98,4 @@ See [Bookmarks](../features/bookmarks.md) for the list controls and storage loca
 
 ## `keybindings`
 
-Bindings are grouped by screen context. Each command accepts an array of key strings that replaces its built-in binding. An empty array disables the command in that context.
-
-```toml
-[keybindings.global]
-help = ["f2"]
-
-[keybindings.inspector]
-next_code_point = ["l", "right", "n"]
-browse_planes = []
-```
-
-See [Custom Keybindings](../keybindings/custom-keybindings.md) for contexts, command names, key formats, and validation rules.
+Use `[keybindings.<context>]` sections to customize controls. See [Custom Keybindings](../keybindings/custom-keybindings.md) for syntax, examples, and validation rules.

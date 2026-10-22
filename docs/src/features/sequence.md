@@ -4,29 +4,13 @@ Sequence mode analyzes a string as an ordered list of code points, grouped into 
 
 ## Start in Sequence Mode
 
-Pass text containing multiple code points:
+Pass a string to analyze its code points and grapheme clusters:
 
 ```sh
 sauva 'Á👩‍💻'
 ```
 
-Use `--text` to prevent code point notation parsing:
-
-```sh
-sauva --text 41
-sauva --text U+2192
-```
-
-Read text from a pipe or file:
-
-```sh
-printf 'Á👩‍💻' | sauva --text -
-sauva --text - < input.txt
-```
-
-A single code point opens the Inspector. Sequence opens for multiple code points, even when they form a single visible character. Empty input is rejected.
-
-See [Command Line Options](../getting-started/command-line-options.md) for the complete input rules.
+See [Basic Usage](../getting-started/basic-usage.md#analyze-a-string) for literal text and piped input examples, and [Command Line Options](../getting-started/command-line-options.md#input) for input interpretation rules.
 
 ![Sequence and normalization demo](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/demo-sequence.gif)
 
@@ -49,36 +33,37 @@ The accented A in the command above is `U+0041` followed by `U+0301`.
 
 - Each row shows the input position, code point, display representation, and Unicode name.
 - The left gutter numbers grapheme clusters and connects their member code points. A dot marks a cluster containing one code point.
-- The selected cluster is emphasized in the gutter.
-- The heading shows code point and grapheme counts, abbreviated as `CP` and `GC` in compact layouts.
 - When space is available, the selection panel shows the selected code point's properties and position within its cluster. The glyph image renders that individual code point.
 
 Input order, repeated characters, spaces, and newlines are preserved. Labels and dotted circles make otherwise hard-to-see characters visible in the list.
 
-## Operations
+## Inspect a Code Point
 
-| Keys | Action |
-| --- | --- |
-| <kbd>j</kbd> / <kbd>k</kbd>, <kbd>Down</kbd> / <kbd>Up</kbd> | Select a code point |
-| <kbd>[</kbd> / <kbd>]</kbd> | Select the first code point of the previous / next grapheme cluster |
-| <kbd>g</kbd> / <kbd>G</kbd> | Select the first / last code point |
-| <kbd>Enter</kbd> | Open the selected code point in the Inspector |
-| <kbd>n</kbd> | Compare normalization forms |
-| <kbd>Y</kbd> | Open copy candidates |
-| <kbd>q</kbd>, <kbd>Esc</kbd> | Quit |
+Open a code point in the [Inspector](./inspector.md) to read its properties.
 
 ![Sequence Inspector](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/sequence-inspector.png)
 
-<kbd>Backspace</kbd> in the Inspector returns to the sequence. From Sequence, press <kbd>n</kbd> to open [Normalization](./normalization.md).
-
 ## Copying
 
-Press <kbd>Y</kbd> to choose what to copy:
+The copy dialog offers three candidates:
 
 - **Code Point**: the selected code point as text.
 - **Grapheme Cluster**: the entire cluster containing the selected code point, including members outside the visible list.
 - **Whole Input**: the original input in its original order.
 
-Select a candidate with <kbd>j</kbd> / <kbd>k</kbd> or the arrow keys, then press <kbd>Enter</kbd> to copy. <kbd>Esc</kbd> cancels. The preview shows the candidate's text and code point notation; labels, dotted circles, and ellipses are display aids and are not copied. Whitespace, newlines, and invisible characters are preserved exactly.
+Labels, dotted circles, and ellipses are display aids and are not copied. Whitespace, newlines, and invisible characters are preserved exactly.
 
 ![Sequence Copy](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/sequence-copy.png)
+
+## Operations
+
+| Keys | Action |
+| --- | --- |
+| <kbd>Up</kbd> / <kbd>Down</kbd> | Select a code point |
+| <kbd>Enter</kbd> | Open the selected code point in the Inspector |
+| <kbd>n</kbd> | Compare [normalization forms](./normalization.md) |
+| <kbd>Y</kbd> | Open the copy dialog |
+
+<kbd>Backspace</kbd> in the Inspector returns to Sequence.
+
+See [Keybindings](../keybindings/index.md#sequence) for all Sequence and copy dialog controls.

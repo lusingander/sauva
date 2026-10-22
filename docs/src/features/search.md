@@ -6,6 +6,8 @@ Press <kbd>/</kbd> in the Inspector to search by character, code point, Unicode 
 
 ## Queries
 
+Results update as the query changes.
+
 | Query | Behavior |
 | --- | --- |
 | `あ` | Find the literal character |
@@ -34,10 +36,9 @@ A code point appears only once even if both its name and an alias match. Matchin
 
 | Keys | Action |
 | --- | --- |
-| <kbd>Up</kbd> / <kbd>Down</kbd>, <kbd>Ctrl-P</kbd> / <kbd>Ctrl-N</kbd> | Select the previous / next result |
+| Character keys | Edit the query |
+| <kbd>Up</kbd> / <kbd>Down</kbd> | Select a result |
 | <kbd>Enter</kbd> | Open the selected result in the Inspector |
-| <kbd>Esc</kbd> | Close Search |
-| <kbd>F1</kbd> | Open contextual help |
-| <kbd>Ctrl-C</kbd> | Quit |
+| <kbd>Esc</kbd> | Close Search and return to the Inspector |
 
-Character keys edit the query, so <kbd>j</kbd>, <kbd>k</kbd>, and <kbd>q</kbd> are entered as text. Search results update as the query changes. Reopening Search keeps the previous query and selection.
+See [Keybindings](../keybindings/index.md#search) for all Search controls.
