@@ -39,14 +39,15 @@ Blocks have different sizes and may leave gaps between them.
 
 ![Block code point browser](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/block-code-points.png)
 
+Code point grids include unassigned and special code points, so an entry may have no visible glyph. The Inspector provides the available property details for each entry.
+
 ## Operations
 
-- Use <kbd>j</kbd> / <kbd>k</kbd> or <kbd>Down</kbd> / <kbd>Up</kbd> in lists.
-- Use <kbd>h</kbd>, <kbd>j</kbd>, <kbd>k</kbd>, <kbd>l</kbd> or the arrow keys in a code point grid.
-- Press <kbd>Enter</kbd> to open the next level or inspect the selected code point.
-
-<kbd>Backspace</kbd> returns to the previous browse level. At the level where browsing was opened, it returns to the Inspector. <kbd>Esc</kbd> cancels browsing immediately and returns to the Inspector without changing its selected code point. Press <kbd>q</kbd> to quit.
+| Keys | Action |
+| --- | --- |
+| Arrow keys | Select an item or code point |
+| <kbd>Enter</kbd> | Open the next level or inspect the selected code point |
+| <kbd>Backspace</kbd> | Return to the previous browse level, or to the Inspector at the starting level |
+| <kbd>Esc</kbd> | Close Browse and return to the Inspector |
 
 See [Keybindings](../keybindings/index.md#browse-lists) for all Browse controls.
-
-Code point grids include unassigned and special code points, so an entry may have no visible glyph. The Inspector provides the available property details for each entry.
