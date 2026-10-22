@@ -42,12 +42,22 @@ sauva --graphics off
 
 Sauva does not bundle fonts. The available glyphs and their appearance depend on the fonts installed on the system.
 
+Additional fonts are optional. If a character has no glyph preview, installing a font that covers it may help. Useful starting points include:
+
+| Fonts | Useful for |
+| --- | --- |
+| [Noto Sans Symbols and Noto Sans Symbols 2](https://notofonts.github.io/noto-docs/website/use/#noto-families) | Symbols, arrows, and dingbats |
+| [Noto Sans CJK](https://github.com/notofonts/noto-cjk) | Chinese, Japanese, and Korean characters |
+| [Noto Color Emoji](https://github.com/googlefonts/noto-emoji) | Color emoji on Linux |
+
+Coverage varies by font and version. Install the fonts needed for the characters you want to explore.
+
 - macOS uses Core Text to find system fonts.
 - Linux uses Fontconfig when available. If Fontconfig cannot be loaded, Sauva uses a best-effort font database lookup.
 
 Preferred text and emoji fonts can be configured separately. See [Glyph Preview](../configurations/glyph-preview.md) for the selection order and settings.
 
-The font used for a glyph image can differ from the terminal's own text font. Terminal-rendered characters and the image preview can therefore look different.
+Glyph preview fonts are selected independently of the terminal's text font, so terminal-rendered characters and glyph images can look different. The glyph preview settings do not change the terminal's text font.
 
 ## Layout
 

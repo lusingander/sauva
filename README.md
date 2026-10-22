@@ -86,6 +86,8 @@ Customize colors, fonts, and keybindings in the [configuration file](https://lus
 
 Sauva supports macOS and Linux. Glyph previews are supported in kitty and Ghostty. Text features remain available without glyph images. See [Compatibility](https://lusingander.github.io/sauva/getting-started/compatibility.html) for details.
 
+Glyph previews use fonts installed on your system. To extend symbol coverage, you can optionally install Noto Sans Symbols 2. See [Fonts](https://lusingander.github.io/sauva/getting-started/compatibility.html#fonts) for more suggestions.
+
 ## Contributing
 
 Please review [CONTRIBUTING.md](CONTRIBUTING.md) before opening an issue or pull request.
