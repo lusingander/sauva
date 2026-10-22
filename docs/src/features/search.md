@@ -40,4 +40,4 @@ A code point appears only once even if both its name and an alias match. Matchin
 | <kbd>F1</kbd> | Open contextual help |
 | <kbd>Ctrl-C</kbd> | Quit |
 
-Character keys edit the query, so <kbd>j</kbd>, <kbd>k</kbd>, and <kbd>q</kbd> are entered as text. Search results update as the query changes. Reopening Search keeps the previous query and selection.
+Character keys edit the query, so <kbd>j</kbd>, <kbd>k</kbd>, and <kbd>q</kbd> are entered as text. Search results update as the query changes.
