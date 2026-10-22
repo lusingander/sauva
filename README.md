@@ -11,14 +11,10 @@ Terminal Unicode Explorer 🪄
 
 Sauva is a terminal application for searching and browsing Unicode code points. It shows Unicode properties and a glyph preview in a responsive TUI.
 
-- Inspect Unicode properties, encodings, and decomposition mappings.
-- Read property explanations and follow specification links.
-- Search by character, code point, Unicode name, or formal name alias.
-- Browse planes, ranges, blocks, and code points.
-- Bookmark code points and revisit them across sessions.
-- Analyze strings by code point and grapheme cluster in Sequence mode.
-- Compare NFC, NFD, NFKC, and NFKD normalization forms.
-- Customize colors, glyph preview fonts, and keybindings.
+- Inspect Unicode properties, encodings, and glyph previews.
+- Search, browse, and bookmark code points.
+- Analyze strings by code point and grapheme cluster, and compare Unicode normalization forms.
+- Customize colors, fonts, and keybindings.
 
 The bundled data is based on Unicode 17.0.0. See [Features](https://lusingander.github.io/sauva/features/) for details and screenshots.
 
