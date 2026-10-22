@@ -56,13 +56,13 @@ The original input is preserved throughout these operations.
 | Keys | In form comparison | In a result list |
 | --- | --- | --- |
 | <kbd>j</kbd> / <kbd>k</kbd>, <kbd>Down</kbd> / <kbd>Up</kbd> | Select a form | Select a code point |
-| <kbd>[</kbd> / <kbd>]</kbd> | — | Select the first code point of the previous / next grapheme cluster |
-| <kbd>g</kbd> / <kbd>G</kbd> | Select NFC / NFKD | Select the first / last code point |
 | <kbd>Enter</kbd> | Open the selected result | Inspect the selected code point |
 | <kbd>y</kbd> | Copy the exact normalized text | — |
 | <kbd>Y</kbd> | — | Open copy candidates |
 | <kbd>Backspace</kbd>, <kbd>Esc</kbd> | Return to the original sequence | Return to form comparison |
 | <kbd>q</kbd> | Quit | Quit |
+
+See [Keybindings](../keybindings/index.md#normalization) for all comparison and result list controls.
 
 Copying includes whitespace and newlines in the normalized result. Select a form and press <kbd>y</kbd> in the comparison screen to copy the whole result.
 

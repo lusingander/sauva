@@ -37,7 +37,7 @@ A code point appears only once even if both its name and an alias match. Matchin
 | <kbd>Up</kbd> / <kbd>Down</kbd>, <kbd>Ctrl-P</kbd> / <kbd>Ctrl-N</kbd> | Select the previous / next result |
 | <kbd>Enter</kbd> | Open the selected result in the Inspector |
 | <kbd>Esc</kbd> | Close Search |
-| <kbd>F1</kbd> | Open contextual help |
-| <kbd>Ctrl-C</kbd> | Quit |
 
 Character keys edit the query, so <kbd>j</kbd>, <kbd>k</kbd>, and <kbd>q</kbd> are entered as text. Search results update as the query changes.
+
+See [Keybindings](../keybindings/index.md#search) for all Search controls.

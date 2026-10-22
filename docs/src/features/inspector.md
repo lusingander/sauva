@@ -1,6 +1,6 @@
 # Inspector
 
-The Inspector shows the properties of one Unicode code point. Open it at startup with a character or code point argument, or select a code point from Search, Browse, or Sequence.
+The Inspector shows the properties of one Unicode code point. Open it at startup with a character or code point argument, or select a code point from Search, Browse, Bookmarks, or Sequence.
 
 ```sh
 sauva あ
@@ -51,18 +51,18 @@ The glyph panel renders the selected code point and shows the font used, when sp
 | --- | --- |
 | <kbd>h</kbd> / <kbd>l</kbd>, <kbd>Left</kbd> / <kbd>Right</kbd> | Inspect the previous / next code point |
 | <kbd>j</kbd> / <kbd>k</kbd>, <kbd>Down</kbd> / <kbd>Up</kbd> | Select a property |
-| <kbd>[</kbd> / <kbd>]</kbd> | Select the first property of the previous / next section |
-| <kbd>Ctrl-U</kbd> / <kbd>Ctrl-D</kbd> | Move through properties by page |
-| <kbd>g</kbd> / <kbd>G</kbd> | Select the first / last property |
 | <kbd>e</kbd> | Explain the selected property |
 | <kbd>y</kbd> | Copy the selected value |
 | <kbd>a</kbd> | Toggle Relevant / All properties |
 | <kbd>/</kbd> | Open Search |
 | <kbd>p</kbd>, <kbd>r</kbd>, <kbd>b</kbd>, <kbd>c</kbd> | Open Browse at the corresponding level |
-| <kbd>Backspace</kbd> | Return to the original or normalized sequence, when one is open |
+| <kbd>m</kbd> / <kbd>M</kbd> | Toggle a bookmark / open Bookmarks |
+| <kbd>Backspace</kbd> | Return to the bookmark list or sequence that opened the Inspector |
 | <kbd>q</kbd>, <kbd>Esc</kbd> | Quit |
 
 Adjacent navigation follows code point values, even when the Inspector was opened from a sequence.
+
+See [Keybindings](../keybindings/index.md#inspector) for all Inspector controls.
 
 ## Property Explanations
 

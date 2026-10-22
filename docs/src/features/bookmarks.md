@@ -13,8 +13,6 @@ Press <kbd>M</kbd> in the Inspector to open Bookmarks.
 | Keys | Action |
 | --- | --- |
 | <kbd>j</kbd> / <kbd>k</kbd>, <kbd>Down</kbd> / <kbd>Up</kbd> | Select a bookmark |
-| <kbd>Ctrl-U</kbd> / <kbd>Ctrl-D</kbd> | Move up / down one page |
-| <kbd>g</kbd> / <kbd>G</kbd> | Select the first / last bookmark |
 | <kbd>Enter</kbd> | Inspect the selected code point |
 | <kbd>m</kbd> | Remove the selected bookmark |
 | <kbd>s</kbd> | Switch sort order |
@@ -23,7 +21,7 @@ Press <kbd>M</kbd> in the Inspector to open Bookmarks.
 
 Bookmarks can be sorted by registration time or code point, in ascending or descending order.
 
-Press <kbd>Backspace</kbd> in the Inspector to return to the bookmark list. Keybindings can be changed in the `inspector` and `bookmarks` contexts; see [Custom Keybindings](../keybindings/custom-keybindings.md).
+Press <kbd>Backspace</kbd> in the Inspector to return to the bookmark list. See [Keybindings](../keybindings/index.md#bookmarks) for all Bookmarks controls.
 
 ## Registration Time
 

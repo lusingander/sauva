@@ -59,15 +59,14 @@ Input order, repeated characters, spaces, and newlines are preserved. Labels and
 | --- | --- |
 | <kbd>j</kbd> / <kbd>k</kbd>, <kbd>Down</kbd> / <kbd>Up</kbd> | Select a code point |
 | <kbd>[</kbd> / <kbd>]</kbd> | Select the first code point of the previous / next grapheme cluster |
-| <kbd>g</kbd> / <kbd>G</kbd> | Select the first / last code point |
 | <kbd>Enter</kbd> | Open the selected code point in the Inspector |
-| <kbd>n</kbd> | Compare normalization forms |
+| <kbd>n</kbd> | Compare [normalization forms](./normalization.md) |
 | <kbd>Y</kbd> | Open copy candidates |
 | <kbd>q</kbd>, <kbd>Esc</kbd> | Quit |
 
 ![Sequence Inspector](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/sequence-inspector.png)
 
-<kbd>Backspace</kbd> in the Inspector returns to the sequence. From Sequence, press <kbd>n</kbd> to open [Normalization](./normalization.md).
+<kbd>Backspace</kbd> in the Inspector returns to the sequence. See [Keybindings](../keybindings/index.md#sequence) for all Sequence controls.
 
 ## Copying
 
