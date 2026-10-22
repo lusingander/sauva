@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use tui_input::backend::crossterm::to_input_request;
 use umbra::optional;
 
-const ALL_COMMANDS: [Command; 34] = [
+const ALL_COMMANDS: [Command; 35] = [
     Command::Quit,
     Command::Help,
     Command::Close,
@@ -31,6 +31,7 @@ const ALL_COMMANDS: [Command; 34] = [
     Command::OpenSearch,
     Command::OpenBookmarks,
     Command::ToggleBookmark,
+    Command::SwitchSort,
     Command::BrowsePlanes,
     Command::BrowseRanges,
     Command::BrowseBlocks,
@@ -108,6 +109,7 @@ pub enum Command {
     OpenSearch,
     OpenBookmarks,
     ToggleBookmark,
+    SwitchSort,
     BrowsePlanes,
     BrowseRanges,
     BrowseBlocks,
@@ -167,6 +169,7 @@ impl Command {
             Self::OpenSearch => "search",
             Self::OpenBookmarks => "bookmarks",
             Self::ToggleBookmark => "toggle_bookmark",
+            Self::SwitchSort => "switch_sort",
             Self::BrowsePlanes => "browse_planes",
             Self::BrowseRanges => "browse_ranges",
             Self::BrowseBlocks => "browse_blocks",
@@ -463,6 +466,7 @@ keybinding_context!(BookmarkKeybindings, Context::Bookmarks, {
     last => (Command::Last, ["G"]),
     activate => (Command::Activate, ["enter"]),
     toggle_bookmark => (Command::ToggleBookmark, ["m"]),
+    switch_sort => (Command::SwitchSort, ["s"]),
 });
 
 keybinding_context!(SequenceKeybindings, Context::Sequence, {
@@ -1023,6 +1027,7 @@ mod tests {
 
                 [bookmarks]
                 activate = ['l']
+                switch_sort = ['o']
             "#,
         )
         .unwrap();
@@ -1040,11 +1045,16 @@ mod tests {
             keymap.resolve(Context::Bookmarks, plain('l')),
             Some(Command::Activate)
         );
+        assert_eq!(
+            keymap.resolve(Context::Bookmarks, plain('o')),
+            Some(Command::SwitchSort)
+        );
+        assert_eq!(keymap.resolve(Context::Bookmarks, plain('s')), None);
         assert!(matches!(
             configured(
                 r#"
                     [bookmarks]
-                    move_down = ['ctrl-c']
+                    switch_sort = ['ctrl-c']
                 "#,
             ),
             Err(KeybindingError::GlobalConflict {

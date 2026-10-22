@@ -399,7 +399,7 @@ mod tests {
     #[rstest::rstest]
     #[case(100, 30)]
     #[case(60, 16)]
-    fn bookmark_details_show_the_configured_date_without_a_list_date_column(
+    fn bookmark_details_and_sort_labels_fit_the_list_layout(
         #[case] width: u16,
         #[case] height: u16,
     ) {
@@ -437,6 +437,16 @@ mod tests {
         assert!(text.contains("Added at"));
         assert!(text.contains("RIGHTWARDS ARROW"));
         insta::assert_snapshot!(format!("bookmarks_{width}x{height}"), text);
+        for label in [
+            "Oldest first",
+            "Code point asc",
+            "Code point desc",
+            "Newest first",
+        ] {
+            update(&mut state, Action::SwitchBookmarkSort);
+            let text = render_to_text(&state, width, height);
+            assert!(text.lines().nth(2).unwrap().contains(label), "{text}");
+        }
     }
 
     #[test]

@@ -87,6 +87,7 @@ Context: `bookmarks`.
 | `last` | <kbd>G</kbd> | Select the last bookmark |
 | `activate` | <kbd>Enter</kbd> | Inspect the selected code point |
 | `toggle_bookmark` | <kbd>m</kbd> | Remove the selected bookmark |
+| `switch_sort` | <kbd>s</kbd> | Switch sort order |
 
 Use <kbd>Backspace</kbd> in the Inspector to return to the list. See [Bookmarks](../features/bookmarks.md) for registration times and storage.
 

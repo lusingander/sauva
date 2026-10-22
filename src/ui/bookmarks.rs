@@ -34,7 +34,7 @@ pub fn render(
         frame,
         layout.list,
         "Bookmarks",
-        Some("Newest first"),
+        Some(bookmarks.sort().label()),
         color_theme,
     );
     let visible = bookmarks.visible_range();

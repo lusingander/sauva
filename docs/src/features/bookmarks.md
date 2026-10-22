@@ -6,7 +6,7 @@ Save code points to revisit them across sessions. In the Inspector, press <kbd>m
 
 ## Bookmark List
 
-Press <kbd>M</kbd> in the Inspector to open Bookmarks. Entries show the character, code point, and Unicode name, ordered by registration time with the newest first. The selected entry's details include its registration time; narrow terminals show these details below the list.
+Press <kbd>M</kbd> in the Inspector to open Bookmarks. Entries show the character, code point, and Unicode name. The selected entry's details include its registration time; narrow terminals show these details below the list.
 
 ![Bookmark list](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/bookmarks.png)
 
@@ -17,8 +17,11 @@ Press <kbd>M</kbd> in the Inspector to open Bookmarks. Entries show the characte
 | <kbd>g</kbd> / <kbd>G</kbd> | Select the first / last bookmark |
 | <kbd>Enter</kbd> | Inspect the selected code point |
 | <kbd>m</kbd> | Remove the selected bookmark |
+| <kbd>s</kbd> | Switch sort order |
 | <kbd>Esc</kbd> | Close Bookmarks and restore the Inspector where it was opened |
 | <kbd>q</kbd> | Quit |
+
+Bookmarks can be sorted by registration time or code point, in ascending or descending order.
 
 Press <kbd>Backspace</kbd> in the Inspector to return to the bookmark list. Closing the list restores the original Inspector, including its return path to Sequence when one is open. Keybindings can be changed in the `inspector` and `bookmarks` contexts; see [Custom Keybindings](../keybindings/custom-keybindings.md).
 

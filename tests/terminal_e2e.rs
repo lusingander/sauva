@@ -194,16 +194,27 @@ fn bookmarks_persist_and_show_configured_dates_and_restore_the_source_inspector(
         screen.row_text(0).contains("2 bookmarks · U+2192")
             && screen.contains("02/01/2020 12:04:05 JST")
     })?;
+    terminal.send(Key::Char('s'))?;
+    terminal.wait_until(|screen| {
+        screen.row_text(2).contains("Oldest first")
+            && screen.row_text(0).contains("2 bookmarks · U+2192")
+    })?;
     terminal.send(Key::F(1))?;
     terminal.wait_until(|screen| screen.contains("Keybindings · Bookmarks"))?;
     terminal.send(Key::F(1))?;
-    terminal.wait_until(|screen| screen.row_text(0).contains("2 bookmarks · U+2192"))?;
+    terminal.wait_until(|screen| {
+        screen.row_text(0).contains("2 bookmarks · U+2192")
+            && screen.row_text(2).contains("Oldest first")
+    })?;
     terminal.send(Key::Enter)?;
     terminal.wait_until(|screen| {
         screen.row_text(0).contains("Bookmarks / Inspector") && screen.contains("RIGHTWARDS ARROW")
     })?;
     terminal.send(Key::Backspace)?;
-    terminal.wait_until(|screen| screen.row_text(0).contains("2 bookmarks · U+2192"))?;
+    terminal.wait_until(|screen| {
+        screen.row_text(0).contains("2 bookmarks · U+2192")
+            && screen.row_text(2).contains("Oldest first")
+    })?;
     resize_and_wait(&mut terminal, 60, 16, |screen| {
         footer_contains(screen, &["Esc Close"]) && screen.contains("02/01/2020 12:04:05 JST")
     })?;
@@ -218,12 +229,24 @@ fn bookmarks_persist_and_show_configured_dates_and_restore_the_source_inspector(
             && screen.row_text(0).contains("U+0041  * Bookmarked")
             && !footer_contains(screen, &["Esc Close"])
     })?;
+    terminal.send(Key::Char('M'))?;
+    terminal.wait_until(|screen| {
+        screen.row_text(0).contains("1 bookmark · U+0041")
+            && screen.row_text(2).contains("Oldest first")
+    })?;
+    terminal.send(Key::Esc)?;
+    terminal.wait_until(|screen| {
+        screen.row_text(0).contains("Inspector") && !footer_contains(screen, &["Esc Close"])
+    })?;
     quit(&mut terminal)?;
 
     let mut restored = launch()?;
     restored.wait_until(|screen| screen.row_text(0).contains("U+0041  * Bookmarked"))?;
     restored.send(Key::Char('M'))?;
-    restored.wait_until(|screen| screen.row_text(0).contains("1 bookmark · U+0041"))?;
+    restored.wait_until(|screen| {
+        screen.row_text(0).contains("1 bookmark · U+0041")
+            && screen.row_text(2).contains("Newest first")
+    })?;
     restored.send(Key::Char('m'))?;
     restored.wait_until(|screen| {
         screen.contains("No bookmarks yet") && screen.contains("Removed bookmark U+0041")
@@ -238,6 +261,76 @@ fn bookmarks_persist_and_show_configured_dates_and_restore_the_source_inspector(
     let file: toml::Value =
         toml::from_str(&fs::read_to_string(data.join("bookmarks.toml"))?).unwrap();
     assert!(file["bookmarks"].as_array().unwrap().is_empty());
+    Ok(())
+}
+
+#[test]
+fn bookmark_sort_switches_with_a_custom_key_without_writing_the_file() -> termlens::Result<()> {
+    let directory = tempdir()?;
+    let config = directory.path().join("config.toml");
+    fs::write(
+        &config,
+        r#"
+            [keybindings.bookmarks]
+            switch_sort = ['o']
+        "#,
+    )?;
+    let data = directory.path().join("sauva");
+    fs::create_dir(&data)?;
+    let path = data.join("bookmarks.toml");
+    let source = r#"
+        [[bookmarks]]
+        code_point = 'U+0042'
+        added_at = '2020-01-03T00:00:00Z'
+
+        [[bookmarks]]
+        code_point = 'U+0043'
+        added_at = '2020-01-02T00:00:00Z'
+
+        [[bookmarks]]
+        code_point = 'U+0041'
+        added_at = '2020-01-01T00:00:00Z'
+    "#;
+    fs::write(&path, source)?;
+    let mut terminal = termlens::bin!(
+        "sauva",
+        size(100, 30),
+        env("SAUVA_CONFIG_FILE", &config),
+        env("XDG_DATA_HOME", directory.path()),
+        args(["--graphics", "off"])
+    )?;
+    terminal.wait_until(|screen| screen.contains("LATIN CAPITAL LETTER A"))?;
+    terminal.send(Key::Char('M'))?;
+    terminal.wait_until(|screen| {
+        screen.row_text(0).contains("3 bookmarks · U+0041")
+            && screen.row_text(2).contains("Newest first")
+            && footer_contains(screen, &["o Sort"])
+    })?;
+    terminal.send(Key::F(1))?;
+    terminal.wait_until(|screen| {
+        screen.contains("Keybindings · Bookmarks") && screen.contains("Switch sort order")
+    })?;
+    terminal.send(Key::Esc)?;
+    terminal.wait_until(|screen| {
+        screen.row_text(2).contains("Newest first") && footer_contains(screen, &["o Sort"])
+    })?;
+    for (label, first) in [
+        ("Oldest first", "U+0041"),
+        ("Code point asc", "U+0041"),
+        ("Code point desc", "U+0043"),
+        ("Newest first", "U+0042"),
+    ] {
+        terminal.send(Key::Char('o'))?;
+        let screen = terminal.snapshot_after(|screen| {
+            screen.row_text(2).contains(label) && screen.row_text(3).contains(first)
+        })?;
+        assert!(
+            screen.row_text(0).contains("3 bookmarks · U+0041"),
+            "{screen}"
+        );
+    }
+    quit(&mut terminal)?;
+    assert_eq!(fs::read_to_string(&path)?, source);
     Ok(())
 }
 

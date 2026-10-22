@@ -153,6 +153,7 @@ fn action_for_command(context: Context, command: Command) -> Option<Action> {
         (X::Bookmarks, C::First) => Some(Action::MoveBookmarks(BookmarkMove::First)),
         (X::Bookmarks, C::Last) => Some(Action::MoveBookmarks(BookmarkMove::Last)),
         (X::Bookmarks, C::Activate) => Some(Action::InspectBookmark),
+        (X::Bookmarks, C::SwitchSort) => Some(Action::SwitchBookmarkSort),
         (X::Inspector, C::BrowsePlanes) => Some(Action::OpenBrowser(BrowseLevel::Plane)),
         (X::Inspector, C::BrowseRanges) => Some(Action::OpenBrowser(BrowseLevel::Range)),
         (X::Inspector, C::BrowseBlocks) => Some(Action::OpenBrowser(BrowseLevel::Block)),
@@ -211,7 +212,7 @@ mod tests {
     }
 
     #[test]
-    fn bookmark_keys_are_scoped_and_help_and_key_repeat_do_not_toggle_bookmarks() {
+    fn bookmark_keys_are_scoped_and_help_and_key_repeat_do_not_change_bookmarks() {
         let key = |character| KeyEvent::new(KeyCode::Char(character), KeyModifiers::NONE);
         let mut state = AppState::default();
         state.set_bookmarks(vec![crate::bookmarks::Bookmark::new(
@@ -226,6 +227,7 @@ mod tests {
             action_for_key(&state, key('M')),
             Some(Action::OpenBookmarks)
         );
+        assert_eq!(action_for_key(&state, key('s')), None);
         let mut repeat = key('m');
         repeat.kind = KeyEventKind::Repeat;
         assert_eq!(action_for_key(&state, repeat), None);
@@ -238,6 +240,16 @@ mod tests {
             action_for_key(&state, key('m')),
             Some(Action::ToggleBookmark)
         );
+        assert_eq!(
+            action_for_key(&state, key('s')),
+            Some(Action::SwitchBookmarkSort)
+        );
+        let mut repeat = key('s');
+        repeat.kind = KeyEventKind::Repeat;
+        assert_eq!(action_for_key(&state, repeat), None);
+        crate::app::update(&mut state, Action::ToggleHelp);
+        assert_eq!(action_for_key(&state, key('s')), None);
+        crate::app::update(&mut state, Action::CloseHelp);
         crate::app::update(&mut state, Action::InspectBookmark);
         assert_eq!(
             action_for_key(
@@ -251,6 +263,10 @@ mod tests {
         assert_eq!(
             action_for_key(&search_state(), key('M')),
             Some(Action::EditSearch(InputRequest::InsertChar('M')))
+        );
+        assert_eq!(
+            action_for_key(&search_state(), key('s')),
+            Some(Action::EditSearch(InputRequest::InsertChar('s')))
         );
     }
 
