@@ -89,18 +89,15 @@ For input interpretation, stdin handling, and graphics modes, see [Command Line 
 
 | Key | Description |
 | --- | --- |
+| Arrow keys | Move the selection or inspect adjacent code points |
+| <kbd>Enter</kbd> | Open the selected item or inspect a code point |
+| <kbd>Backspace</kbd> | Go back in Browse or return from the Inspector to its source list |
+| <kbd>Esc</kbd> | Close the current view; quit from the Inspector or Sequence |
+| <kbd>/</kbd> | Open Search from the Inspector |
 | <kbd>F1</kbd> | Open or close contextual help |
 | <kbd>Ctrl-C</kbd> | Quit from any view |
-| <kbd>j</kbd> / <kbd>k</kbd> or arrow keys | Move the selection; use <kbd>Up</kbd> / <kbd>Down</kbd> in Search |
-| <kbd>/</kbd> | Open Search from the Inspector |
-| <kbd>m</kbd> / <kbd>M</kbd> | Toggle a bookmark / open Bookmarks from the Inspector |
-| <kbd>p</kbd>, <kbd>r</kbd>, <kbd>b</kbd>, <kbd>c</kbd> | Open Browse from the Inspector |
-| <kbd>Enter</kbd> | Open the selected item or inspect a code point |
-| <kbd>Backspace</kbd> | Go back in Browse or return from the Inspector to its Sequence or Bookmarks |
-| <kbd>y</kbd> | Copy the selected Inspector value or normalization result |
-| <kbd>n</kbd> | Compare normalization forms from Sequence |
 
-See [Keybindings](https://lusingander.github.io/sauva/keybindings/) for all controls and [Custom Keybindings](https://lusingander.github.io/sauva/keybindings/custom-keybindings.html) to customize them.
+See [Keybindings](https://lusingander.github.io/sauva/keybindings/) for all controls.
 
 ### Config
 
