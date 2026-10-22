@@ -37,29 +37,33 @@ The accented A in the command above is `U+0041` followed by `U+0301`.
 
 Input order, repeated characters, spaces, and newlines are preserved. Labels and dotted circles make otherwise hard-to-see characters visible in the list.
 
-## Operations
+## Inspect a Code Point
 
-| Keys | Action |
-| --- | --- |
-| <kbd>j</kbd> / <kbd>k</kbd>, <kbd>Down</kbd> / <kbd>Up</kbd> | Select a code point |
-| <kbd>[</kbd> / <kbd>]</kbd> | Select the first code point of the previous / next grapheme cluster |
-| <kbd>Enter</kbd> | Open the selected code point in the Inspector |
-| <kbd>n</kbd> | Compare [normalization forms](./normalization.md) |
-| <kbd>Y</kbd> | Open copy candidates |
-| <kbd>q</kbd>, <kbd>Esc</kbd> | Quit |
+Open a code point in the [Inspector](./inspector.md) to read its properties.
 
 ![Sequence Inspector](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/sequence-inspector.png)
 
-<kbd>Backspace</kbd> in the Inspector returns to the sequence. See [Keybindings](../keybindings/index.md#sequence) for all Sequence controls.
-
 ## Copying
 
-Press <kbd>Y</kbd> to choose what to copy:
+The copy dialog offers three candidates:
 
 - **Code Point**: the selected code point as text.
 - **Grapheme Cluster**: the entire cluster containing the selected code point, including members outside the visible list.
 - **Whole Input**: the original input in its original order.
 
-Select a candidate with <kbd>j</kbd> / <kbd>k</kbd> or the arrow keys, then press <kbd>Enter</kbd> to copy. <kbd>Esc</kbd> cancels. The preview shows the candidate's text and code point notation; labels, dotted circles, and ellipses are display aids and are not copied. Whitespace, newlines, and invisible characters are preserved exactly.
+Labels, dotted circles, and ellipses are display aids and are not copied. Whitespace, newlines, and invisible characters are preserved exactly.
 
 ![Sequence Copy](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/sequence-copy.png)
+
+## Operations
+
+| Keys | Action |
+| --- | --- |
+| <kbd>Up</kbd> / <kbd>Down</kbd> | Select a code point |
+| <kbd>Enter</kbd> | Open the selected code point in the Inspector |
+| <kbd>n</kbd> | Compare [normalization forms](./normalization.md) |
+| <kbd>Y</kbd> | Open the copy dialog |
+
+<kbd>Backspace</kbd> in the Inspector returns to Sequence.
+
+See [Keybindings](../keybindings/index.md#sequence) for all Sequence and copy dialog controls.
