@@ -1,43 +1,13 @@
 # Config File Format
 
-All configuration settings are optional. The following example contains the default colors, glyph preview settings, and UI settings:
+All configuration settings are optional. Specify only the values you want to change, for example:
 
 ```toml
 [color]
-fg = "reset"
-bg = "reset"
-muted = "darkgray"
-accent = "cyan"
-heading = "blue"
-border = "darkgray"
-match = "yellow"
-key = "yellow"
-link = "blue"
-
-[color.selection]
-fg = "black"
-bg = "cyan"
-
-[color.difference]
-fg = "black"
-bg = "yellow"
-
-[color.status]
-info = "green"
-warning = "yellow"
-
-[glyph_preview]
-font_families = []
-emoji_font_families = []
-fg = "#f5f7fa"
-bg = "#00000000"
-
-[ui]
-input_cursor = "native"
-bookmark_date_format = "%Y-%m-%d %H:%M %Z"
+accent = "magenta"
 ```
 
-Use `sauva --print-default-config` to print the full configuration, including every default keybinding.
+The sections below list the settings and their defaults. Use `sauva --print-default-config` to print the full configuration, including every default keybinding.
 
 The configuration structure is also described by [config.schema.json](https://github.com/lusingander/sauva/blob/master/config.schema.json). Sauva validates the configuration at startup, including terminal cell widths and keybinding conflicts.
 
