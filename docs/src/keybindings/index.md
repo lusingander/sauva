@@ -157,7 +157,7 @@ Context: `copy_dialog`. These bindings apply to the candidate list opened from S
 | `activate` | <kbd>Enter</kbd> | Copy the selected candidate |
 | `close` | <kbd>Esc</kbd> | Cancel and return to the source screen |
 
-Global <kbd>F1</kbd> opens the shared Copy Dialog help. Closing help restores the candidate selection. Global <kbd>Ctrl-C</kbd> still quits.
+Global <kbd>F1</kbd> opens the shared Copy Dialog help. Global <kbd>Ctrl-C</kbd> still quits.
 
 ## Browse Lists
 
