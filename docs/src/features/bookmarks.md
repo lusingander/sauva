@@ -38,6 +38,6 @@ The format must produce nonempty text without control characters. Invalid format
 
 ## Storage
 
-Bookmarks are saved in `$XDG_DATA_HOME/sauva/bookmarks.toml`, or `~/.local/share/sauva/bookmarks.toml` when `XDG_DATA_HOME` is unset or empty. This file is separate from the configuration. Adding or removing an entry saves it immediately; a save failure is reported in the footer and leaves the current bookmark state unchanged.
+Bookmarks are saved in `$XDG_DATA_HOME/sauva/bookmarks.toml`, or `~/.local/share/sauva/bookmarks.toml` when `XDG_DATA_HOME` is unset or empty.
 
-Any code point that Sauva can inspect can be bookmarked, including unassigned code points and surrogates. Removing and adding an entry again gives it a new registration time.
+Any code point that Sauva can inspect can be bookmarked, including unassigned code points and surrogates.
