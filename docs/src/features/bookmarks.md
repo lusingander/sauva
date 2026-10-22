@@ -1,12 +1,12 @@
 # Bookmarks
 
-Save code points to revisit them across sessions. In the Inspector, press <kbd>m</kbd> to add the current code point. The header shows `* Bookmarked`, and the footer reports the result.
+Save code points to revisit them across sessions. In the Inspector, press <kbd>m</kbd> to add the current code point.
 
 ![Bookmarked code point](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/bookmark-added.png)
 
 ## Bookmark List
 
-Press <kbd>M</kbd> in the Inspector to open Bookmarks. Entries show the character, code point, and Unicode name. The selected entry's details include its registration time; narrow terminals show these details below the list.
+Press <kbd>M</kbd> in the Inspector to open Bookmarks.
 
 ![Bookmark list](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/bookmarks.png)
 
