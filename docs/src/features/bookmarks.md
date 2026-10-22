@@ -25,14 +25,7 @@ Press <kbd>Backspace</kbd> in the Inspector to return to the bookmark list. See 
 
 ## Registration Time
 
-Times use the local time zone and default to a format such as `2026-10-16 14:32 JST`. Set `ui.bookmark_date_format` to use a different [strftime format](https://docs.rs/jiff/latest/jiff/fmt/strtime/index.html):
-
-```toml
-[ui]
-bookmark_date_format = "%Y-%m-%d %H:%M:%S %:z"
-```
-
-The format must produce nonempty text without control characters. Invalid formats are reported when Sauva starts.
+Customize the display of registration times with [`ui.bookmark_date_format`](../configurations/config-file-format.md#bookmark_date_format).
 
 ## Storage
 

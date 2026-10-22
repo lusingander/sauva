@@ -8,8 +8,6 @@ The image font is selected independently of the terminal's text font. Configure 
 [glyph_preview]
 font_families = ["Iosevka", "Noto Sans"]
 emoji_font_families = ["Noto Color Emoji"]
-fg = "#f5f7fa"
-bg = "#00000000"
 ```
 
 ## Font Selection
@@ -21,7 +19,7 @@ For each code point, Sauva tries:
 3. Configured emoji fonts in `emoji_font_families`, in order.
 4. System fallback fonts.
 
-Missing families and fonts without a usable glyph are skipped. Both lists default to `[]`, so system fonts are used without any configuration.
+Missing families and fonts without a usable glyph are skipped.
 
 Sauva does not install fonts. Specify family names for fonts already installed on the machine. The chosen font can vary between code points and between operating systems.
 
@@ -29,10 +27,7 @@ For OS-specific font lookup and terminal support, see [Compatibility](../getting
 
 ## Image Colors
 
-- `fg` is the glyph foreground color; the default is `"#f5f7fa"`.
-- `bg` is the image background color; the default is `"#00000000"`, fully transparent.
-
-Values accept `#RRGGBB` or `#RRGGBBAA`. For example, use an opaque background on a light terminal:
+Use `fg` for the glyph foreground color and `bg` for the image background. For example, on a light terminal:
 
 ```toml
 [glyph_preview]
@@ -41,6 +36,8 @@ bg = "#ffffff"
 ```
 
 Color font glyphs, such as emoji, can use their own palette.
+
+See [Config File Format](./config-file-format.md#glyph_preview) for defaults and accepted values.
 
 ## Special Characters
 
