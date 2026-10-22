@@ -60,7 +60,7 @@ Use `--text -` to read literal UTF-8 text from stdin:
 printf 'Á👩‍💻' | sauva --text -
 ```
 
-See [Sequence](https://lusingander.github.io/sauva/features/sequence.html), [Normalization](https://lusingander.github.io/sauva/features/normalization.html), and [Basic Usage](https://lusingander.github.io/sauva/getting-started/basic-usage.html) for more examples.
+See [Basic Usage](https://lusingander.github.io/sauva/getting-started/basic-usage.html) for more examples.
 
 For all command line options, run `sauva --help` or see [Command Line Options](https://lusingander.github.io/sauva/getting-started/command-line-options.html).
 
