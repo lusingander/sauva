@@ -18,12 +18,12 @@ Press <kbd>M</kbd> in the Inspector to open Bookmarks.
 | <kbd>Enter</kbd> | Inspect the selected code point |
 | <kbd>m</kbd> | Remove the selected bookmark |
 | <kbd>s</kbd> | Switch sort order |
-| <kbd>Esc</kbd> | Close Bookmarks and restore the Inspector where it was opened |
+| <kbd>Esc</kbd> | Close Bookmarks and return to the Inspector |
 | <kbd>q</kbd> | Quit |
 
 Bookmarks can be sorted by registration time or code point, in ascending or descending order.
 
-Press <kbd>Backspace</kbd> in the Inspector to return to the bookmark list. Closing the list restores the original Inspector, including its return path to Sequence when one is open. Keybindings can be changed in the `inspector` and `bookmarks` contexts; see [Custom Keybindings](../keybindings/custom-keybindings.md).
+Press <kbd>Backspace</kbd> in the Inspector to return to the bookmark list. Keybindings can be changed in the `inspector` and `bookmarks` contexts; see [Custom Keybindings](../keybindings/custom-keybindings.md).
 
 ## Registration Time
 

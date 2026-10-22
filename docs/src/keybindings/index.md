@@ -78,7 +78,7 @@ Context: `bookmarks`.
 | Command | Keys | Action |
 | --- | --- | --- |
 | `quit` | <kbd>q</kbd> | Quit |
-| `close` | <kbd>Esc</kbd> | Close Bookmarks and restore the original Inspector |
+| `close` | <kbd>Esc</kbd> | Close Bookmarks and return to the Inspector |
 | `move_up` | <kbd>k</kbd>, <kbd>Up</kbd> | Select the previous bookmark |
 | `move_down` | <kbd>j</kbd>, <kbd>Down</kbd> | Select the next bookmark |
 | `page_up` | <kbd>Ctrl-U</kbd> | Move up one page |
