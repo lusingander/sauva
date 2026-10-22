@@ -33,7 +33,7 @@ This path explores named blocks from the Unicode Character Database:
 Block → Code Point → Inspector
 ```
 
-Blocks have different sizes and may leave gaps between them. When opening the block list from a code point in a gap, Sauva selects the next block.
+Blocks have different sizes and may leave gaps between them.
 
 ![Block browser](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/block.png)
 
