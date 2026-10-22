@@ -80,15 +80,7 @@ See [Keybindings](https://lusingander.github.io/sauva/keybindings/) for all cont
 
 ### Config
 
-Sauva loads the configuration selected by `SAUVA_CONFIG_FILE`, or `$XDG_CONFIG_HOME/sauva/config.toml` (using `~/.config` when `XDG_CONFIG_HOME` is unset or empty).
-
-Print the complete built-in configuration with:
-
-```sh
-sauva --print-default-config
-```
-
-See [Configurations](https://lusingander.github.io/sauva/configurations/) and [Config File Format](https://lusingander.github.io/sauva/configurations/config-file-format.html) for settings and defaults.
+Customize colors, fonts, and keybindings in the [configuration file](https://lusingander.github.io/sauva/configurations/).
 
 ## Compatibility
 
