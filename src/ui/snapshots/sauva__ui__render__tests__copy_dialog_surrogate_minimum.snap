@@ -1,0 +1,20 @@
+---
+source: src/ui/render.rs
+expression: text
+---
+ sauva / Inspector                                   U+D800
+
+
+  ┌ Copy ────────────────────────────────────────────────┐
+  │ Inspector · U+D800                                   │
+  │                                                      │
+  │ Target: Code Point                                   │
+  │ Format  Code Point List                              │
+  │                                                      │
+  │ Preview · 1 CP                                       │
+  │ U+D800                                               │
+  │                                                      │
+  └──────────────────────────────────────────────────────┘
+
+
+ Enter Copy  Esc Cancel  C-c Quit                   F1 Help

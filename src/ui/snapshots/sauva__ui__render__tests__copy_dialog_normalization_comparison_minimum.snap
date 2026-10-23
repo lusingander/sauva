@@ -1,0 +1,20 @@
+---
+source: src/ui/render.rs
+expression: text
+---
+ sauva / Sequence / Normalization                      NFKC
+
+
+  ┌ Copy ────────────────────────────────────────────────┐
+  │ Normalization · NFKC Result                          │
+  │                                                      │
+  │ Target: Whole NFKC Result                            │
+  │ Format  < Rust String >  3/6                         │
+  │                                                      │
+  │ Preview · 4 CP · 5 UTF-8 bytes                       │
+  │ "\u{C1}ffi"                                          │
+  │                                                      │
+  └──────────────────────────────────────────────────────┘
+
+  U+00C1 U+0066 U+0066 U+0069
+ ←/→ Format  Enter Copy  Esc Cancel  C-c Quit       F1 Help

@@ -841,8 +841,10 @@ mod tests {
         update(&mut state, Action::OpenCopyDialog);
         assert_eq!(state.preview_code_point(), None);
         update(&mut state, Action::MoveCopyDialog(CopyMove::Next));
+        update(&mut state, Action::MoveCopyDialog(CopyMove::NextFormat));
         update(&mut state, Action::ToggleHelp);
         update(&mut state, Action::MoveCopyDialog(CopyMove::Last));
+        update(&mut state, Action::MoveCopyDialog(CopyMove::NextFormat));
         update(&mut state, Action::CloseCopyDialog);
         update(&mut state, Action::MoveSequence(SequenceMove::Last));
         update(&mut state, Action::CopyDialogSelection);
@@ -851,7 +853,7 @@ mod tests {
         update(&mut state, Action::CloseHelp);
         update(&mut state, Action::CopyDialogSelection);
         let request = state.take_clipboard_request().unwrap();
-        assert_eq!(request.value(), Some("A\u{0301}"));
+        assert_eq!(request.value(), Some(r#""A\u0301""#));
         assert!(request.is_from_copy_dialog());
         update(
             &mut state,

@@ -303,6 +303,7 @@ fn render_footer(
 
 #[cfg(test)]
 mod tests {
+    use crate::unicode::CodePoint;
     use ratatui::{
         Terminal,
         backend::TestBackend,
@@ -498,7 +499,7 @@ mod tests {
         assert!(footer.contains("Enter Copy"));
         assert!(footer.contains("Esc Cancel"));
         assert!(footer.contains("F1 Help"));
-        assert!(text.contains("Preview · 2 CP · 3 bytes"));
+        assert!(text.contains("Preview · 2 CP · 3 UTF-8 bytes"));
         insta::assert_snapshot!(text);
     }
 
@@ -550,6 +551,91 @@ mod tests {
         let text = render_to_text(&state, 100, 30);
         assert!(text.contains("Keybindings · Copy Dialog"));
         assert!(text.contains("Copy the selected candidate"));
+        insta::assert_snapshot!(text);
+    }
+
+    #[test]
+    fn copy_dialog_formats_fit_the_minimum_screen_without_losing_the_source_metrics() {
+        let mut state = sequence_copy_dialog();
+        for (label, expected) in [
+            ("Text", "A\u{301}"),
+            ("JSON String", r#""A\u0301""#),
+            ("Rust String", r#""A\u{301}""#),
+            ("Code Point List", "U+0041 U+0301"),
+            ("UTF-8 Hex", "41 CC 81"),
+            ("UTF-16 Units", "0041 0301"),
+        ] {
+            let text = render_to_text(&state, 60, 16);
+            assert!(text.contains(&format!("< {label} >")), "{text}");
+            assert!(text.contains(expected), "{text}");
+            assert!(text.contains("Preview · 2 CP · 3 UTF-8 bytes"), "{text}");
+            assert!(
+                text.lines().last().unwrap().contains("←/→ Format"),
+                "{text}"
+            );
+            update(
+                &mut state,
+                Action::MoveCopyDialog(crate::copy_dialog::CopyMove::NextFormat),
+            );
+        }
+    }
+
+    #[test]
+    fn copy_dialog_inspector_minimum() {
+        let mut state = AppState::with_selected(CodePoint::from('😀'));
+        update(&mut state, Action::OpenCopyDialog);
+        update(
+            &mut state,
+            Action::MoveCopyDialog(crate::copy_dialog::CopyMove::NextFormat),
+        );
+        let text = render_to_text(&state, 60, 16);
+        assert!(text.contains("Target: Code Point"));
+        assert!(text.contains(r#""\uD83D\uDE00""#));
+        assert!(!text.lines().last().unwrap().contains("Scope"));
+        insta::assert_snapshot!(text);
+    }
+
+    #[test]
+    fn copy_dialog_surrogate_minimum() {
+        let mut state = AppState::with_selected(CodePoint::new(0xd800).unwrap());
+        update(&mut state, Action::OpenCopyDialog);
+        let text = render_to_text(&state, 60, 16);
+        let dialog = text
+            .lines()
+            .skip_while(|line| !line.contains("┌ Copy"))
+            .take_while(|line| !line.contains('└'))
+            .collect::<Vec<_>>()
+            .join("\n");
+        assert!(dialog.contains("Format  Code Point List"));
+        assert!(!dialog.contains("Not available"));
+        assert!(!dialog.contains("surrogate"));
+        let footer = text.lines().last().unwrap();
+        assert!(!footer.contains("Scope"));
+        assert!(!footer.contains("Format"));
+        insta::assert_snapshot!(text);
+    }
+
+    #[test]
+    fn copy_dialog_normalization_comparison_minimum() {
+        let mut state = AppState::with_sequence("A\u{301}ﬃ".to_owned());
+        update(&mut state, Action::OpenNormalization);
+        for _ in 0..2 {
+            update(
+                &mut state,
+                Action::MoveNormalization(crate::normalization::NormalizationMove::Next),
+            );
+        }
+        update(&mut state, Action::OpenCopyDialog);
+        for _ in 0..2 {
+            update(
+                &mut state,
+                Action::MoveCopyDialog(crate::copy_dialog::CopyMove::NextFormat),
+            );
+        }
+        let text = render_to_text(&state, 60, 16);
+        assert!(text.contains("Target: Whole NFKC Result"));
+        assert!(text.contains(r#""\u{C1}ffi""#));
+        assert!(!text.lines().last().unwrap().contains("Scope"));
         insta::assert_snapshot!(text);
     }
 

@@ -7,12 +7,12 @@ expression: text
 
   ┌ Copy ────────────────────────────────────────────────┐
   │ Sequence · CP 2/6 · U+0301                           │
-  │                                                      │
   │  Code Point                                  U+0301  │
   │  Grapheme Cluster                     2 code points  │
   │  Whole Input                          6 code points  │
+  │ Format  < Text >  1/6                                │
   │                                                      │
-  │ Preview · 2 CP · 3 bytes                             │
+  │ Preview · 2 CP · 3 UTF-8 bytes                       │
   │ Á                                                    │
   │ U+0041 U+0301                                        │
   └──────────────────────────────────────────────────────┘

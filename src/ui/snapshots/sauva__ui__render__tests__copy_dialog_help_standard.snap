@@ -14,6 +14,8 @@ expression: text
  Keybindings · Copy Dialog
   k  Up                    Select the previous copy candidate
   j  Down                  Select the next copy candidate
+  Left                     Select the previous output format
+  Right                    Select the next output format
   g                        Select the first copy candidate
   G                        Select the last copy candidate
   Enter                    Copy the selected candidate
@@ -21,11 +23,9 @@ expression: text
   Ctrl-c                   Quit
   F1                       Open or close help
 
-  Copy the selected code point, its whole grapheme cluster, or the whole input or normalization
-  result. Text is copied exactly; preview labels and dotted circles are display aids only. Closing
-  help returns to the same copy candidate.
-
-
+  Select a scope and cycle output formats. Formats: Text, JSON String, Rust String, Code Point
+  List, UTF-8 Hex, UTF-16 Units. JSON and Rust strings include quotes and use ASCII escapes.
+  Preview labels and ellipses are not copied.
 
 
 
