@@ -8,6 +8,7 @@ use ratatui::{
 
 use crate::{
     app::AppState,
+    copy_dialog::CopySource,
     input::context_for_state,
     keybindings::{Command, Context, KeyLabelStyle, ResolvedKeymap, format_key},
     ui::{
@@ -185,12 +186,26 @@ fn about_document(
 pub fn footer(
     context: Context,
     has_inspector_parent: bool,
+    copy_source: Option<CopySource<'_>>,
     width: u16,
     keymap: &ResolvedKeymap,
     color_theme: &ColorTheme,
 ) -> FooterContent {
     let mut items = short_help_items(context, has_inspector_parent)
         .into_iter()
+        .filter(|item| {
+            if context != Context::CopyDialog {
+                return true;
+            }
+            let Some(source) = copy_source else {
+                return true;
+            };
+            match item.commands.as_slice() {
+                [Command::MoveUp, Command::MoveDown] => source.targets().len() > 1,
+                [Command::MoveLeft, Command::MoveRight] => source.formats().len() > 1,
+                _ => true,
+            }
+        })
         .filter_map(|item| render_short_help_item(context, item, keymap))
         .collect::<Vec<_>>();
     let help = render_short_help_item(
@@ -250,7 +265,7 @@ fn document(
     if context == Context::CopyDialog {
         lines.push(Line::default());
         lines.extend(wrap_plain_text(
-            "Copy the selected code point, its whole grapheme cluster, or the whole input or normalization result. Text is copied exactly; preview labels and dotted circles are display aids only. Closing help returns to the same copy candidate.",
+            "Select a scope and cycle output formats. Formats: Text, JSON String, Rust String, Code Point List, UTF-8 Hex, UTF-16 Units. JSON and Rust strings include quotes and use ASCII escapes. Preview labels and ellipses are not copied.",
             width,
         ));
     }
@@ -462,6 +477,8 @@ fn help_items(context: Context, has_inspector_parent: bool) -> Vec<HelpItem> {
         Context::CopyDialog => vec![
             item(C::MoveUp, "Select the previous copy candidate"),
             item(C::MoveDown, "Select the next copy candidate"),
+            item(C::MoveLeft, "Select the previous output format"),
+            item(C::MoveRight, "Select the next output format"),
             item(C::First, "Select the first copy candidate"),
             item(C::Last, "Select the last copy candidate"),
             item(C::Activate, "Copy the selected candidate"),
@@ -613,7 +630,8 @@ fn short_help_items(context: Context, has_inspector_parent: bool) -> Vec<ShortHe
             short(&[C::Quit], "Quit", 3),
         ],
         Context::CopyDialog => vec![
-            short(&[C::MoveUp, C::MoveDown], "Move", 1),
+            short(&[C::MoveUp, C::MoveDown], "Scope", 0),
+            short(&[C::MoveLeft, C::MoveRight], "Format", 0),
             short(&[C::Activate], "Copy", 0),
             short(&[C::Close], "Cancel", 0),
             short(&[C::Quit], "Quit", 3),
@@ -830,8 +848,15 @@ mod tests {
     fn footer_prunes_lower_priority_items_to_fit() {
         let keymap = ResolvedKeymap::default();
         let theme = ColorTheme::default();
-        let wide = footer_text(footer(Context::Inspector, false, 140, &keymap, &theme));
-        let narrow = footer_text(footer(Context::Inspector, false, 60, &keymap, &theme));
+        let wide = footer_text(footer(
+            Context::Inspector,
+            false,
+            None,
+            140,
+            &keymap,
+            &theme,
+        ));
+        let narrow = footer_text(footer(Context::Inspector, false, None, 60, &keymap, &theme));
 
         assert!(Line::from(wide.as_str()).width() <= 140);
         assert!(Line::from(narrow.as_str()).width() <= 60);
@@ -925,6 +950,7 @@ mod tests {
         let footer = footer(
             Context::Inspector,
             false,
+            None,
             140,
             &keymap,
             &ColorTheme::default(),

@@ -289,6 +289,7 @@ fn render_footer(
     let content = help::footer(
         context,
         state.has_inspector_parent(),
+        state.copy_dialog().and_then(|_| state.copy_source()),
         area.width,
         keymap,
         color_theme,

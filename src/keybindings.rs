@@ -512,6 +512,8 @@ keybinding_context!(CopyDialogKeybindings, Context::CopyDialog, {
     close => (Command::Close, ["esc"]),
     move_up => (Command::MoveUp, ["k", "up"]),
     move_down => (Command::MoveDown, ["j", "down"]),
+    move_left => (Command::MoveLeft, ["left"]),
+    move_right => (Command::MoveRight, ["right"]),
     first => (Command::First, ["g"]),
     last => (Command::Last, ["G"]),
     activate => (Command::Activate, ["enter"]),
@@ -1073,6 +1075,8 @@ mod tests {
 
                 [copy_dialog]
                 activate = ['y']
+                move_down = ['l']
+                move_right = ['right', 'f']
             "#,
         )
         .unwrap();
@@ -1094,6 +1098,14 @@ mod tests {
             None
         );
         assert_eq!(keymap.resolve(Context::Search, plain('Y')), None);
+        assert_eq!(
+            keymap.resolve(Context::CopyDialog, plain('l')),
+            Some(Command::MoveDown)
+        );
+        assert_eq!(
+            keymap.resolve(Context::CopyDialog, plain('f')),
+            Some(Command::MoveRight)
+        );
         let error = configured(
             r#"
                 [copy_dialog]

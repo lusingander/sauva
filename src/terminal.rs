@@ -546,7 +546,7 @@ mod tests {
         assert!(state.copy_dialog().is_none());
         assert_eq!(
             state.footer_status().unwrap().message(),
-            "Copied Whole Text (Input): 6 code points"
+            "Copied Whole Input as Text (Input)"
         );
         assert_eq!(state.sequence().unwrap().selected_index(), 0);
     }
