@@ -19,6 +19,8 @@ open_copy_dialog = ["C"]
 open_copy_dialog = ["C"]
 
 [keybindings.copy_dialog]
+move_left = ["left", "h"]
+move_right = ["right", "l"]
 activate = ["enter", "y"]
 ```
 
