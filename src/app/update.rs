@@ -68,7 +68,10 @@ pub fn update(state: &mut AppState, action: Action) {
         Action::OpenCopyDialog
             if !state.help.is_open()
                 && state.copy_dialog.is_none()
-                && matches!(state.view, View::Inspector | View::Sequence) =>
+                && matches!(
+                    state.view,
+                    View::Inspector | View::Sequence | View::Normalization
+                ) =>
         {
             state.copy_dialog = Some(CopyDialogState::default());
         }

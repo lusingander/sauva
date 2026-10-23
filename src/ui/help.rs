@@ -455,6 +455,10 @@ fn help_items(context: Context, has_inspector_parent: bool) -> Vec<HelpItem> {
             item(C::Last, "Select NFKD"),
             item(C::Activate, "Inspect the selected normalization result"),
             item(C::CopyValue, "Copy the exact normalized text"),
+            item(
+                C::OpenCopyDialog,
+                "Choose a representation of the whole normalized result",
+            ),
             item(C::Back, "Return to the original sequence"),
             item(C::Close, "Return to the original sequence"),
             item(C::Quit, "Quit"),
@@ -622,7 +626,8 @@ fn short_help_items(context: Context, has_inspector_parent: bool) -> Vec<ShortHe
         Context::Normalization => vec![
             short(&[C::MoveUp, C::MoveDown], "Form", 1),
             short(&[C::Activate], "Inspect", 1),
-            short(&[C::CopyValue], "Copy", 1),
+            short(&[C::CopyValue], "Copy", 0),
+            short(&[C::OpenCopyDialog], "Copy...", 0),
             short(&[C::Back, C::Close], "Sequence", 0),
             short(&[C::Quit], "Quit", 3),
         ],

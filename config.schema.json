@@ -483,7 +483,8 @@
         "first": { "$ref": "#/definitions/keyArray" },
         "last": { "$ref": "#/definitions/keyArray" },
         "activate": { "$ref": "#/definitions/keyArray" },
-        "copy_value": { "$ref": "#/definitions/keyArray" }
+        "copy_value": { "$ref": "#/definitions/keyArray" },
+        "open_copy_dialog": { "$ref": "#/definitions/keyArray" }
       },
       "additionalProperties": false
     },

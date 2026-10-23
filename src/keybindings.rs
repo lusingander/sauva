@@ -493,6 +493,7 @@ keybinding_context!(NormalizationKeybindings, Context::Normalization, {
     last => (Command::Last, ["G"]),
     activate => (Command::Activate, ["enter"]),
     copy_value => (Command::CopyValue, ["y"]),
+    open_copy_dialog => (Command::OpenCopyDialog, ["Y"]),
 });
 
 keybinding_context!(NormalizationResultKeybindings, Context::NormalizationResult, {

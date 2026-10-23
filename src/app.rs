@@ -906,8 +906,6 @@ mod tests {
     fn copy_dialog_supports_single_code_point_results() {
         let mut state = AppState::with_sequence("A\u{0301}".to_owned());
         update(&mut state, Action::OpenNormalization);
-        update(&mut state, Action::OpenCopyDialog);
-        assert!(state.copy_dialog().is_none());
         update(&mut state, Action::InspectNormalizationResult);
         update(&mut state, Action::OpenCopyDialog);
         for _ in 0..3 {
@@ -976,6 +974,41 @@ mod tests {
         assert_eq!(
             state.take_clipboard_request().unwrap().value(),
             Some("U+D800")
+        );
+    }
+
+    #[test]
+    fn comparison_copy_uses_each_whole_normalization_result_and_preserves_quick_copy() {
+        let mut state = AppState::with_sequence("A\u{301}ﬃ".to_owned());
+        update(&mut state, Action::OpenNormalization);
+        for (text, json) in [
+            ("Áﬃ", r#""\u00C1\uFB03""#),
+            ("A\u{301}ﬃ", r#""A\u0301\uFB03""#),
+            ("Áffi", r#""\u00C1ffi""#),
+            ("A\u{301}ffi", r#""A\u0301ffi""#),
+        ] {
+            update(&mut state, Action::OpenCopyDialog);
+            update(&mut state, Action::MoveCopyDialog(CopyMove::NextFormat));
+            update(&mut state, Action::MoveCopyDialog(CopyMove::Last));
+            update(&mut state, Action::CopyDialogSelection);
+            let request = state.take_clipboard_request().unwrap();
+            assert_eq!(request.value(), Some(json));
+            assert!(
+                request
+                    .success_message()
+                    .contains(state.normalization().unwrap().form().label())
+            );
+            update(&mut state, Action::CloseCopyDialog);
+            update(&mut state, Action::CopyNormalizationResult);
+            assert_eq!(state.take_clipboard_request().unwrap().value(), Some(text));
+            update(
+                &mut state,
+                Action::MoveNormalization(NormalizationMove::Next),
+            );
+        }
+        assert_eq!(
+            state.original_sequence().unwrap().analysis().source(),
+            "A\u{301}ﬃ"
         );
     }
 
