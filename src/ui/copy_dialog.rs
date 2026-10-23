@@ -89,8 +89,10 @@ pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorThem
             theme.selection,
         ));
     }
-    let target = dialog.selected_target();
-    let text = target.text(sequence);
+    let source = state.copy_source().expect("the copy source is available");
+    let target = dialog.selected_target(source);
+    let value = source.value(target);
+    let text = value.text().expect("sequence text is valid UTF-8");
     let count = code_point_count(target, sequence);
     let preview_width = usize::from(content.width);
     lines.extend([

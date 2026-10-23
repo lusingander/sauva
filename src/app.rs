@@ -8,7 +8,7 @@ pub use crate::app::update::update;
 use crate::{
     bookmarks::{Bookmark, BookmarkMove, BookmarkState},
     browser::{BrowseLevel, BrowseMove, BrowseState},
-    copy_dialog::{CopyDialogState, CopyMove},
+    copy_dialog::{CopyDialogState, CopyMove, CopySource},
     help::{HelpMove, HelpState},
     inspector::{InspectorGroup, InspectorMove, InspectorState},
     normalization::{NormalizationMove, NormalizationState},
@@ -331,6 +331,30 @@ impl AppState {
 
     pub fn copy_dialog(&self) -> Option<&CopyDialogState> {
         self.copy_dialog.as_ref()
+    }
+
+    pub fn copy_source(&self) -> Option<CopySource<'_>> {
+        match self.view {
+            View::Inspector => Some(CopySource::Inspector(self.selected)),
+            View::Sequence => {
+                let sequence = self.sequence()?;
+                Some(CopySource::Sequence {
+                    analysis: sequence.analysis(),
+                    selected_index: sequence.selected_index(),
+                    form: self
+                        .showing_normalization_result
+                        .then(|| self.normalization.as_ref().unwrap().form()),
+                })
+            }
+            View::Normalization => {
+                let normalization = self.normalization.as_ref()?;
+                Some(CopySource::Normalization {
+                    analysis: normalization.comparison().result.analysis(),
+                    form: normalization.form(),
+                })
+            }
+            _ => None,
+        }
     }
 
     pub const fn glyph_preview(&self) -> &GlyphPreviewState {
