@@ -61,6 +61,8 @@ Unavailable values, such as an encoding for a surrogate, cannot be copied. A sta
 
 Case mappings copy the displayed code points and names, preserving their order and repeated characters. Numeric Value copies its exact number or fraction; `NaN` cannot be copied.
 
+The [copy dialog](./copying.md) represents the current code point as text, a string literal, a code point list, or an encoding. Its target does not depend on the selected property. Cluster and whole-text copying are available from the originating Sequence or Normalization Result screen.
+
 ## Special Code Points
 
 Sauva can inspect the full code point range, including unassigned code points, private-use characters, and surrogates.
@@ -75,6 +77,7 @@ Surrogates are not Unicode scalar values, so UTF-8 / UTF-16 encodings and charac
 | <kbd>Up</kbd> / <kbd>Down</kbd> | Select a property |
 | <kbd>e</kbd> | Open the selected property's explanation |
 | <kbd>y</kbd> | Copy the selected property value |
+| <kbd>Y</kbd> | Open the copy dialog for the current code point |
 | <kbd>a</kbd> | Toggle Relevant / All properties |
 | <kbd>/</kbd> | Open Search |
 | <kbd>p</kbd>, <kbd>r</kbd>, <kbd>b</kbd>, <kbd>c</kbd> | Open Browse at the corresponding level |

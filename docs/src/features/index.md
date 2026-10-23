@@ -6,5 +6,6 @@
 - [Bookmarks](./bookmarks.md): save code points and revisit them across sessions.
 - [Sequence](./sequence.md): examine a string's code points and grapheme clusters.
 - [Normalization](./normalization.md): compare and inspect normalized text.
+- [Copying](./copying.md): copy text, string literals, code point lists, and encodings.
 
 Press <kbd>F1</kbd> in any screen for contextual help. See [Keybindings](../keybindings/index.md) for the complete controls.

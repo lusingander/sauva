@@ -14,6 +14,7 @@ Sauva is a terminal application for searching and browsing Unicode code points. 
 - Inspect Unicode properties, encodings, and glyph previews.
 - Search, browse, and bookmark code points.
 - Analyze strings by code point and grapheme cluster, and compare Unicode normalization forms.
+- Copy text, JSON and Rust string literals, code point lists, and encodings.
 - Customize colors, fonts, and keybindings.
 
 The bundled data is based on Unicode 17.0.0. See [Features](https://lusingander.github.io/sauva/features/) for details and screenshots.
