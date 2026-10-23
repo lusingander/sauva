@@ -49,8 +49,8 @@ impl UnicodeScalarEncoding {
     }
 }
 
-fn format_hex_bytes(values: &[u8]) -> String {
-    let mut output = String::with_capacity(values.len() * 3 - 1);
+pub fn format_hex_bytes(values: &[u8]) -> String {
+    let mut output = String::with_capacity(values.len().saturating_mul(3).saturating_sub(1));
     for (index, value) in values.iter().enumerate() {
         if index > 0 {
             output.push(' ');
@@ -60,8 +60,8 @@ fn format_hex_bytes(values: &[u8]) -> String {
     output
 }
 
-fn format_hex_code_units(values: &[u16]) -> String {
-    let mut output = String::with_capacity(values.len() * 5 - 1);
+pub fn format_hex_code_units(values: &[u16]) -> String {
+    let mut output = String::with_capacity(values.len().saturating_mul(5).saturating_sub(1));
     for (index, value) in values.iter().enumerate() {
         if index > 0 {
             output.push(' ');
