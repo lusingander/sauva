@@ -65,6 +65,13 @@ pub fn update(state: &mut AppState, action: Action) {
         | Action::MoveCopyDialog(_)
         | Action::CopyDialogSelection
         | Action::CompleteCopyDialog(_) => update_copy_dialog(state, action),
+        Action::OpenCopyDialog
+            if !state.help.is_open()
+                && state.copy_dialog.is_none()
+                && matches!(state.view, View::Inspector | View::Sequence) =>
+        {
+            state.copy_dialog = Some(CopyDialogState::default());
+        }
         Action::Quit => state.running = false,
         Action::CloseProperty
         | Action::MoveProperty(_)
@@ -406,9 +413,6 @@ fn update_sequence(state: &mut AppState, action: Action) {
             state.showing_normalization_result = false;
             state.view = View::Normalization;
             refresh_preview_for_change(state, previous_preview);
-        }
-        Action::OpenCopyDialog if !state.help.is_open() && state.copy_dialog.is_none() => {
-            state.copy_dialog = Some(CopyDialogState::default());
         }
         _ => {}
     }

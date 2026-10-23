@@ -383,6 +383,10 @@ fn help_items(context: Context, has_inspector_parent: bool) -> Vec<HelpItem> {
             item(C::Last, "Select the last property"),
             item(C::ExplainProperty, "Explain the selected property"),
             item(C::CopyValue, "Copy the selected property value"),
+            item(
+                C::OpenCopyDialog,
+                "Choose a representation of the current code point",
+            ),
             item(C::ToggleProperties, "Toggle relevant or all properties"),
             item(C::OpenSearch, "Open search"),
             item(C::ToggleBookmark, "Add or remove the code point's bookmark"),
@@ -575,6 +579,7 @@ fn short_help_items(context: Context, has_inspector_parent: bool) -> Vec<ShortHe
             short(&[C::First, C::Last], "Ends", 3),
             short(&[C::ExplainProperty], "Explain", 2),
             short(&[C::CopyValue], "Copy", 1),
+            short(&[C::OpenCopyDialog], "Copy...", 0),
             short(&[C::OpenSearch], "Search", 2),
             short(&[C::ToggleBookmark, C::OpenBookmarks], "Bookmarks", 3),
             short(&[C::BrowsePlanes, C::BrowseRanges, C::BrowseBlocks, C::BrowseCodePoints], "Browse", 2),

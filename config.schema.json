@@ -377,6 +377,9 @@
         "copy_value": {
           "$ref": "#/definitions/keyArray"
         },
+        "open_copy_dialog": {
+          "$ref": "#/definitions/keyArray"
+        },
         "search": {
           "$ref": "#/definitions/keyArray"
         },

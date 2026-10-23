@@ -106,7 +106,7 @@ fn action_for_command(context: Context, command: Command) -> Option<Action> {
     match (context, command) {
         (_, C::Quit) => Some(Action::Quit),
         (_, C::Help) => Some(Action::ToggleHelp),
-        (X::Sequence | X::NormalizationResult, C::OpenCopyDialog) => Some(Action::OpenCopyDialog),
+        (X::Inspector | X::Sequence | X::NormalizationResult, C::OpenCopyDialog) => Some(Action::OpenCopyDialog),
         (X::CopyDialog, C::Close) => Some(Action::CloseCopyDialog),
         (X::CopyDialog, C::MoveUp) => Some(Action::MoveCopyDialog(CopyMove::Previous)),
         (X::CopyDialog, C::MoveDown) => Some(Action::MoveCopyDialog(CopyMove::Next)),
@@ -621,6 +621,7 @@ mod tests {
 
     #[rstest]
     #[case('y', Action::CopyInspectorValue)]
+    #[case('Y', Action::OpenCopyDialog)]
     #[case('a', Action::ToggleInspectorProperties)]
     fn inspector_commands_do_not_repeat(#[case] key: char, #[case] action: Action) {
         let state = AppState::default();

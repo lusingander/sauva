@@ -903,10 +903,7 @@ mod tests {
     }
 
     #[test]
-    fn copy_dialog_supports_single_code_point_results_and_is_scoped_to_sequence_views() {
-        let mut state = AppState::default();
-        update(&mut state, Action::OpenCopyDialog);
-        assert!(state.copy_dialog().is_none());
+    fn copy_dialog_supports_single_code_point_results() {
         let mut state = AppState::with_sequence("A\u{0301}".to_owned());
         update(&mut state, Action::OpenNormalization);
         update(&mut state, Action::OpenCopyDialog);
@@ -918,6 +915,68 @@ mod tests {
             assert_eq!(state.take_clipboard_request().unwrap().value(), Some("Á"));
             update(&mut state, Action::MoveCopyDialog(CopyMove::Next));
         }
+    }
+
+    #[test]
+    fn inspector_copy_formats_ignore_the_selected_property_and_preserve_its_quick_copy() {
+        let mut state = AppState::with_selected(CodePoint::from('😀'));
+        resize_inspector(&mut state, 5);
+        update(&mut state, Action::MoveInspector(InspectorMove::Last));
+        let field_index = state.inspector().selected_index();
+        update(&mut state, Action::CopyInspectorValue);
+        let property = state.take_clipboard_request().unwrap();
+        assert_eq!(property.label(), "Unicode Version");
+        update(&mut state, Action::OpenCopyDialog);
+        for expected in [
+            "😀",
+            r#""\uD83D\uDE00""#,
+            r#""\u{1F600}""#,
+            "U+1F600",
+            "F0 9F 98 80",
+            "D83D DE00",
+        ] {
+            update(&mut state, Action::MoveCopyDialog(CopyMove::Last));
+            update(&mut state, Action::CopyDialogSelection);
+            assert_eq!(
+                state.take_clipboard_request().unwrap().value(),
+                Some(expected)
+            );
+            update(&mut state, Action::MoveCopyDialog(CopyMove::NextFormat));
+        }
+        update(&mut state, Action::CloseCopyDialog);
+        assert_eq!(state.inspector().selected_index(), field_index);
+        update(&mut state, Action::CopyInspectorValue);
+        assert_eq!(state.take_clipboard_request().unwrap(), property);
+    }
+
+    #[test]
+    fn sequence_inspector_copies_its_current_code_point_instead_of_the_parent_selection() {
+        let mut state = AppState::with_sequence("A\u{301}".to_owned());
+        update(&mut state, Action::MoveSequence(SequenceMove::Next));
+        update(&mut state, Action::InspectSequenceCodePoint);
+        update(&mut state, Action::MoveCodePoint(CodePointMove::Next));
+        update(&mut state, Action::OpenCopyDialog);
+        update(&mut state, Action::CopyDialogSelection);
+        assert_eq!(
+            state.take_clipboard_request().unwrap().value(),
+            Some("\u{302}")
+        );
+        update(&mut state, Action::CloseCopyDialog);
+        update(&mut state, Action::ReturnToSequence);
+        assert_eq!(state.sequence().unwrap().selected().value(), 0x301);
+    }
+
+    #[test]
+    fn inspector_surrogate_copy_is_fixed_to_code_point_notation() {
+        let mut state = AppState::with_selected(CodePoint::new(0xd800).unwrap());
+        update(&mut state, Action::OpenCopyDialog);
+        update(&mut state, Action::MoveCopyDialog(CopyMove::NextFormat));
+        update(&mut state, Action::MoveCopyDialog(CopyMove::Last));
+        update(&mut state, Action::CopyDialogSelection);
+        assert_eq!(
+            state.take_clipboard_request().unwrap().value(),
+            Some("U+D800")
+        );
     }
 
     #[test]

@@ -436,6 +436,7 @@ keybinding_context!(InspectorKeybindings, Context::Inspector, {
     first => (Command::First, ["g"]),
     last => (Command::Last, ["G"]),
     copy_value => (Command::CopyValue, ["y"]),
+    open_copy_dialog => (Command::OpenCopyDialog, ["Y"]),
     explain_property => (Command::ExplainProperty, ["e"]),
     toggle_properties => (Command::ToggleProperties, ["a"]),
     search => (Command::OpenSearch, ["/"]),
