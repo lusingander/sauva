@@ -9,17 +9,18 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use crate::{
     app::AppState,
-    copy_dialog::CopyTarget,
-    sequence::SequenceState,
+    copy_dialog::{CopyTarget, CopyValue},
     ui::{selectable_list_line, text_preview::safe_cluster, theme::ColorTheme},
-    unicode::CodePoint,
+    unicode::{CodePoint, representation::TextFormat},
 };
 
 pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorTheme) {
     let dialog = state.copy_dialog().expect("the copy dialog is open");
-    let sequence = state.sequence().expect("copy candidates have a sequence");
+    let source = state.copy_source().expect("the copy source is available");
+    let targets = source.targets();
+    let format = dialog.selected_format(source);
     let width = area.width.saturating_sub(2).min(66);
-    let height = area.height.min(13);
+    let height = area.height.min(if targets.len() > 1 { 14 } else { 12 });
     let background = Rect::new(
         area.x + (area.width - width) / 2,
         area.y + (area.height - height) / 2,
@@ -44,40 +45,23 @@ pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorThem
     frame.render_widget(Block::default().style(theme.base_style()), background);
     frame.render_widget(block, area);
 
-    let source = if state.showing_normalization_result() {
-        format!("{} Result", state.normalization().unwrap().form().label())
-    } else {
-        "Sequence".to_owned()
-    };
-    let mut lines = vec![
-        Line::styled(
-            format!(
-                "{source} · CP {}/{} · {}",
-                sequence.selected_index() + 1,
-                sequence.code_points().len(),
-                sequence.selected()
-            ),
-            muted,
-        ),
-        Line::default(),
-    ];
-    for (index, target) in CopyTarget::ALL.into_iter().enumerate() {
-        let label = if target == CopyTarget::WholeText {
-            if state.showing_normalization_result() {
-                format!(
-                    "Whole {} Result",
-                    state.normalization().unwrap().form().label()
-                )
-            } else {
-                "Whole Input".to_owned()
-            }
-        } else {
-            target.label().to_owned()
-        };
+    let mut lines = vec![Line::styled(source.heading(), muted)];
+    // The minimum terminal has nine content rows. Keep the Text preview's
+    // code-point line by omitting just this gap when necessary.
+    if content.height >= 10 || targets.len() == 1 || format != TextFormat::Text {
+        lines.push(Line::default());
+    }
+    for (index, &target) in targets.iter().enumerate() {
+        let label = source.target_label(target);
+        if targets.len() == 1 {
+            lines.push(Line::from(format!("Target: {label}")));
+            continue;
+        }
+        let value = source.value(target);
+        let count = value.code_point_count();
         let summary = if target == CopyTarget::CodePoint {
-            sequence.selected().to_string()
+            value.format(TextFormat::CodePointList).unwrap()
         } else {
-            let count = code_point_count(target, sequence);
             format!("{count} code point{}", if count == 1 { "" } else { "s" })
         };
         let row_width = usize::from(content.width.saturating_sub(2));
@@ -89,31 +73,42 @@ pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorThem
             theme.selection,
         ));
     }
-    let source = state.copy_source().expect("the copy source is available");
-    let target = dialog.selected_target(source);
-    let value = source.value(target);
-    let text = value.text().expect("sequence text is valid UTF-8");
-    let count = code_point_count(target, sequence);
+    let formats = source.formats();
+    let mut format_line = vec![Span::raw("Format  ")];
+    if formats.len() > 1 {
+        format_line.push(Span::styled(
+            format!("< {} >", format.label()),
+            theme.heading_style(),
+        ));
+        format_line.push(Span::styled(
+            format!("  {}/{}", dialog.format_index() + 1, formats.len()),
+            muted,
+        ));
+    } else {
+        format_line.push(Span::styled(format.label(), theme.heading_style()));
+    }
+    lines.push(Line::from(format_line));
+    lines.push(Line::default());
+    let value = source.value(dialog.selected_target(source));
+    let count = value.code_point_count();
+    let text = value.text();
+    let bytes = text.as_ref().map_or_else(String::new, |text| {
+        format!(
+            " · {} UTF-8 byte{}",
+            text.len(),
+            if text.len() == 1 { "" } else { "s" }
+        )
+    });
+    lines.push(Line::from(vec![
+        Span::styled("Preview", theme.heading_style()),
+        Span::styled(format!(" · {count} CP{bytes}"), muted),
+    ]));
     let preview_width = usize::from(content.width);
-    lines.extend([
-        Line::default(),
-        Line::from(vec![
-            Span::styled("Preview", theme.heading_style()),
-            Span::styled(
-                format!(
-                    " · {count} CP · {} byte{}",
-                    text.len(),
-                    if text.len() == 1 { "" } else { "s" }
-                ),
-                muted,
-            ),
-        ]),
-        Line::from(fit_atoms(
-            text.graphemes(true).map(safe_cluster),
-            "",
-            preview_width,
-        )),
-        Line::styled(
+    lines.push(Line::from(preview(value, format, preview_width)));
+    if format == TextFormat::Text
+        && let Some(text) = text
+    {
+        lines.push(Line::styled(
             fit_atoms(
                 text.chars()
                     .map(|character| CodePoint::from(character).to_string()),
@@ -121,21 +116,18 @@ pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorThem
                 preview_width,
             ),
             muted,
-        ),
-    ]);
+        ));
+    }
     frame.render_widget(Paragraph::new(lines), content);
 }
 
-fn code_point_count(target: CopyTarget, sequence: &SequenceState) -> usize {
-    match target {
-        CopyTarget::CodePoint => 1,
-        CopyTarget::Grapheme => {
-            let point = &sequence.code_points()[sequence.selected_index()];
-            sequence.analysis().graphemes()[point.grapheme_index()]
-                .code_point_range()
-                .len()
+fn preview(value: CopyValue<'_>, format: TextFormat, width: usize) -> String {
+    match value.text() {
+        Some(text) if format == TextFormat::Text => {
+            fit_atoms(text.graphemes(true).map(safe_cluster), "", width)
         }
-        CopyTarget::WholeText => sequence.code_points().len(),
+        Some(text) => fit_atoms(format.atoms(&text), "", width),
+        None => fit_atoms(value.format(format).into_iter(), "", width),
     }
 }
 
@@ -166,6 +158,21 @@ fn fit_atoms(atoms: impl Iterator<Item = String>, separator: &str, width: usize)
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn formatted_previews_stop_between_complete_escapes_and_copy_values_stay_whole() {
+        let value = CopyValue::Text {
+            text: "A😀B",
+            code_point_count: 3,
+        };
+        assert_eq!(preview(value, TextFormat::JsonString, 8), r#""A…"#);
+        assert_eq!(preview(value, TextFormat::RustString, 8), r#""A…"#);
+        assert_eq!(preview(value, TextFormat::Utf8Hex, 8), "41…");
+        assert_eq!(
+            value.format(TextFormat::JsonString).unwrap(),
+            r#""A\uD83D\uDE00B""#
+        );
+    }
 
     #[test]
     fn preview_clips_at_cluster_boundaries_and_never_emits_terminal_controls() {
