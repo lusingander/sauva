@@ -265,7 +265,7 @@ fn document(
     if context == Context::CopyDialog {
         lines.push(Line::default());
         lines.extend(wrap_plain_text(
-            "Select a scope and cycle output formats. Formats: Text, JSON String, Rust String, Code Point List, UTF-8 Hex, UTF-16 Units. JSON and Rust strings include quotes and use ASCII escapes. Preview labels and ellipses are not copied.",
+            "Select a target and cycle output formats. Formats: Text, JSON String, Rust String, Code Point List, UTF-8 Hex, UTF-16 Units. JSON and Rust strings include quotes and use ASCII escapes. Preview labels and ellipses are not copied.",
             width,
         ));
     }
@@ -483,13 +483,13 @@ fn help_items(context: Context, has_inspector_parent: bool) -> Vec<HelpItem> {
             item(C::Quit, "Quit"),
         ],
         Context::CopyDialog => vec![
-            item(C::MoveUp, "Select the previous copy candidate"),
-            item(C::MoveDown, "Select the next copy candidate"),
+            item(C::MoveUp, "Select the previous copy target"),
+            item(C::MoveDown, "Select the next copy target"),
             item(C::MoveLeft, "Select the previous output format"),
             item(C::MoveRight, "Select the next output format"),
-            item(C::First, "Select the first copy candidate"),
-            item(C::Last, "Select the last copy candidate"),
-            item(C::Activate, "Copy the selected candidate"),
+            item(C::First, "Select the first copy target"),
+            item(C::Last, "Select the last copy target"),
+            item(C::Activate, "Copy the selected target and format"),
             item(C::Close, "Cancel and return to the source screen"),
             item(C::Quit, "Quit"),
         ],
@@ -640,7 +640,7 @@ fn short_help_items(context: Context, has_inspector_parent: bool) -> Vec<ShortHe
             short(&[C::Quit], "Quit", 3),
         ],
         Context::CopyDialog => vec![
-            short(&[C::MoveUp, C::MoveDown], "Scope", 0),
+            short(&[C::MoveUp, C::MoveDown], "Target", 0),
             short(&[C::MoveLeft, C::MoveRight], "Format", 0),
             short(&[C::Activate], "Copy", 0),
             short(&[C::Close], "Cancel", 0),

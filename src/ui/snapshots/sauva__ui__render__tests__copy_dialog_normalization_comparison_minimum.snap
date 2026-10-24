@@ -4,16 +4,16 @@ expression: text
 ---
  sauva / Sequence / Normalization                      NFKC
 
+ Original                            3 CP · 6 Bytes · 2 GC
 
   ┌ Copy ────────────────────────────────────────────────┐
   │ Normalization · NFKC Result                          │
+  │ Target   Whole NFKC Result                           │
   │                                                      │
-  │ Target: Whole NFKC Result                            │
-  │ Format  < Rust String >                              │
+  │ Format   < Rust String >                             │
   │                                                      │
   │ Preview · 4 CP · 5 UTF-8 bytes                       │
   │ "\u{C1}ffi"                                          │
-  │                                                      │
   └──────────────────────────────────────────────────────┘
 
   U+00C1 U+0066 U+0066 U+0069

@@ -685,7 +685,7 @@ fn normalized_copy_dialog_uses_result_text_and_custom_bindings() -> termlens::Re
     terminal.send(Key::F(1))?;
     terminal.wait_until(|screen| {
         screen.contains("Keybindings · Copy Dialog")
-            && screen.contains("Copy the selected candidate")
+            && screen.contains("Copy the selected target and format")
     })?;
     terminal.send(Key::F(1))?;
     terminal.wait_until(|screen| screen.contains(r#""\u00C1ffi""#))?;
@@ -712,10 +712,10 @@ fn inspector_copy_dialog_uses_fixed_scope_and_available_formats(
     terminal
         .wait_until(|screen| screen.row_text(0).contains(input) && screen.contains("Properties"))?;
     terminal.send(Key::Char('Y'))?;
-    let screen = terminal.snapshot_after(|screen| screen.contains("Target: Code Point"))?;
-    assert!(!footer_contains(&screen, &["Scope"]), "{screen}");
+    let screen = terminal.snapshot_after(|screen| screen.contains("Target   Code Point"))?;
+    assert!(!footer_contains(&screen, &["Target"]), "{screen}");
     if surrogate {
-        assert!(screen.contains("Format  Code Point List"), "{screen}");
+        assert!(screen.contains("Format   Code Point List"), "{screen}");
         assert!(!footer_contains(&screen, &["Format"]), "{screen}");
     } else {
         terminal.send(Key::Right)?;
@@ -742,8 +742,8 @@ fn normalization_comparison_opens_copy_formats_for_the_whole_selected_result()
     terminal.send(Key::Down)?;
     terminal.wait_until(|screen| screen.contains("NFKC Result"))?;
     terminal.send(Key::Char('Y'))?;
-    let screen = terminal.snapshot_after(|screen| screen.contains("Target: Whole NFKC Result"))?;
-    assert!(!footer_contains(&screen, &["Scope"]), "{screen}");
+    let screen = terminal.snapshot_after(|screen| screen.contains("Target   Whole NFKC Result"))?;
+    assert!(!footer_contains(&screen, &["Target"]), "{screen}");
     terminal.send(Key::Right)?;
     terminal.wait_until(|screen| screen.contains(r#""\u00C1ffi""#))?;
     terminal.send(Key::Esc)?;

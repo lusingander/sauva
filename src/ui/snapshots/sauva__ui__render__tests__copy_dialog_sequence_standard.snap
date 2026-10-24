@@ -10,18 +10,18 @@ expression: "render_to_text(&state, 100, 30)"
   2 •  3  U+0020    <SPACE> — SPACE                         │  Primary Name
   3 ┌  4  U+1F469   👩  — WOMAN                              │    COMBINING ACUTE ACCENT
     │  5  U+200D    <DEFAULT IGNORABLE> — ZERO WIDTH JOIN   │  Grapheme         1/3 · member 2/2
-    └  6  U+1F4BB
-                  ┌ Copy ────────────────────────────────────────────────────────┐ cal Marks
-                  │ Sequence · CP 2/6 · U+0301                                   │
-                  │                                                              │ rk
-                  │  Code Point                                          U+0301  │ ────────────────
-                  │  Grapheme Cluster                             2 code points  │
-                  │  Whole Input                                  6 code points  │
-                  │ Format  < Text >                                             │
+    └  6  U+1F4BB   💻  — PERSONAL COMPUTER                  │  Block
+                                                                                   cal Marks
+                  ┌ Copy ────────────────────────────────────────────────────────┐
+                  │ Sequence · CP 2/6 · U+0301                                   │ rk
+                  │ Target   Code Point                                  U+0301  │ ────────────────
+                  │          Grapheme Cluster                     2 code points  │
+                  │          Whole Input                          6 code points  │
+                  │                                                              │
+                  │ Format   < Text >                                            │
                   │                                                              │
                   │ Preview · 2 CP · 3 UTF-8 bytes                               │
                   │ Á                                                            │
-                  │                                                              │
                   └──────────────────────────────────────────────────────────────┘
 
                                                             │
@@ -31,4 +31,4 @@ expression: "render_to_text(&state, 100, 30)"
                                                             │
                                                             │
 
- k/j Scope  h/l Format  Enter Copy  Esc Cancel  C-c Quit                                    F1 Help
+ k/j Target  h/l Format  Enter Copy  Esc Cancel  C-c Quit                                   F1 Help

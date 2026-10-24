@@ -12,18 +12,18 @@ expression: text
   https://example.com/sauva
 
  Keybindings · Copy Dialog
-  k  Up                    Select the previous copy candidate
-  j  Down                  Select the next copy candidate
+  k  Up                    Select the previous copy target
+  j  Down                  Select the next copy target
   h  Left                  Select the previous output format
   l  Right                 Select the next output format
-  g                        Select the first copy candidate
-  G                        Select the last copy candidate
-  Enter                    Copy the selected candidate
+  g                        Select the first copy target
+  G                        Select the last copy target
+  Enter                    Copy the selected target and format
   Esc                      Cancel and return to the source screen
   Ctrl-c                   Quit
   F1                       Open or close help
 
-  Select a scope and cycle output formats. Formats: Text, JSON String, Rust String, Code Point
+  Select a target and cycle output formats. Formats: Text, JSON String, Rust String, Code Point
   List, UTF-8 Hex, UTF-16 Units. JSON and Rust strings include quotes and use ASCII escapes.
   Preview labels and ellipses are not copied.
 

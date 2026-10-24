@@ -4,16 +4,16 @@ expression: text
 ---
  sauva / Inspector                                  U+1F600
 
+ Properties                                       Relevant
 
   ┌ Copy ────────────────────────────────────────────────┐
   │ Inspector · U+1F600                                  │
+  │ Target   Code Point                                  │
   │                                                      │
-  │ Target: Code Point                                   │
-  │ Format  < JSON String >                              │
+  │ Format   < JSON String >                             │
   │                                                      │
   │ Preview · 1 CP · 4 UTF-8 bytes                       │
   │ "\uD83D\uDE00"                                       │
-  │                                                      │
   └──────────────────────────────────────────────────────┘
 
 

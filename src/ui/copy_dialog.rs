@@ -14,13 +14,15 @@ use crate::{
     unicode::representation::TextFormat,
 };
 
+const LABEL_WIDTH: u16 = 8;
+
 pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorTheme) {
     let dialog = state.copy_dialog().expect("the copy dialog is open");
     let source = state.copy_source().expect("the copy source is available");
     let targets = source.targets();
     let format = dialog.selected_format(source);
     let width = area.width.saturating_sub(2).min(66);
-    let height = area.height.min(if targets.len() > 1 { 14 } else { 12 });
+    let height = area.height.min(if targets.len() > 1 { 13 } else { 11 });
     let background = Rect::new(
         area.x + (area.width - width) / 2,
         area.y + (area.height - height) / 2,
@@ -46,13 +48,13 @@ pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorThem
     frame.render_widget(block, area);
 
     let mut lines = vec![Line::styled(source.heading(), muted)];
-    if content.height >= 10 || targets.len() == 1 || format != TextFormat::Text {
-        lines.push(Line::default());
-    }
+    let target_width = content.width.saturating_sub(LABEL_WIDTH);
     for (index, &target) in targets.iter().enumerate() {
         let label = source.target_label(target);
+        let mut line = Line::from(field_label(if index == 0 { "Target" } else { "" }, theme));
         if targets.len() == 1 {
-            lines.push(Line::from(format!("Target: {label}")));
+            line.spans.push(Span::raw(format!(" {label}")));
+            lines.push(line);
             continue;
         }
         let value = source.value(target);
@@ -62,24 +64,31 @@ pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorThem
         } else {
             format!("{count} code point{}", if count == 1 { "" } else { "s" })
         };
-        let row_width = usize::from(content.width.saturating_sub(2));
+        let row_width = usize::from(target_width.saturating_sub(2));
         let gap = row_width.saturating_sub(label.len() + summary.len());
-        lines.push(selectable_list_line(
+        let candidate = selectable_list_line(
             Line::from(format!("{label}{}{summary}", " ".repeat(gap))),
             index == dialog.selected_index(),
-            content.width,
+            target_width,
             theme.selection,
-        ));
+        );
+        line.spans
+            .extend(candidate.spans.into_iter().map(|mut span| {
+                span.style = candidate.style.patch(span.style);
+                span
+            }));
+        lines.push(line);
     }
+    lines.push(Line::default());
     let formats = source.formats();
-    let mut format_line = vec![Span::raw("Format  ")];
+    let mut format_line = vec![field_label("Format", theme)];
     if formats.len() > 1 {
         format_line.push(Span::styled(
-            format!("< {} >", format.label()),
-            theme.heading_style(),
+            format!(" < {} >", format.label()),
+            theme.accent_style(),
         ));
     } else {
-        format_line.push(Span::styled(format.label(), theme.heading_style()));
+        format_line.push(Span::raw(format!(" {}", format.label())));
     }
     lines.push(Line::from(format_line));
     lines.push(Line::default());
@@ -100,6 +109,13 @@ pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorThem
     let preview_width = usize::from(content.width);
     lines.push(Line::from(preview(value, format, preview_width)));
     frame.render_widget(Paragraph::new(lines), content);
+}
+
+fn field_label(label: &str, theme: &ColorTheme) -> Span<'static> {
+    Span::styled(
+        format!("{label:<width$}", width = usize::from(LABEL_WIDTH)),
+        theme.heading_style(),
+    )
 }
 
 fn preview(value: CopyValue<'_>, format: TextFormat, width: usize) -> String {

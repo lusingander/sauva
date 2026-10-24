@@ -4,16 +4,16 @@ expression: text
 ---
  sauva / Inspector                                   U+D800
 
+ Properties                                       Relevant
 
   ┌ Copy ────────────────────────────────────────────────┐
   │ Inspector · U+D800                                   │
+  │ Target   Code Point                                  │
   │                                                      │
-  │ Target: Code Point                                   │
-  │ Format  Code Point List                              │
+  │ Format   Code Point List                             │
   │                                                      │
   │ Preview · 1 CP                                       │
   │ U+D800                                               │
-  │                                                      │
   └──────────────────────────────────────────────────────┘
 
 

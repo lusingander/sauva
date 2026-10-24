@@ -7,14 +7,14 @@ expression: text
 
   ┌ Copy ────────────────────────────────────────────────┐
   │ NFKC Result · CP 7/7 · U+1F4BB                       │
-  │  Code Point                                 U+1F4BB  │
-  │  Grapheme Cluster                     3 code points  │
-  │  Whole NFKC Result                    7 code points  │
-  │ Format  < Text >                                     │
+  │ Target   Code Point                         U+1F4BB  │
+  │          Grapheme Cluster             3 code points  │
+  │          Whole NFKC Result            7 code points  │
+  │                                                      │
+  │ Format   < Text >                                    │
   │                                                      │
   │ Preview · 7 CP · 16 UTF-8 bytes                      │
   │ Áffi👩‍💻                                                │
-  │                                                      │
   └──────────────────────────────────────────────────────┘
 
- k/j Scope  h/l Format  Enter Copy  Esc Cancel      F1 Help
+ k/j Target  h/l Format  Enter Copy  Esc Cancel     F1 Help
