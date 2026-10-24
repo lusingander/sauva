@@ -5,16 +5,16 @@ expression: text
  sauva / Sequence / NFKC Result               7/7 · U+1F4BB
 
 
-  ┌ Copy ────────────────────────────────────────────────┐
-  │ NFKC Result · CP 7/7 · U+1F4BB                       │
+  ┌ Copy ────────────────────────────────────────── NFKC ┐
   │ Target   Code Point                         U+1F4BB  │
-  │          Grapheme Cluster             3 code points  │
-  │          Whole NFKC Result            7 code points  │
+  │          Grapheme Cluster                      3 CP  │
+  │          Whole NFKC Result                     7 CP  │
   │                                                      │
   │ Format   < Text >                                    │
   │                                                      │
   │ Preview · 7 CP · 16 UTF-8 bytes                      │
   │ Áffi👩‍💻                                                │
   └──────────────────────────────────────────────────────┘
+
 
  k/j Target  h/l Format  Enter Copy  Esc Cancel     F1 Help

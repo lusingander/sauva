@@ -6,8 +6,7 @@ expression: text
 
  Properties                                       Relevant
 
-  ┌ Copy ────────────────────────────────────────────────┐
-  │ Inspector · U+1F600                                  │
+  ┌ Copy ─────────────────────────────────────── U+1F600 ┐
   │ Target   Code Point                                  │
   │                                                      │
   │ Format   < JSON String >                             │
@@ -15,6 +14,7 @@ expression: text
   │ Preview · 1 CP · 4 UTF-8 bytes                       │
   │ "\uD83D\uDE00"                                       │
   └──────────────────────────────────────────────────────┘
+
 
 
  h/l Format  Enter Copy  Esc Cancel  C-c Quit       F1 Help

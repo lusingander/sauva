@@ -6,8 +6,7 @@ expression: text
 
  Properties                                       Relevant
 
-  ┌ Copy ────────────────────────────────────────────────┐
-  │ Inspector · U+D800                                   │
+  ┌ Copy ──────────────────────────────────────── U+D800 ┐
   │ Target   Code Point                                  │
   │                                                      │
   │ Format   Code Point List                             │
@@ -15,6 +14,7 @@ expression: text
   │ Preview · 1 CP                                       │
   │ U+D800                                               │
   └──────────────────────────────────────────────────────┘
+
 
 
  Enter Copy  Esc Cancel  C-c Quit                   F1 Help

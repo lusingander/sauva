@@ -56,24 +56,13 @@ impl<'a> CopySource<'a> {
         }
     }
 
-    pub fn heading(self) -> String {
+    pub fn context_label(self) -> Option<String> {
         match self {
-            Self::Inspector(point) => format!("Inspector · {point}"),
+            Self::Inspector(point) => Some(point.to_string()),
             Self::Sequence {
-                analysis,
-                selected_index,
-                form,
-            } => format!(
-                "{} · CP {}/{} · {}",
-                form.map_or_else(
-                    || "Sequence".to_owned(),
-                    |form| format!("{} Result", form.label())
-                ),
-                selected_index + 1,
-                analysis.code_points().len(),
-                analysis.code_points()[selected_index].code_point(),
-            ),
-            Self::Normalization { form, .. } => format!("Normalization · {} Result", form.label()),
+                form: Some(form), ..
+            } => Some(form.label().to_owned()),
+            Self::Sequence { form: None, .. } | Self::Normalization { .. } => None,
         }
     }
 

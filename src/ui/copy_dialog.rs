@@ -22,7 +22,7 @@ pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorThem
     let targets = source.targets();
     let format = dialog.selected_format(source);
     let width = area.width.saturating_sub(2).min(66);
-    let height = area.height.min(if targets.len() > 1 { 13 } else { 11 });
+    let height = area.height.min(if targets.len() > 1 { 12 } else { 10 });
     let background = Rect::new(
         area.x + (area.width - width) / 2,
         area.y + (area.height - height) / 2,
@@ -31,11 +31,14 @@ pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorThem
     );
     let area = background.inner(Margin::new(1, 1));
     let muted = Style::new().fg(theme.muted);
-    let block = Block::default()
+    let mut block = Block::default()
         .borders(Borders::ALL)
         .border_style(theme.border_style())
         .style(theme.base_style())
         .title(Line::styled(" Copy ", theme.heading_style()));
+    if let Some(context) = source.context_label() {
+        block = block.title(Line::styled(format!(" {context} "), muted).right_aligned());
+    }
     let inner = block.inner(area);
     let content = Rect::new(
         inner.x + 1,
@@ -47,7 +50,7 @@ pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorThem
     frame.render_widget(Block::default().style(theme.base_style()), background);
     frame.render_widget(block, area);
 
-    let mut lines = vec![Line::styled(source.heading(), muted)];
+    let mut lines = Vec::new();
     let target_width = content.width.saturating_sub(LABEL_WIDTH);
     for (index, &target) in targets.iter().enumerate() {
         let label = source.target_label(target);
@@ -62,7 +65,7 @@ pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorThem
         let summary = if target == CopyTarget::CodePoint {
             value.format(TextFormat::CodePointList).unwrap()
         } else {
-            format!("{count} code point{}", if count == 1 { "" } else { "s" })
+            format!("{count} CP")
         };
         let row_width = usize::from(target_width.saturating_sub(2));
         let gap = row_width.saturating_sub(label.len() + summary.len());

@@ -6,15 +6,15 @@ expression: text
 
 
   ┌ Copy ────────────────────────────────────────────────┐
-  │ Sequence · CP 2/6 · U+0301                           │
   │ Target   Code Point                          U+0301  │
-  │          Grapheme Cluster             2 code points  │
-  │          Whole Input                  6 code points  │
+  │          Grapheme Cluster                      2 CP  │
+  │          Whole Input                           6 CP  │
   │                                                      │
   │ Format   < Text >                                    │
   │                                                      │
   │ Preview · 2 CP · 3 UTF-8 bytes                       │
   │ Á                                                    │
   └──────────────────────────────────────────────────────┘
+
 
  Clipboard is busy
