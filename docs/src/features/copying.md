@@ -13,6 +13,8 @@ The copy dialog copies a character or string as text, a quoted string literal, o
 
 A grapheme cluster includes members outside the visible list. Normalization copies use the selected result.
 
+![Sequence copy dialog](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/sequence-copy.png)
+
 ## Formats
 
 The following examples use `A` + U+0301 + `😀`:

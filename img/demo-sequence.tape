@@ -12,6 +12,7 @@ Set Theme "nord"
 Hide
 
 Env SAUVA_CONFIG_FILE "./img/config.toml"
+Env NO_COLOR ""
 Type "cargo run --release -- --graphics iterm2 --text 'Šaúvá❤️‍🔥'"
 Enter
 Sleep 2s
@@ -70,6 +71,10 @@ Sleep 1s
 
 Type "Y"
 Sleep 1s
+
+Type "j"
+Right
+Sleep 300ms
 
 Screenshot "./img/sequence-copy.png"
 Sleep 100ms
