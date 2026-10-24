@@ -10,7 +10,7 @@ expression: text
   │  Code Point                                 U+1F4BB  │
   │  Grapheme Cluster                     3 code points  │
   │  Whole NFKC Result                    7 code points  │
-  │ Format  < Text >  1/6                                │
+  │ Format  < Text >                                     │
   │                                                      │
   │ Preview · 7 CP · 16 UTF-8 bytes                      │
   │ Áffi👩‍💻                                                │

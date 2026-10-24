@@ -525,7 +525,13 @@ mod tests {
         handle_clipboard_request(&mut state, &mut failing);
         assert_eq!(failing.writes, [r#""A\u0301\t\r\n\u001B""#]);
         assert_eq!(state.copy_dialog().unwrap().selected_index(), 2);
-        assert_eq!(state.copy_dialog().unwrap().format_index(), 1);
+        assert_eq!(
+            state
+                .copy_dialog()
+                .unwrap()
+                .selected_format(state.copy_source().unwrap()),
+            crate::unicode::representation::TextFormat::JsonString
+        );
         assert_eq!(
             state.footer_status().unwrap().message(),
             "Clipboard is busy"

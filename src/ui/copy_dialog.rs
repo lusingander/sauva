@@ -80,10 +80,6 @@ pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorThem
             format!("< {} >", format.label()),
             theme.heading_style(),
         ));
-        format_line.push(Span::styled(
-            format!("  {}/{}", dialog.format_index() + 1, formats.len()),
-            muted,
-        ));
     } else {
         format_line.push(Span::styled(format.label(), theme.heading_style()));
     }

@@ -190,10 +190,6 @@ impl CopyDialogState {
     pub const fn selected_index(&self) -> usize {
         self.selected_index
     }
-    pub const fn format_index(&self) -> usize {
-        self.format_index
-    }
-
     pub fn selected_target(&self, source: CopySource<'_>) -> CopyTarget {
         source.targets()[self.selected_index]
     }

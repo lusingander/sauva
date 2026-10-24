@@ -12,7 +12,7 @@ size: 60x16  cursor: hidden
   │  Code Point                                  U+0301  │
   │  Grapheme Cluster                     2 code points  │
   │  Whole Input                          6 code points  │
-  │ Format  < JSON String >  2/6                         │
+  │ Format  < JSON String >                              │
   │                                                      │
   │ Preview · 2 CP · 3 UTF-8 bytes                       │
   │ "A\u0301"                                            │
@@ -28,7 +28,7 @@ styles:
 6: 2 fg=8; 57 fg=8
 7: 2 fg=8; 4-55 fg=0 bg=6; 57 fg=8
 8: 2 fg=8; 57 fg=8
-9: 2 fg=8; 12-26 fg=4 bold; 27-31 fg=8; 57 fg=8
+9: 2 fg=8; 12-26 fg=4 bold; 57 fg=8
 10: 2 fg=8; 57 fg=8
 11: 2 fg=8; 4-10 fg=4 bold; 11-33 fg=8; 57 fg=8
 12: 2 fg=8; 57 fg=8

@@ -17,7 +17,7 @@ expression: "render_to_text(&state, 100, 30)"
                   │  Code Point                                          U+0301  │ ────────────────
                   │  Grapheme Cluster                             2 code points  │
                   │  Whole Input                                  6 code points  │
-                  │ Format  < Text >  1/6                                        │
+                  │ Format  < Text >                                             │
                   │                                                              │
                   │ Preview · 2 CP · 3 UTF-8 bytes                               │
                   │ Á                                                            │

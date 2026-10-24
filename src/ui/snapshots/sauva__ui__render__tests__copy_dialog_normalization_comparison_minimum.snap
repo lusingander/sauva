@@ -9,7 +9,7 @@ expression: text
   │ Normalization · NFKC Result                          │
   │                                                      │
   │ Target: Whole NFKC Result                            │
-  │ Format  < Rust String >  3/6                         │
+  │ Format  < Rust String >                              │
   │                                                      │
   │ Preview · 4 CP · 5 UTF-8 bytes                       │
   │ "\u{C1}ffi"                                          │
