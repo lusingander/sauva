@@ -14,8 +14,8 @@ expression: text
  Keybindings · Copy Dialog
   k  Up                    Select the previous copy candidate
   j  Down                  Select the next copy candidate
-  Left                     Select the previous output format
-  Right                    Select the next output format
+  h  Left                  Select the previous output format
+  l  Right                 Select the next output format
   g                        Select the first copy candidate
   G                        Select the last copy candidate
   Enter                    Copy the selected candidate

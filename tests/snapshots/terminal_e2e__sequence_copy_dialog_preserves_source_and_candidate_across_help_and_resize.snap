@@ -18,7 +18,7 @@ size: 60x16  cursor: hidden
   │ "A\u0301"                                            │
   └──────────────────────────────────────────────────────┘
 
- k/j Scope  ←/→ Format  Enter Copy  Esc Cancel      F1 Help
+ k/j Scope  h/l Format  Enter Copy  Esc Cancel      F1 Help
 
 styles:
 0: 0-5 fg=6 bold; 47-59 fg=8

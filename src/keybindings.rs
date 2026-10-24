@@ -514,8 +514,8 @@ keybinding_context!(CopyDialogKeybindings, Context::CopyDialog, {
     close => (Command::Close, ["esc"]),
     move_up => (Command::MoveUp, ["k", "up"]),
     move_down => (Command::MoveDown, ["j", "down"]),
-    move_left => (Command::MoveLeft, ["left"]),
-    move_right => (Command::MoveRight, ["right"]),
+    move_left => (Command::MoveLeft, ["h", "left"]),
+    move_right => (Command::MoveRight, ["l", "right"]),
     first => (Command::First, ["g"]),
     last => (Command::Last, ["G"]),
     activate => (Command::Activate, ["enter"]),
@@ -1174,6 +1174,7 @@ mod tests {
             Context::BrowseRange,
             Context::BrowseBlock,
             Context::BrowseCodePoints,
+            Context::CopyDialog,
             Context::Help,
         ] {
             assert_eq!(
@@ -1191,6 +1192,8 @@ mod tests {
             (Context::Inspector, Command::NextCodePoint, plain('l')),
             (Context::BrowseCodePoints, Command::MoveLeft, plain('h')),
             (Context::BrowseCodePoints, Command::MoveRight, plain('l')),
+            (Context::CopyDialog, Command::MoveLeft, plain('h')),
+            (Context::CopyDialog, Command::MoveRight, plain('l')),
         ] {
             assert_eq!(keymap.keys_for(context, command).first(), Some(&key));
         }

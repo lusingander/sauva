@@ -570,7 +570,7 @@ mod tests {
             assert!(text.contains(expected), "{text}");
             assert!(text.contains("Preview · 2 CP · 3 UTF-8 bytes"), "{text}");
             assert!(
-                text.lines().last().unwrap().contains("←/→ Format"),
+                text.lines().last().unwrap().contains("h/l Format"),
                 "{text}"
             );
             update(

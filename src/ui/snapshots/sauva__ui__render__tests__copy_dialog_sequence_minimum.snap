@@ -17,4 +17,4 @@ expression: text
   │ U+0041 U+0301                                        │
   └──────────────────────────────────────────────────────┘
 
- k/j Scope  ←/→ Format  Enter Copy  Esc Cancel      F1 Help
+ k/j Scope  h/l Format  Enter Copy  Esc Cancel      F1 Help

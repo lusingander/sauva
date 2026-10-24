@@ -597,7 +597,7 @@ fn sequence_copy_dialog_preserves_source_and_candidate_across_help_and_resize()
     })?;
     terminal.send(Key::Down)?;
     terminal.wait_until(|screen| screen.contains("Preview · 2 CP · 3 UTF-8 bytes"))?;
-    terminal.send(Key::Right)?;
+    terminal.send(Key::Char('l'))?;
     terminal.wait_until(|screen| screen.contains(r#""A\u0301""#))?;
     terminal.send(Key::F(1))?;
     terminal.wait_until(|screen| screen.contains("Keybindings · Copy Dialog"))?;

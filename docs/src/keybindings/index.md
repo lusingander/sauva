@@ -154,8 +154,8 @@ Context: `copy_dialog`. These bindings apply to the dialog opened from Inspector
 | --- | --- | --- |
 | `move_up` | <kbd>k</kbd>, <kbd>Up</kbd> | Select the previous scope |
 | `move_down` | <kbd>j</kbd>, <kbd>Down</kbd> | Select the next scope |
-| `move_left` | <kbd>Left</kbd> | Select the previous format |
-| `move_right` | <kbd>Right</kbd> | Select the next format |
+| `move_left` | <kbd>h</kbd>, <kbd>Left</kbd> | Select the previous format |
+| `move_right` | <kbd>l</kbd>, <kbd>Right</kbd> | Select the next format |
 | `first` | <kbd>g</kbd> | Select the first scope |
 | `last` | <kbd>G</kbd> | Select the last scope |
 | `activate` | <kbd>Enter</kbd> | Copy the selected scope and format |

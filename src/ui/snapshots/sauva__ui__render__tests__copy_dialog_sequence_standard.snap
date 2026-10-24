@@ -31,4 +31,4 @@ expression: "render_to_text(&state, 100, 30)"
                                                             │
                                                             │
 
- k/j Scope  ←/→ Format  Enter Copy  Esc Cancel  C-c Quit                                    F1 Help
+ k/j Scope  h/l Format  Enter Copy  Esc Cancel  C-c Quit                                    F1 Help
