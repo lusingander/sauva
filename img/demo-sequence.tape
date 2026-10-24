@@ -73,11 +73,22 @@ Type "Y"
 Sleep 1s
 
 Type "j"
+Sleep 500ms
+
 Right
-Sleep 300ms
+Sleep 500ms
 
 Screenshot "./img/sequence-copy.png"
 Sleep 100ms
+
+Right
+Sleep 500ms
+Right
+Sleep 500ms
+Right
+Sleep 500ms
+Right
+Sleep 500ms
 
 Type@300ms "jjj"
 Sleep 500ms
