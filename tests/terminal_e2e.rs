@@ -675,7 +675,6 @@ fn normalized_copy_dialog_uses_result_text_and_custom_bindings() -> termlens::Re
         terminal.snapshot_after(|screen| screen.contains("Preview · 4 CP · 5 UTF-8 bytes"))?;
     assert!(screen.contains("Whole NFKC Result"), "{screen}");
     assert!(screen.contains("Áffi"), "{screen}");
-    assert!(screen.contains("U+00C1 U+0066 U+0066 U+0069"), "{screen}");
     assert!(screen.contains("y Copy"), "{screen}");
     assert!(screen.contains("x Cancel"), "{screen}");
     terminal.send(Key::Char('f'))?;

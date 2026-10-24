@@ -11,7 +11,7 @@ use crate::{
     app::AppState,
     copy_dialog::{CopyTarget, CopyValue},
     ui::{selectable_list_line, text_preview::safe_cluster, theme::ColorTheme},
-    unicode::{CodePoint, representation::TextFormat},
+    unicode::representation::TextFormat,
 };
 
 pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorTheme) {
@@ -46,8 +46,6 @@ pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorThem
     frame.render_widget(block, area);
 
     let mut lines = vec![Line::styled(source.heading(), muted)];
-    // The minimum terminal has nine content rows. Keep the Text preview's
-    // code-point line by omitting just this gap when necessary.
     if content.height >= 10 || targets.len() == 1 || format != TextFormat::Text {
         lines.push(Line::default());
     }
@@ -101,35 +99,22 @@ pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorThem
     ]));
     let preview_width = usize::from(content.width);
     lines.push(Line::from(preview(value, format, preview_width)));
-    if format == TextFormat::Text
-        && let Some(text) = text
-    {
-        lines.push(Line::styled(
-            fit_atoms(
-                text.chars()
-                    .map(|character| CodePoint::from(character).to_string()),
-                " ",
-                preview_width,
-            ),
-            muted,
-        ));
-    }
     frame.render_widget(Paragraph::new(lines), content);
 }
 
 fn preview(value: CopyValue<'_>, format: TextFormat, width: usize) -> String {
     match value.text() {
         Some(text) if format == TextFormat::Text => {
-            fit_atoms(text.graphemes(true).map(safe_cluster), "", width)
+            fit_atoms(text.graphemes(true).map(safe_cluster), width)
         }
-        Some(text) => fit_atoms(format.atoms(&text), "", width),
-        None => fit_atoms(value.format(format).into_iter(), "", width),
+        Some(text) => fit_atoms(format.atoms(&text), width),
+        None => fit_atoms(value.format(format).into_iter(), width),
     }
 }
 
 /// Clip between complete display atoms without retaining a full rendering of a
 /// potentially large input. Ellipses are display aids only.
-fn fit_atoms(atoms: impl Iterator<Item = String>, separator: &str, width: usize) -> String {
+fn fit_atoms(atoms: impl Iterator<Item = String>, width: usize) -> String {
     if width == 0 {
         return String::new();
     }
@@ -137,14 +122,12 @@ fn fit_atoms(atoms: impl Iterator<Item = String>, separator: &str, width: usize)
     let mut output = String::new();
     let mut used = 0;
     while let Some(atom) = atoms.next() {
-        let gap = if output.is_empty() { "" } else { separator };
-        let atom_width = Line::from(atom.as_str()).width() + gap.len();
+        let atom_width = Line::from(atom.as_str()).width();
         let reserve = usize::from(atoms.peek().is_some());
         if used + atom_width + reserve > width {
             output.push('…');
             break;
         }
-        output.push_str(gap);
         output.push_str(&atom);
         used += atom_width;
     }
@@ -174,21 +157,13 @@ mod tests {
     fn preview_clips_at_cluster_boundaries_and_never_emits_terminal_controls() {
         let text = "A\u{0301}👩‍💻\r\n\u{1b}\u{202e}";
         assert_eq!(
-            fit_atoms(text.graphemes(true).map(safe_cluster), "", 100),
+            fit_atoms(text.graphemes(true).map(safe_cluster), 100),
             "A\u{0301}👩‍💻<CR><LF><U+001B><U+202E>"
         );
         assert_eq!(
-            fit_atoms(text.graphemes(true).map(safe_cluster), "", 2),
+            fit_atoms(text.graphemes(true).map(safe_cluster), 2),
             "A\u{0301}…"
         );
-        assert_eq!(fit_atoms(["👩‍💻".to_owned()].into_iter(), "", 2), "👩‍💻");
-        assert_eq!(
-            fit_atoms(
-                ["U+0041".to_owned(), "U+0301".to_owned()].into_iter(),
-                " ",
-                8
-            ),
-            "U+0041…"
-        );
+        assert_eq!(fit_atoms(["👩‍💻".to_owned()].into_iter(), 2), "👩‍💻");
     }
 }
