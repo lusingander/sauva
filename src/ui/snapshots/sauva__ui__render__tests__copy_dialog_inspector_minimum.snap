@@ -6,13 +6,13 @@ expression: text
 
  Properties                                       Relevant
 
+
   ┌ Copy ─────────────────────────────────────── U+1F600 ┐
   │ Target   Code Point                                  │
   │                                                      │
   │ Format   < JSON String >                             │
   │                                                      │
-  │ Preview · 1 CP · 4 UTF-8 bytes                       │
-  │ "\uD83D\uDE00"                                       │
+  │ Preview  "\uD83D\uDE00"                              │
   └──────────────────────────────────────────────────────┘
 
 

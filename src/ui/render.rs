@@ -499,7 +499,6 @@ mod tests {
         assert!(footer.contains("Enter Copy"));
         assert!(footer.contains("Esc Cancel"));
         assert!(footer.contains("F1 Help"));
-        assert!(text.contains("Preview · 2 CP · 3 UTF-8 bytes"));
         insta::assert_snapshot!(text);
 
         update(
@@ -551,7 +550,6 @@ mod tests {
         );
         let text = render_to_text(&state, 60, 16);
         assert!(text.contains("Whole NFKC Result"));
-        assert!(text.contains("Preview · 7 CP"));
         insta::assert_snapshot!(text);
     }
 
@@ -578,7 +576,7 @@ mod tests {
     }
 
     #[test]
-    fn copy_dialog_formats_fit_the_minimum_screen_without_losing_the_source_metrics() {
+    fn copy_dialog_formats_show_inline_previews_at_the_minimum_screen_size() {
         let mut state = sequence_copy_dialog();
         for (label, expected) in [
             ("Text", "A\u{301}"),
@@ -590,8 +588,7 @@ mod tests {
         ] {
             let text = render_to_text(&state, 60, 16);
             assert!(text.contains(&format!("< {label} >")), "{text}");
-            assert!(text.contains(expected), "{text}");
-            assert!(text.contains("Preview · 2 CP · 3 UTF-8 bytes"), "{text}");
+            assert!(text.contains(&format!("Preview  {expected}")), "{text}");
             assert!(
                 text.lines().last().unwrap().contains("h/l Format"),
                 "{text}"

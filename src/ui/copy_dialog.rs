@@ -22,7 +22,7 @@ pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorThem
     let targets = source.targets();
     let format = dialog.selected_format(source);
     let width = area.width.saturating_sub(2).min(66);
-    let height = area.height.min(if targets.len() > 1 { 12 } else { 10 });
+    let height = area.height.min(if targets.len() > 1 { 11 } else { 9 });
     let background = Rect::new(
         area.x + (area.width - width) / 2,
         area.y + (area.height - height) / 2,
@@ -51,7 +51,7 @@ pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorThem
     frame.render_widget(block, area);
 
     let mut lines = Vec::new();
-    let target_width = content.width.saturating_sub(LABEL_WIDTH);
+    let value_width = content.width.saturating_sub(LABEL_WIDTH);
     for (index, &target) in targets.iter().enumerate() {
         let label = source.target_label(target);
         let mut line = Line::from(field_label(if index == 0 { "Target" } else { "" }, theme));
@@ -67,12 +67,12 @@ pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorThem
         } else {
             format!("{count} CP")
         };
-        let row_width = usize::from(target_width.saturating_sub(2));
+        let row_width = usize::from(value_width.saturating_sub(2));
         let gap = row_width.saturating_sub(label.len() + summary.len());
         let candidate = selectable_list_line(
             Line::from(format!("{label}{}{summary}", " ".repeat(gap))),
             index == dialog.selected_index(),
-            target_width,
+            value_width,
             theme.selection,
         );
         line.spans
@@ -96,21 +96,11 @@ pub fn render(frame: &mut Frame, area: Rect, state: &AppState, theme: &ColorThem
     lines.push(Line::from(format_line));
     lines.push(Line::default());
     let value = source.value(dialog.selected_target(source));
-    let count = value.code_point_count();
-    let text = value.text();
-    let bytes = text.as_ref().map_or_else(String::new, |text| {
-        format!(
-            " · {} UTF-8 byte{}",
-            text.len(),
-            if text.len() == 1 { "" } else { "s" }
-        )
-    });
+    let preview_width = usize::from(value_width.saturating_sub(1));
     lines.push(Line::from(vec![
-        Span::styled("Preview", theme.heading_style()),
-        Span::styled(format!(" · {count} CP{bytes}"), muted),
+        field_label("Preview", theme),
+        Span::raw(format!(" {}", preview(value, format, preview_width))),
     ]));
-    let preview_width = usize::from(content.width);
-    lines.push(Line::from(preview(value, format, preview_width)));
     frame.render_widget(Paragraph::new(lines), content);
 }
 

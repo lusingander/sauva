@@ -5,14 +5,14 @@ expression: text
  sauva / Sequence / Normalization                      NFKC
 
  Original                            3 CP · 6 Bytes · 2 GC
+  Áﬃ
 
   ┌ Copy ────────────────────────────────────────────────┐
   │ Target   Whole NFKC Result                           │
   │                                                      │
   │ Format   < Rust String >                             │
   │                                                      │
-  │ Preview · 4 CP · 5 UTF-8 bytes                       │
-  │ "\u{C1}ffi"                                          │
+  │ Preview  "\u{C1}ffi"                                 │
   └──────────────────────────────────────────────────────┘
 
   Áffi
