@@ -148,17 +148,17 @@ Use <kbd>Backspace</kbd> in the Inspector to return to this result.
 
 ## Copy Dialog
 
-Context: `copy_dialog`. These bindings apply to the dialog opened from Inspector, Sequence, or either Normalization screen. The source screen's bindings are inactive while the dialog is open. See [Copying](../features/copying.md) for available scopes and formats.
+Context: `copy_dialog`. These bindings apply to the dialog opened from Inspector, Sequence, or either Normalization screen. The source screen's bindings are inactive while the dialog is open. See [Copying](../features/copying.md) for available targets and formats.
 
 | Command | Keys | Action |
 | --- | --- | --- |
-| `move_up` | <kbd>k</kbd>, <kbd>Up</kbd> | Select the previous scope |
-| `move_down` | <kbd>j</kbd>, <kbd>Down</kbd> | Select the next scope |
+| `move_up` | <kbd>k</kbd>, <kbd>Up</kbd> | Select the previous target |
+| `move_down` | <kbd>j</kbd>, <kbd>Down</kbd> | Select the next target |
 | `move_left` | <kbd>h</kbd>, <kbd>Left</kbd> | Select the previous format |
 | `move_right` | <kbd>l</kbd>, <kbd>Right</kbd> | Select the next format |
-| `first` | <kbd>g</kbd> | Select the first scope |
-| `last` | <kbd>G</kbd> | Select the last scope |
-| `activate` | <kbd>Enter</kbd> | Copy the selected scope and format |
+| `first` | <kbd>g</kbd> | Select the first target |
+| `last` | <kbd>G</kbd> | Select the last target |
+| `activate` | <kbd>Enter</kbd> | Copy the selected target and format |
 | `close` | <kbd>Esc</kbd> | Cancel and return to the source screen |
 
 Global <kbd>F1</kbd> opens the shared Copy Dialog help. Global <kbd>Ctrl-C</kbd> still quits.

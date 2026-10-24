@@ -51,9 +51,7 @@ Result code points can be opened in the [Inspector](./inspector.md) to read thei
 
 ## Copying
 
-Quick copying from the form comparison includes the whole normalized result as text. The [copy dialog](./copying.md) also offers string literals, code point lists, and encodings for that result.
-
-The result list offers the selected code point, its entire grapheme cluster, or the whole normalized result in the same dialog. Each scope uses the normalized text; the original input remains unchanged.
+Quick copying from form comparison takes the whole normalized result as text. The [copy dialog](./copying.md) offers other formats and, from the result list, code point and grapheme cluster targets.
 
 ## Operations
 

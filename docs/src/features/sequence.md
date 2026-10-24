@@ -45,13 +45,7 @@ Open a code point in the [Inspector](./inspector.md) to read its properties.
 
 ## Copying
 
-The [copy dialog](./copying.md) offers three scopes:
-
-- **Code Point**: the selected code point as text.
-- **Grapheme Cluster**: the entire cluster containing the selected code point, including members outside the visible list.
-- **Whole Input**: the original input in its original order.
-
-Choose a representation for each scope using the shared [copy formats](./copying.md#formats).
+The [copy dialog](./copying.md) copies the selected code point, its whole grapheme cluster, or the original input in a chosen format.
 
 ## Operations
 
