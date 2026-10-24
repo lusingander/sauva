@@ -592,11 +592,9 @@ fn sequence_copy_dialog_preserves_source_and_candidate_across_help_and_resize()
     terminal.send(Key::Down)?;
     terminal.wait_until(|screen| screen.contains("2/6 · U+0301"))?;
     terminal.send(Key::Char('Y'))?;
-    terminal.wait_until(|screen| {
-        screen.contains("Sequence") && screen.contains("Preview · 1 CP · 2 UTF-8 bytes")
-    })?;
+    terminal.wait_until(|screen| screen.contains("Preview  ◌\u{0301}"))?;
     terminal.send(Key::Down)?;
-    terminal.wait_until(|screen| screen.contains("Preview · 2 CP · 3 UTF-8 bytes"))?;
+    terminal.wait_until(|screen| screen.contains("Preview  A\u{0301}"))?;
     terminal.send(Key::Char('l'))?;
     terminal.wait_until(|screen| screen.contains(r#""A\u0301""#))?;
     terminal.send(Key::F(1))?;
@@ -605,15 +603,13 @@ fn sequence_copy_dialog_preserves_source_and_candidate_across_help_and_resize()
         screen.contains("Keybindings · Copy Dialog") && footer_contains(screen, &["F1 Close"])
     })?;
     terminal.send(Key::Esc)?;
-    let screen = terminal.snapshot_after(|screen| {
-        screen.contains("Preview · 2 CP · 3 UTF-8 bytes") && screen.contains(r#""A\u0301""#)
-    })?;
+    let screen = terminal.snapshot_after(|screen| screen.contains(r#"Preview  "A\u0301""#))?;
     insta::assert_snapshot!(screen.with_styles());
 
     terminal.send(Key::Char('G'))?;
-    terminal.wait_until(|screen| screen.contains("Preview · 6 CP · 15 UTF-8 bytes"))?;
+    terminal.wait_until(|screen| screen.contains(r#"Preview  "A\u0301\uD83D"#))?;
     resize_and_wait(&mut terminal, 100, 30, |screen| {
-        screen.contains("Preview · 6 CP · 15 UTF-8 bytes")
+        screen.contains(r#"Preview  "A\u0301\uD83D"#)
             && footer_contains(screen, &["Enter Copy", "F1 Help"])
     })?;
     terminal.send(Key::Esc)?;
@@ -623,7 +619,7 @@ fn sequence_copy_dialog_preserves_source_and_candidate_across_help_and_resize()
         screen.contains("2/6 · U+0301") && footer_contains(screen, &["Y Copy..."])
     })?;
     terminal.send(Key::Char('Y'))?;
-    terminal.wait_until(|screen| screen.contains("Preview · 1 CP · 2 UTF-8 bytes"))?;
+    terminal.wait_until(|screen| screen.contains("Preview  ◌\u{0301}"))?;
     terminal.send(Key::Esc)?;
     terminal.wait_until(|screen| {
         screen.contains("2/6 · U+0301") && footer_contains(screen, &["Y Copy..."])
@@ -666,13 +662,10 @@ fn normalized_copy_dialog_uses_result_text_and_custom_bindings() -> termlens::Re
     let screen = terminal.snapshot_after(|screen| screen.contains("2/4 · U+0066"))?;
     assert!(screen.contains("C Copy..."), "{screen}");
     terminal.send(Key::Char('C'))?;
-    terminal.wait_until(|screen| {
-        screen.contains("NFKC Result") && screen.contains("Preview · 1 CP · 1 UTF-8 byte")
-    })?;
+    terminal.wait_until(|screen| screen.contains("Preview  f"))?;
     terminal.send(Key::Char('l'))?;
     terminal.send(Key::Char('l'))?;
-    let screen =
-        terminal.snapshot_after(|screen| screen.contains("Preview · 4 CP · 5 UTF-8 bytes"))?;
+    let screen = terminal.snapshot_after(|screen| screen.contains("Preview  Áffi"))?;
     assert!(screen.contains("Whole NFKC Result"), "{screen}");
     assert!(screen.contains("Áffi"), "{screen}");
     assert!(screen.contains("y Copy"), "{screen}");
