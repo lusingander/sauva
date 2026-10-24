@@ -13,7 +13,7 @@ The copy dialog copies a character or string as text, a quoted string literal, o
 
 A grapheme cluster includes members outside the visible list. Normalization copies use the selected result.
 
-![Sequence copy dialog](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/sequence-copy.png)
+![Copy a grapheme cluster as a JSON string from Sequence](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/sequence-copy.png)
 
 ## Formats
 
@@ -28,7 +28,7 @@ The following examples use `A` + U+0301 + `😀`:
 | UTF-8 Hex | `41 CC 81 F0 9F 98 80` |
 | UTF-16 Units | `0041 0301 D83D DE00` |
 
-![Inspector copy dialog](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/inspector-copy.png)
+![Copy a code point as a Rust string from Inspector](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/inspector-copy.png)
 
 JSON String and Rust String include quotes and use ASCII escapes for non-ASCII characters and controls. Even one character is copied as a string literal.
 
