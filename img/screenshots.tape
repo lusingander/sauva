@@ -56,6 +56,29 @@ Sleep 100ms
 Type "q"
 Sleep 100ms
 
+# Inspector copy: show a single-code-point Rust string literal.
+
+Type@1ms "./target/release/sauva --graphics iterm2 U+1F600"
+Enter
+Sleep 1s
+
+Show
+
+Type "Y"
+Right
+Right
+Sleep 300ms
+
+Screenshot "./img/inspector-copy.png"
+Sleep 100ms
+
+Hide
+
+Escape
+Sleep 100ms
+Type "q"
+Sleep 100ms
+
 # Property explanation: show every East Asian Width value and its reference.
 
 Type@1ms "./target/release/sauva --graphics iterm2 U+00E9"
