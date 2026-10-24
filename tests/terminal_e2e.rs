@@ -908,7 +908,7 @@ fn normalization_comparison_highlights_changes_and_preserves_navigation() -> ter
         screen.contains("NFKC Result 3/6 / Inspector") && screen.contains("DIGIT ONE")
     })?;
     terminal.send(Key::Backspace)?;
-    terminal.wait_until(|screen| screen.contains("Sequence / NFKC Result"))?;
+    terminal.wait_until(|screen| screen.row_text(0).contains("3/6 · U+0031"))?;
     terminal.send(Key::Backspace)?;
     terminal.wait_until(|screen| {
         screen.contains("Sequence / Normalization") && screen.contains("NFKC Result")
@@ -917,6 +917,7 @@ fn normalization_comparison_highlights_changes_and_preserves_navigation() -> ter
     terminal.send(Key::Enter)?;
     terminal.wait_until(|screen| screen.contains("NFKC Result 3/6 / Inspector"))?;
     terminal.send(Key::Backspace)?;
+    terminal.wait_until(|screen| screen.row_text(0).contains("3/6 · U+0031"))?;
     terminal.send(Key::Esc)?;
     terminal.wait_until(|screen| screen.contains("Sequence / Normalization"))?;
     terminal.send(Key::Esc)?;
@@ -935,6 +936,7 @@ fn normalization_fits_the_minimum_terminal_and_opens_single_point_results() -> t
     let mut terminal = termlens::bin!(
         "sauva",
         size(60, 16),
+        answer_queries(false),
         args(["A\u{0301}", "--graphics", "off"])
     )?;
     terminal.wait_until(|screen| screen.contains("2 code points"))?;
@@ -949,6 +951,7 @@ fn normalization_fits_the_minimum_terminal_and_opens_single_point_results() -> t
     terminal.send(Key::Enter)?;
     terminal.wait_until(|screen| screen.contains("NFC Result 1/1 / Inspector"))?;
     terminal.send(Key::Backspace)?;
+    terminal.wait_until(|screen| screen.row_text(0).contains("1/1 · U+00C1"))?;
     terminal.send(Key::Esc)?;
     terminal.wait_until(|screen| screen.contains("Sequence / Normalization"))?;
     terminal.send(Key::Esc)?;
