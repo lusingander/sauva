@@ -935,6 +935,7 @@ fn normalization_fits_the_minimum_terminal_and_opens_single_point_results() -> t
     let mut terminal = termlens::bin!(
         "sauva",
         size(60, 16),
+        answer_queries(false),
         args(["A\u{0301}", "--graphics", "off"])
     )?;
     terminal.wait_until(|screen| screen.contains("2 code points"))?;

@@ -2,6 +2,7 @@ use std::io;
 
 use ratatui::{
     DefaultTerminal,
+    backend::Backend,
     crossterm::{
         event::{self, Event},
         terminal::window_size,
@@ -116,7 +117,10 @@ fn run_event_loop(
             if previous_screen != VisibleScreen::for_state(state) {
                 // Some terminals retain parts of combining-character sequences after a differential redraw.
                 // Clear at screen boundaries so the next screen starts from empty cells without clearing during ordinary navigation.
-                terminal.clear()?;
+                // A full redraw does not need Terminal::clear's cursor-position query.
+                terminal.backend_mut().clear()?;
+                // The last draw left the current buffer empty; discard the previous frame.
+                terminal.swap_buffers();
             }
         }
     }
