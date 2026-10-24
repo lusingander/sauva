@@ -9,6 +9,7 @@ mod generated;
 mod notation;
 pub mod plane;
 mod properties;
+pub mod representation;
 pub mod text;
 
 pub use crate::unicode::{

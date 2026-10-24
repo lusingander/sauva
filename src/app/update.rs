@@ -65,6 +65,16 @@ pub fn update(state: &mut AppState, action: Action) {
         | Action::MoveCopyDialog(_)
         | Action::CopyDialogSelection
         | Action::CompleteCopyDialog(_) => update_copy_dialog(state, action),
+        Action::OpenCopyDialog
+            if !state.help.is_open()
+                && state.copy_dialog.is_none()
+                && matches!(
+                    state.view,
+                    View::Inspector | View::Sequence | View::Normalization
+                ) =>
+        {
+            state.copy_dialog = Some(CopyDialogState::default());
+        }
         Action::Quit => state.running = false,
         Action::CloseProperty
         | Action::MoveProperty(_)
@@ -407,9 +417,6 @@ fn update_sequence(state: &mut AppState, action: Action) {
             state.view = View::Normalization;
             refresh_preview_for_change(state, previous_preview);
         }
-        Action::OpenCopyDialog if !state.help.is_open() && state.copy_dialog.is_none() => {
-            state.copy_dialog = Some(CopyDialogState::default());
-        }
         _ => {}
     }
 }
@@ -459,30 +466,26 @@ fn update_copy_dialog(state: &mut AppState, action: Action) {
     match action {
         Action::CloseCopyDialog if !state.help.is_open() => state.copy_dialog = None,
         Action::MoveCopyDialog(movement) if !state.help.is_open() => {
-            if let Some(dialog) = &mut state.copy_dialog {
-                dialog.move_selection(movement);
+            if let Some(mut dialog) = state.copy_dialog {
+                dialog.move_selection(movement, state.copy_source().unwrap());
+                state.copy_dialog = Some(dialog);
             }
         }
         Action::CopyDialogSelection if !state.help.is_open() && state.copy_dialog.is_some() => {
-            let target = state.copy_dialog.as_ref().unwrap().selected_target();
-            let value = target.text(state.sequence().unwrap()).to_owned();
-            let source = if state.showing_normalization_result {
-                format!(
-                    "{} Result",
-                    state.normalization.as_ref().unwrap().form().label()
-                )
-            } else {
-                "Input".to_owned()
-            };
-            let count = value.chars().count();
+            let source = state.copy_source().unwrap();
+            let dialog = state.copy_dialog.as_ref().unwrap();
+            let target = dialog.selected_target(source);
+            let format = dialog.selected_format(source);
+            let value = source.value(target).format(format);
             state.clipboard_request = Some(ClipboardRequest {
                 label: target.label(),
                 success_message: format!(
-                    "Copied {} ({source}): {count} code point{}",
-                    target.label(),
-                    if count == 1 { "" } else { "s" },
+                    "Copied {} as {} ({})",
+                    source.target_label(target),
+                    format.label(),
+                    source.origin_label(),
                 ),
-                value: Some(value),
+                value,
                 from_copy_dialog: true,
             });
         }

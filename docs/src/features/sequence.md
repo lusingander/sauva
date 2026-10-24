@@ -45,15 +45,7 @@ Open a code point in the [Inspector](./inspector.md) to read its properties.
 
 ## Copying
 
-The copy dialog offers three candidates:
-
-- **Code Point**: the selected code point as text.
-- **Grapheme Cluster**: the entire cluster containing the selected code point, including members outside the visible list.
-- **Whole Input**: the original input in its original order.
-
-Labels, dotted circles, and ellipses are display aids and are not copied. Whitespace, newlines, and invisible characters are preserved exactly.
-
-![Sequence Copy](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/sequence-copy.png)
+The [copy dialog](./copying.md) copies the selected code point, its whole grapheme cluster, or the original input in a chosen format.
 
 ## Operations
 

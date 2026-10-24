@@ -289,6 +289,7 @@ fn render_footer(
     let content = help::footer(
         context,
         state.has_inspector_parent(),
+        state.copy_dialog().and_then(|_| state.copy_source()),
         area.width,
         keymap,
         color_theme,
@@ -302,6 +303,7 @@ fn render_footer(
 
 #[cfg(test)]
 mod tests {
+    use crate::unicode::CodePoint;
     use ratatui::{
         Terminal,
         backend::TestBackend,
@@ -491,14 +493,36 @@ mod tests {
 
     #[test]
     fn copy_dialog_sequence_minimum() {
-        let state = sequence_copy_dialog();
+        let mut state = sequence_copy_dialog();
         let text = render_to_text(&state, 60, 16);
         let footer = text.lines().last().unwrap();
         assert!(footer.contains("Enter Copy"));
         assert!(footer.contains("Esc Cancel"));
         assert!(footer.contains("F1 Help"));
-        assert!(text.contains("Preview · 2 CP · 3 bytes"));
         insta::assert_snapshot!(text);
+
+        update(
+            &mut state,
+            Action::MoveCopyDialog(crate::copy_dialog::CopyMove::First),
+        );
+        let theme = ColorTheme::default();
+        let buffer = render_to_buffer(&state, 60, 16, &theme);
+        let text = buffer_to_text(&buffer);
+        let (row, line) = text
+            .lines()
+            .enumerate()
+            .find(|(_, line)| line.contains("Target"))
+            .unwrap();
+        let label = line.find("Target").unwrap() as u16;
+        let value = line.find("Code Point").unwrap() as u16;
+        assert_ne!(
+            buffer.cell((label, row as u16)).unwrap().bg,
+            theme.selection.bg
+        );
+        assert_eq!(
+            buffer.cell((value, row as u16)).unwrap().bg,
+            theme.selection.bg
+        );
     }
 
     #[test]
@@ -526,7 +550,6 @@ mod tests {
         );
         let text = render_to_text(&state, 60, 16);
         assert!(text.contains("Whole NFKC Result"));
-        assert!(text.contains("Preview · 7 CP"));
         insta::assert_snapshot!(text);
     }
 
@@ -548,7 +571,91 @@ mod tests {
         update(&mut state, Action::ToggleHelp);
         let text = render_to_text(&state, 100, 30);
         assert!(text.contains("Keybindings · Copy Dialog"));
-        assert!(text.contains("Copy the selected candidate"));
+        assert!(text.contains("Copy the selected target and format"));
+        insta::assert_snapshot!(text);
+    }
+
+    #[test]
+    fn copy_dialog_formats_show_inline_previews_at_the_minimum_screen_size() {
+        let mut state = sequence_copy_dialog();
+        for (label, expected) in [
+            ("Text", "A\u{301}"),
+            ("JSON String", r#""A\u0301""#),
+            ("Rust String", r#""A\u{301}""#),
+            ("Code Point List", "U+0041 U+0301"),
+            ("UTF-8 Hex", "41 CC 81"),
+            ("UTF-16 Units", "0041 0301"),
+        ] {
+            let text = render_to_text(&state, 60, 16);
+            assert!(text.contains(&format!("< {label} >")), "{text}");
+            assert!(text.contains(&format!("Preview  {expected}")), "{text}");
+            assert!(
+                text.lines().last().unwrap().contains("h/l Format"),
+                "{text}"
+            );
+            update(
+                &mut state,
+                Action::MoveCopyDialog(crate::copy_dialog::CopyMove::NextFormat),
+            );
+        }
+    }
+
+    #[test]
+    fn copy_dialog_inspector_minimum() {
+        let mut state = AppState::with_selected(CodePoint::from('😀'));
+        update(&mut state, Action::OpenCopyDialog);
+        update(
+            &mut state,
+            Action::MoveCopyDialog(crate::copy_dialog::CopyMove::NextFormat),
+        );
+        let text = render_to_text(&state, 60, 16);
+        assert!(text.contains("Target   Code Point"));
+        assert!(text.contains(r#""\uD83D\uDE00""#));
+        assert!(!text.lines().last().unwrap().contains("Target"));
+        insta::assert_snapshot!(text);
+    }
+
+    #[test]
+    fn copy_dialog_surrogate_minimum() {
+        let mut state = AppState::with_selected(CodePoint::new(0xd800).unwrap());
+        update(&mut state, Action::OpenCopyDialog);
+        let text = render_to_text(&state, 60, 16);
+        let dialog = text
+            .lines()
+            .skip_while(|line| !line.contains("┌ Copy"))
+            .take_while(|line| !line.contains('└'))
+            .collect::<Vec<_>>()
+            .join("\n");
+        assert!(dialog.contains("Format   Code Point List"));
+        assert!(!dialog.contains("Not available"));
+        assert!(!dialog.contains("surrogate"));
+        let footer = text.lines().last().unwrap();
+        assert!(!footer.contains("Target"));
+        assert!(!footer.contains("Format"));
+        insta::assert_snapshot!(text);
+    }
+
+    #[test]
+    fn copy_dialog_normalization_comparison_minimum() {
+        let mut state = AppState::with_sequence("A\u{301}ﬃ".to_owned());
+        update(&mut state, Action::OpenNormalization);
+        for _ in 0..2 {
+            update(
+                &mut state,
+                Action::MoveNormalization(crate::normalization::NormalizationMove::Next),
+            );
+        }
+        update(&mut state, Action::OpenCopyDialog);
+        for _ in 0..2 {
+            update(
+                &mut state,
+                Action::MoveCopyDialog(crate::copy_dialog::CopyMove::NextFormat),
+            );
+        }
+        let text = render_to_text(&state, 60, 16);
+        assert!(text.contains("Target   Whole NFKC Result"));
+        assert!(text.contains(r#""\u{C1}ffi""#));
+        assert!(!text.lines().last().unwrap().contains("Target"));
         insta::assert_snapshot!(text);
     }
 

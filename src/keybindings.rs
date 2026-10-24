@@ -436,6 +436,7 @@ keybinding_context!(InspectorKeybindings, Context::Inspector, {
     first => (Command::First, ["g"]),
     last => (Command::Last, ["G"]),
     copy_value => (Command::CopyValue, ["y"]),
+    open_copy_dialog => (Command::OpenCopyDialog, ["Y"]),
     explain_property => (Command::ExplainProperty, ["e"]),
     toggle_properties => (Command::ToggleProperties, ["a"]),
     search => (Command::OpenSearch, ["/"]),
@@ -492,6 +493,7 @@ keybinding_context!(NormalizationKeybindings, Context::Normalization, {
     last => (Command::Last, ["G"]),
     activate => (Command::Activate, ["enter"]),
     copy_value => (Command::CopyValue, ["y"]),
+    open_copy_dialog => (Command::OpenCopyDialog, ["Y"]),
 });
 
 keybinding_context!(NormalizationResultKeybindings, Context::NormalizationResult, {
@@ -512,6 +514,8 @@ keybinding_context!(CopyDialogKeybindings, Context::CopyDialog, {
     close => (Command::Close, ["esc"]),
     move_up => (Command::MoveUp, ["k", "up"]),
     move_down => (Command::MoveDown, ["j", "down"]),
+    move_left => (Command::MoveLeft, ["h", "left"]),
+    move_right => (Command::MoveRight, ["l", "right"]),
     first => (Command::First, ["g"]),
     last => (Command::Last, ["G"]),
     activate => (Command::Activate, ["enter"]),
@@ -1073,6 +1077,8 @@ mod tests {
 
                 [copy_dialog]
                 activate = ['y']
+                move_down = ['l']
+                move_right = ['right', 'f']
             "#,
         )
         .unwrap();
@@ -1094,6 +1100,14 @@ mod tests {
             None
         );
         assert_eq!(keymap.resolve(Context::Search, plain('Y')), None);
+        assert_eq!(
+            keymap.resolve(Context::CopyDialog, plain('l')),
+            Some(Command::MoveDown)
+        );
+        assert_eq!(
+            keymap.resolve(Context::CopyDialog, plain('f')),
+            Some(Command::MoveRight)
+        );
         let error = configured(
             r#"
                 [copy_dialog]
@@ -1160,6 +1174,7 @@ mod tests {
             Context::BrowseRange,
             Context::BrowseBlock,
             Context::BrowseCodePoints,
+            Context::CopyDialog,
             Context::Help,
         ] {
             assert_eq!(
@@ -1177,6 +1192,8 @@ mod tests {
             (Context::Inspector, Command::NextCodePoint, plain('l')),
             (Context::BrowseCodePoints, Command::MoveLeft, plain('h')),
             (Context::BrowseCodePoints, Command::MoveRight, plain('l')),
+            (Context::CopyDialog, Command::MoveLeft, plain('h')),
+            (Context::CopyDialog, Command::MoveRight, plain('l')),
         ] {
             assert_eq!(keymap.keys_for(context, command).first(), Some(&key));
         }

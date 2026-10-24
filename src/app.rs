@@ -8,7 +8,7 @@ pub use crate::app::update::update;
 use crate::{
     bookmarks::{Bookmark, BookmarkMove, BookmarkState},
     browser::{BrowseLevel, BrowseMove, BrowseState},
-    copy_dialog::{CopyDialogState, CopyMove},
+    copy_dialog::{CopyDialogState, CopyMove, CopySource},
     help::{HelpMove, HelpState},
     inspector::{InspectorGroup, InspectorMove, InspectorState},
     normalization::{NormalizationMove, NormalizationState},
@@ -331,6 +331,30 @@ impl AppState {
 
     pub fn copy_dialog(&self) -> Option<&CopyDialogState> {
         self.copy_dialog.as_ref()
+    }
+
+    pub fn copy_source(&self) -> Option<CopySource<'_>> {
+        match self.view {
+            View::Inspector => Some(CopySource::Inspector(self.selected)),
+            View::Sequence => {
+                let sequence = self.sequence()?;
+                Some(CopySource::Sequence {
+                    analysis: sequence.analysis(),
+                    selected_index: sequence.selected_index(),
+                    form: self
+                        .showing_normalization_result
+                        .then(|| self.normalization.as_ref().unwrap().form()),
+                })
+            }
+            View::Normalization => {
+                let normalization = self.normalization.as_ref()?;
+                Some(CopySource::Normalization {
+                    analysis: normalization.comparison().result.analysis(),
+                    form: normalization.form(),
+                })
+            }
+            _ => None,
+        }
     }
 
     pub const fn glyph_preview(&self) -> &GlyphPreviewState {
@@ -817,8 +841,10 @@ mod tests {
         update(&mut state, Action::OpenCopyDialog);
         assert_eq!(state.preview_code_point(), None);
         update(&mut state, Action::MoveCopyDialog(CopyMove::Next));
+        update(&mut state, Action::MoveCopyDialog(CopyMove::NextFormat));
         update(&mut state, Action::ToggleHelp);
         update(&mut state, Action::MoveCopyDialog(CopyMove::Last));
+        update(&mut state, Action::MoveCopyDialog(CopyMove::NextFormat));
         update(&mut state, Action::CloseCopyDialog);
         update(&mut state, Action::MoveSequence(SequenceMove::Last));
         update(&mut state, Action::CopyDialogSelection);
@@ -827,7 +853,7 @@ mod tests {
         update(&mut state, Action::CloseHelp);
         update(&mut state, Action::CopyDialogSelection);
         let request = state.take_clipboard_request().unwrap();
-        assert_eq!(request.value(), Some("A\u{0301}"));
+        assert_eq!(request.value(), Some(r#""A\u0301""#));
         assert!(request.is_from_copy_dialog());
         update(
             &mut state,
@@ -879,14 +905,9 @@ mod tests {
     }
 
     #[test]
-    fn copy_dialog_supports_single_code_point_results_and_is_scoped_to_sequence_views() {
-        let mut state = AppState::default();
-        update(&mut state, Action::OpenCopyDialog);
-        assert!(state.copy_dialog().is_none());
+    fn copy_dialog_supports_single_code_point_results() {
         let mut state = AppState::with_sequence("A\u{0301}".to_owned());
         update(&mut state, Action::OpenNormalization);
-        update(&mut state, Action::OpenCopyDialog);
-        assert!(state.copy_dialog().is_none());
         update(&mut state, Action::InspectNormalizationResult);
         update(&mut state, Action::OpenCopyDialog);
         for _ in 0..3 {
@@ -894,6 +915,103 @@ mod tests {
             assert_eq!(state.take_clipboard_request().unwrap().value(), Some("Á"));
             update(&mut state, Action::MoveCopyDialog(CopyMove::Next));
         }
+    }
+
+    #[test]
+    fn inspector_copy_formats_ignore_the_selected_property_and_preserve_its_quick_copy() {
+        let mut state = AppState::with_selected(CodePoint::from('😀'));
+        resize_inspector(&mut state, 5);
+        update(&mut state, Action::MoveInspector(InspectorMove::Last));
+        let field_index = state.inspector().selected_index();
+        update(&mut state, Action::CopyInspectorValue);
+        let property = state.take_clipboard_request().unwrap();
+        assert_eq!(property.label(), "Unicode Version");
+        update(&mut state, Action::OpenCopyDialog);
+        for expected in [
+            "😀",
+            r#""\uD83D\uDE00""#,
+            r#""\u{1F600}""#,
+            "U+1F600",
+            "F0 9F 98 80",
+            "D83D DE00",
+        ] {
+            update(&mut state, Action::MoveCopyDialog(CopyMove::Last));
+            update(&mut state, Action::CopyDialogSelection);
+            assert_eq!(
+                state.take_clipboard_request().unwrap().value(),
+                Some(expected)
+            );
+            update(&mut state, Action::MoveCopyDialog(CopyMove::NextFormat));
+        }
+        update(&mut state, Action::CloseCopyDialog);
+        assert_eq!(state.inspector().selected_index(), field_index);
+        update(&mut state, Action::CopyInspectorValue);
+        assert_eq!(state.take_clipboard_request().unwrap(), property);
+    }
+
+    #[test]
+    fn sequence_inspector_copies_its_current_code_point_instead_of_the_parent_selection() {
+        let mut state = AppState::with_sequence("A\u{301}".to_owned());
+        update(&mut state, Action::MoveSequence(SequenceMove::Next));
+        update(&mut state, Action::InspectSequenceCodePoint);
+        update(&mut state, Action::MoveCodePoint(CodePointMove::Next));
+        update(&mut state, Action::OpenCopyDialog);
+        update(&mut state, Action::CopyDialogSelection);
+        assert_eq!(
+            state.take_clipboard_request().unwrap().value(),
+            Some("\u{302}")
+        );
+        update(&mut state, Action::CloseCopyDialog);
+        update(&mut state, Action::ReturnToSequence);
+        assert_eq!(state.sequence().unwrap().selected().value(), 0x301);
+    }
+
+    #[test]
+    fn inspector_surrogate_copy_is_fixed_to_code_point_notation() {
+        let mut state = AppState::with_selected(CodePoint::new(0xd800).unwrap());
+        update(&mut state, Action::OpenCopyDialog);
+        update(&mut state, Action::MoveCopyDialog(CopyMove::NextFormat));
+        update(&mut state, Action::MoveCopyDialog(CopyMove::Last));
+        update(&mut state, Action::CopyDialogSelection);
+        assert_eq!(
+            state.take_clipboard_request().unwrap().value(),
+            Some("U+D800")
+        );
+    }
+
+    #[test]
+    fn comparison_copy_uses_each_whole_normalization_result_and_preserves_quick_copy() {
+        let mut state = AppState::with_sequence("A\u{301}ﬃ".to_owned());
+        update(&mut state, Action::OpenNormalization);
+        for (text, json) in [
+            ("Áﬃ", r#""\u00C1\uFB03""#),
+            ("A\u{301}ﬃ", r#""A\u0301\uFB03""#),
+            ("Áffi", r#""\u00C1ffi""#),
+            ("A\u{301}ffi", r#""A\u0301ffi""#),
+        ] {
+            update(&mut state, Action::OpenCopyDialog);
+            update(&mut state, Action::MoveCopyDialog(CopyMove::NextFormat));
+            update(&mut state, Action::MoveCopyDialog(CopyMove::Last));
+            update(&mut state, Action::CopyDialogSelection);
+            let request = state.take_clipboard_request().unwrap();
+            assert_eq!(request.value(), Some(json));
+            assert!(
+                request
+                    .success_message()
+                    .contains(state.normalization().unwrap().form().label())
+            );
+            update(&mut state, Action::CloseCopyDialog);
+            update(&mut state, Action::CopyNormalizationResult);
+            assert_eq!(state.take_clipboard_request().unwrap().value(), Some(text));
+            update(
+                &mut state,
+                Action::MoveNormalization(NormalizationMove::Next),
+            );
+        }
+        assert_eq!(
+            state.original_sequence().unwrap().analysis().source(),
+            "A\u{301}ﬃ"
+        );
     }
 
     #[test]

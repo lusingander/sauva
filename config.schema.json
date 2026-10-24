@@ -377,6 +377,9 @@
         "copy_value": {
           "$ref": "#/definitions/keyArray"
         },
+        "open_copy_dialog": {
+          "$ref": "#/definitions/keyArray"
+        },
         "search": {
           "$ref": "#/definitions/keyArray"
         },
@@ -480,7 +483,8 @@
         "first": { "$ref": "#/definitions/keyArray" },
         "last": { "$ref": "#/definitions/keyArray" },
         "activate": { "$ref": "#/definitions/keyArray" },
-        "copy_value": { "$ref": "#/definitions/keyArray" }
+        "copy_value": { "$ref": "#/definitions/keyArray" },
+        "open_copy_dialog": { "$ref": "#/definitions/keyArray" }
       },
       "additionalProperties": false
     },
@@ -505,6 +509,8 @@
         "close": { "$ref": "#/definitions/keyArray" },
         "move_up": { "$ref": "#/definitions/keyArray" },
         "move_down": { "$ref": "#/definitions/keyArray" },
+        "move_left": { "$ref": "#/definitions/keyArray" },
+        "move_right": { "$ref": "#/definitions/keyArray" },
         "first": { "$ref": "#/definitions/keyArray" },
         "last": { "$ref": "#/definitions/keyArray" },
         "activate": { "$ref": "#/definitions/keyArray" }

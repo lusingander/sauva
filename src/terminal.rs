@@ -516,11 +516,22 @@ mod tests {
             &mut state,
             Action::MoveCopyDialog(crate::copy_dialog::CopyMove::Last),
         );
+        update(
+            &mut state,
+            Action::MoveCopyDialog(crate::copy_dialog::CopyMove::NextFormat),
+        );
         let mut failing = TestClipboard::failing(ClipboardError::Busy);
         update(&mut state, Action::CopyDialogSelection);
         handle_clipboard_request(&mut state, &mut failing);
-        assert_eq!(failing.writes, ["A\u{0301}\t\r\n\u{1b}"]);
+        assert_eq!(failing.writes, [r#""A\u0301\t\r\n\u001B""#]);
         assert_eq!(state.copy_dialog().unwrap().selected_index(), 2);
+        assert_eq!(
+            state
+                .copy_dialog()
+                .unwrap()
+                .selected_format(state.copy_source().unwrap()),
+            crate::unicode::representation::TextFormat::JsonString
+        );
         assert_eq!(
             state.footer_status().unwrap().message(),
             "Clipboard is busy"
@@ -546,7 +557,7 @@ mod tests {
         assert!(state.copy_dialog().is_none());
         assert_eq!(
             state.footer_status().unwrap().message(),
-            "Copied Whole Text (Input): 6 code points"
+            "Copied Whole Input as JSON String (Input)"
         );
         assert_eq!(state.sequence().unwrap().selected_index(), 0);
     }

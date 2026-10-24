@@ -106,10 +106,12 @@ fn action_for_command(context: Context, command: Command) -> Option<Action> {
     match (context, command) {
         (_, C::Quit) => Some(Action::Quit),
         (_, C::Help) => Some(Action::ToggleHelp),
-        (X::Sequence | X::NormalizationResult, C::OpenCopyDialog) => Some(Action::OpenCopyDialog),
+        (X::Inspector | X::Sequence | X::Normalization | X::NormalizationResult, C::OpenCopyDialog) => Some(Action::OpenCopyDialog),
         (X::CopyDialog, C::Close) => Some(Action::CloseCopyDialog),
         (X::CopyDialog, C::MoveUp) => Some(Action::MoveCopyDialog(CopyMove::Previous)),
         (X::CopyDialog, C::MoveDown) => Some(Action::MoveCopyDialog(CopyMove::Next)),
+        (X::CopyDialog, C::MoveLeft) => Some(Action::MoveCopyDialog(CopyMove::PreviousFormat)),
+        (X::CopyDialog, C::MoveRight) => Some(Action::MoveCopyDialog(CopyMove::NextFormat)),
         (X::CopyDialog, C::First) => Some(Action::MoveCopyDialog(CopyMove::First)),
         (X::CopyDialog, C::Last) => Some(Action::MoveCopyDialog(CopyMove::Last)),
         (X::CopyDialog, C::Activate) => Some(Action::CopyDialogSelection),
@@ -293,6 +295,14 @@ mod tests {
         assert_eq!(
             action_for_key(&state, key(KeyCode::Char('j'))),
             Some(Action::MoveCopyDialog(CopyMove::Next))
+        );
+        assert_eq!(
+            action_for_key(&state, key(KeyCode::Left)),
+            Some(Action::MoveCopyDialog(CopyMove::PreviousFormat))
+        );
+        assert_eq!(
+            action_for_key(&state, key(KeyCode::Right)),
+            Some(Action::MoveCopyDialog(CopyMove::NextFormat))
         );
         for code in [
             KeyCode::Char('n'),
@@ -611,6 +621,7 @@ mod tests {
 
     #[rstest]
     #[case('y', Action::CopyInspectorValue)]
+    #[case('Y', Action::OpenCopyDialog)]
     #[case('a', Action::ToggleInspectorProperties)]
     fn inspector_commands_do_not_repeat(#[case] key: char, #[case] action: Action) {
         let state = AppState::default();

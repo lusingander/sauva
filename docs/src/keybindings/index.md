@@ -32,6 +32,7 @@ Context: `inspector`.
 | `last` | <kbd>G</kbd> | Select the last property |
 | `explain_property` | <kbd>e</kbd> | Explain the selected property |
 | `copy_value` | <kbd>y</kbd> | Copy the selected property value |
+| `open_copy_dialog` | <kbd>Y</kbd> | Choose a representation of the current code point |
 | `toggle_properties` | <kbd>a</kbd> | Toggle Relevant / All properties |
 | `search` | <kbd>/</kbd> | Open search |
 | `toggle_bookmark` | <kbd>m</kbd> | Add or remove the current code point's bookmark |
@@ -123,6 +124,7 @@ Context: `normalization`.
 | `last` | <kbd>G</kbd> | Select NFKD |
 | `activate` | <kbd>Enter</kbd> | Inspect the selected normalization result |
 | `copy_value` | <kbd>y</kbd> | Copy the exact normalized text |
+| `open_copy_dialog` | <kbd>Y</kbd> | Choose a representation of the whole normalized result |
 
 ## Normalization Result
 
@@ -146,15 +148,17 @@ Use <kbd>Backspace</kbd> in the Inspector to return to this result.
 
 ## Copy Dialog
 
-Context: `copy_dialog`. These bindings apply to the candidate list opened from Sequence or Normalization Result. The source screen's bindings are inactive while the dialog is open.
+Context: `copy_dialog`. These bindings apply to the dialog opened from Inspector, Sequence, or either Normalization screen. The source screen's bindings are inactive while the dialog is open. See [Copying](../features/copying.md) for available targets and formats.
 
 | Command | Keys | Action |
 | --- | --- | --- |
-| `move_up` | <kbd>k</kbd>, <kbd>Up</kbd> | Select the previous candidate |
-| `move_down` | <kbd>j</kbd>, <kbd>Down</kbd> | Select the next candidate |
-| `first` | <kbd>g</kbd> | Select Code Point |
-| `last` | <kbd>G</kbd> | Select the whole input or result |
-| `activate` | <kbd>Enter</kbd> | Copy the selected candidate |
+| `move_up` | <kbd>k</kbd>, <kbd>Up</kbd> | Select the previous target |
+| `move_down` | <kbd>j</kbd>, <kbd>Down</kbd> | Select the next target |
+| `move_left` | <kbd>h</kbd>, <kbd>Left</kbd> | Select the previous format |
+| `move_right` | <kbd>l</kbd>, <kbd>Right</kbd> | Select the next format |
+| `first` | <kbd>g</kbd> | Select the first target |
+| `last` | <kbd>G</kbd> | Select the last target |
+| `activate` | <kbd>Enter</kbd> | Copy the selected target and format |
 | `close` | <kbd>Esc</kbd> | Cancel and return to the source screen |
 
 Global <kbd>F1</kbd> opens the shared Copy Dialog help. Global <kbd>Ctrl-C</kbd> still quits.

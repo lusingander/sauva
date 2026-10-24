@@ -1,0 +1,20 @@
+---
+source: src/ui/render.rs
+expression: text
+---
+ sauva / Inspector                                  U+1F600
+
+ Properties                                       Relevant
+
+
+  ┌ Copy ─────────────────────────────────────── U+1F600 ┐
+  │ Target   Code Point                                  │
+  │                                                      │
+  │ Format   < JSON String >                             │
+  │                                                      │
+  │ Preview  "\uD83D\uDE00"                              │
+  └──────────────────────────────────────────────────────┘
+
+
+
+ h/l Format  Enter Copy  Esc Cancel  C-c Quit       F1 Help

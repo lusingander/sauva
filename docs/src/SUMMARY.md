@@ -19,4 +19,5 @@
   - [Bookmarks](./features/bookmarks.md)
   - [Sequence](./features/sequence.md)
   - [Normalization](./features/normalization.md)
+  - [Copying](./features/copying.md)
 - [FAQ](./faq/index.md)

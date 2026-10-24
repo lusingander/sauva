@@ -51,11 +51,7 @@ Result code points can be opened in the [Inspector](./inspector.md) to read thei
 
 ## Copying
 
-Copying from the form comparison includes the whole normalized result, preserving whitespace and newlines.
-
-The result list uses the same [copy dialog as Sequence](./sequence.md#copying), offering the selected code point, its entire grapheme cluster, or the whole normalized result. Each candidate uses the normalized text; the original input remains unchanged.
-
-![Normalization result Copy](https://raw.githubusercontent.com/lusingander/sauva/refs/heads/master/img/sequence-normalization-result-copy.png)
+Quick copying from form comparison takes the whole normalized result as text. The [copy dialog](./copying.md) offers other formats and, from the result list, code point and grapheme cluster targets.
 
 ## Operations
 
@@ -64,7 +60,7 @@ The result list uses the same [copy dialog as Sequence](./sequence.md#copying), 
 | <kbd>Up</kbd> / <kbd>Down</kbd> | Select a form | Select a code point |
 | <kbd>Enter</kbd> | Open the selected result | Open the selected code point in the Inspector |
 | <kbd>y</kbd> | Copy the whole normalized result | — |
-| <kbd>Y</kbd> | — | Open the copy dialog |
+| <kbd>Y</kbd> | Open the copy dialog for the whole result | Open the copy dialog |
 | <kbd>Esc</kbd> | Return to the original sequence | Return to form comparison |
 
 <kbd>Backspace</kbd> in the Inspector returns to the result list.

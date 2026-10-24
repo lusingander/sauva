@@ -8,6 +8,7 @@ use ratatui::{
 
 use crate::{
     app::AppState,
+    copy_dialog::CopySource,
     input::context_for_state,
     keybindings::{Command, Context, KeyLabelStyle, ResolvedKeymap, format_key},
     ui::{
@@ -185,12 +186,26 @@ fn about_document(
 pub fn footer(
     context: Context,
     has_inspector_parent: bool,
+    copy_source: Option<CopySource<'_>>,
     width: u16,
     keymap: &ResolvedKeymap,
     color_theme: &ColorTheme,
 ) -> FooterContent {
     let mut items = short_help_items(context, has_inspector_parent)
         .into_iter()
+        .filter(|item| {
+            if context != Context::CopyDialog {
+                return true;
+            }
+            let Some(source) = copy_source else {
+                return true;
+            };
+            match item.commands.as_slice() {
+                [Command::MoveUp, Command::MoveDown] => source.targets().len() > 1,
+                [Command::MoveLeft, Command::MoveRight] => source.formats().len() > 1,
+                _ => true,
+            }
+        })
         .filter_map(|item| render_short_help_item(context, item, keymap))
         .collect::<Vec<_>>();
     let help = render_short_help_item(
@@ -250,7 +265,7 @@ fn document(
     if context == Context::CopyDialog {
         lines.push(Line::default());
         lines.extend(wrap_plain_text(
-            "Copy the selected code point, its whole grapheme cluster, or the whole input or normalization result. Text is copied exactly; preview labels and dotted circles are display aids only. Closing help returns to the same copy candidate.",
+            "Select a target and cycle output formats. Formats: Text, JSON String, Rust String, Code Point List, UTF-8 Hex, UTF-16 Units. JSON and Rust strings include quotes and use ASCII escapes. Preview labels and ellipses are not copied.",
             width,
         ));
     }
@@ -368,6 +383,10 @@ fn help_items(context: Context, has_inspector_parent: bool) -> Vec<HelpItem> {
             item(C::Last, "Select the last property"),
             item(C::ExplainProperty, "Explain the selected property"),
             item(C::CopyValue, "Copy the selected property value"),
+            item(
+                C::OpenCopyDialog,
+                "Choose a representation of the current code point",
+            ),
             item(C::ToggleProperties, "Toggle relevant or all properties"),
             item(C::OpenSearch, "Open search"),
             item(C::ToggleBookmark, "Add or remove the code point's bookmark"),
@@ -436,6 +455,10 @@ fn help_items(context: Context, has_inspector_parent: bool) -> Vec<HelpItem> {
             item(C::Last, "Select NFKD"),
             item(C::Activate, "Inspect the selected normalization result"),
             item(C::CopyValue, "Copy the exact normalized text"),
+            item(
+                C::OpenCopyDialog,
+                "Choose a representation of the whole normalized result",
+            ),
             item(C::Back, "Return to the original sequence"),
             item(C::Close, "Return to the original sequence"),
             item(C::Quit, "Quit"),
@@ -460,11 +483,13 @@ fn help_items(context: Context, has_inspector_parent: bool) -> Vec<HelpItem> {
             item(C::Quit, "Quit"),
         ],
         Context::CopyDialog => vec![
-            item(C::MoveUp, "Select the previous copy candidate"),
-            item(C::MoveDown, "Select the next copy candidate"),
-            item(C::First, "Select the first copy candidate"),
-            item(C::Last, "Select the last copy candidate"),
-            item(C::Activate, "Copy the selected candidate"),
+            item(C::MoveUp, "Select the previous copy target"),
+            item(C::MoveDown, "Select the next copy target"),
+            item(C::MoveLeft, "Select the previous output format"),
+            item(C::MoveRight, "Select the next output format"),
+            item(C::First, "Select the first copy target"),
+            item(C::Last, "Select the last copy target"),
+            item(C::Activate, "Copy the selected target and format"),
             item(C::Close, "Cancel and return to the source screen"),
             item(C::Quit, "Quit"),
         ],
@@ -558,6 +583,7 @@ fn short_help_items(context: Context, has_inspector_parent: bool) -> Vec<ShortHe
             short(&[C::First, C::Last], "Ends", 3),
             short(&[C::ExplainProperty], "Explain", 2),
             short(&[C::CopyValue], "Copy", 1),
+            short(&[C::OpenCopyDialog], "Copy...", 0),
             short(&[C::OpenSearch], "Search", 2),
             short(&[C::ToggleBookmark, C::OpenBookmarks], "Bookmarks", 3),
             short(&[C::BrowsePlanes, C::BrowseRanges, C::BrowseBlocks, C::BrowseCodePoints], "Browse", 2),
@@ -600,7 +626,8 @@ fn short_help_items(context: Context, has_inspector_parent: bool) -> Vec<ShortHe
         Context::Normalization => vec![
             short(&[C::MoveUp, C::MoveDown], "Form", 1),
             short(&[C::Activate], "Inspect", 1),
-            short(&[C::CopyValue], "Copy", 1),
+            short(&[C::CopyValue], "Copy", 0),
+            short(&[C::OpenCopyDialog], "Copy...", 0),
             short(&[C::Back, C::Close], "Sequence", 0),
             short(&[C::Quit], "Quit", 3),
         ],
@@ -613,7 +640,8 @@ fn short_help_items(context: Context, has_inspector_parent: bool) -> Vec<ShortHe
             short(&[C::Quit], "Quit", 3),
         ],
         Context::CopyDialog => vec![
-            short(&[C::MoveUp, C::MoveDown], "Move", 1),
+            short(&[C::MoveUp, C::MoveDown], "Target", 0),
+            short(&[C::MoveLeft, C::MoveRight], "Format", 0),
             short(&[C::Activate], "Copy", 0),
             short(&[C::Close], "Cancel", 0),
             short(&[C::Quit], "Quit", 3),
@@ -830,8 +858,15 @@ mod tests {
     fn footer_prunes_lower_priority_items_to_fit() {
         let keymap = ResolvedKeymap::default();
         let theme = ColorTheme::default();
-        let wide = footer_text(footer(Context::Inspector, false, 140, &keymap, &theme));
-        let narrow = footer_text(footer(Context::Inspector, false, 60, &keymap, &theme));
+        let wide = footer_text(footer(
+            Context::Inspector,
+            false,
+            None,
+            140,
+            &keymap,
+            &theme,
+        ));
+        let narrow = footer_text(footer(Context::Inspector, false, None, 60, &keymap, &theme));
 
         assert!(Line::from(wide.as_str()).width() <= 140);
         assert!(Line::from(narrow.as_str()).width() <= 60);
@@ -925,6 +960,7 @@ mod tests {
         let footer = footer(
             Context::Inspector,
             false,
+            None,
             140,
             &keymap,
             &ColorTheme::default(),
