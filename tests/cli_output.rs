@@ -88,6 +88,46 @@ fn run_with_stdin(arguments: &[&str], input: &[u8]) -> Output {
     child.wait_with_output().unwrap()
 }
 
+#[rstest]
+#[case("json-string")]
+#[case("rust-string")]
+fn treats_a_closed_stdout_pipe_as_success(#[case] format: &str) {
+    let mut child = Command::new(env!("CARGO_BIN_EXE_sauva"))
+        .args(["--output", format, "--text", "-"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+
+    // Close the reader before allowing stdin to reach EOF and output to start.
+    drop(child.stdout.take().unwrap());
+    let mut stdin = child.stdin.take().unwrap();
+    stdin.write_all(b"A").unwrap();
+    drop(stdin);
+    let output = child.wait_with_output().unwrap();
+
+    assert_eq!(output.status.code(), Some(0));
+    assert!(output.stderr.is_empty());
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn reports_stdout_write_failures() {
+    let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
+        .args(["--output", "json-string", "A"])
+        .stdout(
+            std::fs::OpenOptions::new()
+                .write(true)
+                .open("/dev/full")
+                .unwrap(),
+        )
+        .output()
+        .unwrap();
+
+    assert_failure(&output, 1, "failed to write stdout");
+}
+
 fn assert_failure(output: &Output, expected_code: i32, expected_error: &str) {
     assert_eq!(output.status.code(), Some(expected_code));
     assert!(output.stdout.is_empty());
