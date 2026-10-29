@@ -2,7 +2,7 @@ use std::io::{self, Read};
 
 use clap::{Parser, ValueEnum};
 
-use crate::{graphics::GraphicsMode, unicode::CodePoint};
+use crate::{graphics::GraphicsMode, output::OutputFormat, unicode::CodePoint};
 
 const CODE_POINT_ARGUMENT_HELP: &str =
     "use one character, U+XXXX, 0xXXXX, or 2-6 hexadecimal digits";
@@ -24,6 +24,7 @@ enum InputSource {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LaunchOptions {
     target: Option<LaunchTarget>,
+    output: Option<OutputFormat>,
     demo: Option<Demo>,
     graphics: GraphicsMode,
     print_default_config: bool,
@@ -32,6 +33,10 @@ pub struct LaunchOptions {
 impl LaunchOptions {
     pub fn target(&self) -> Option<&LaunchTarget> {
         self.target.as_ref()
+    }
+
+    pub const fn output(&self) -> Option<OutputFormat> {
+        self.output
     }
 
     pub const fn demo(&self) -> Option<Demo> {
@@ -59,13 +64,18 @@ struct Cli {
     #[arg(
         value_name = "INPUT",
         value_parser = parse_input_source,
+        group = "source",
         conflicts_with_all = ["text", "demo"]
     )]
     input: Option<InputSource>,
 
     /// Treat the input as literal text, without code point notation parsing; - reads stdin
-    #[arg(short, long, value_name = "TEXT", value_parser = parse_text_source, conflicts_with = "demo")]
+    #[arg(short, long, value_name = "TEXT", value_parser = parse_text_source, group = "source", conflicts_with = "demo")]
     text: Option<InputSource>,
+
+    /// Print a result and exit
+    #[arg(long, value_enum, value_name = "FORMAT", requires = "source", conflicts_with_all = ["graphics", "demo"])]
+    output: Option<OutputFormat>,
 
     /// Control glyph preview graphics
     #[arg(short, long, value_enum, default_value_t, value_name = "MODE")]
@@ -144,6 +154,7 @@ impl Cli {
 
         Ok(LaunchOptions {
             target,
+            output: self.output,
             demo: self.demo,
             graphics: self.graphics,
             print_default_config: self.print_default_config,
@@ -238,6 +249,7 @@ mod tests {
         let options = try_parse(&["sauva"]).unwrap();
 
         assert_eq!(options.target(), None);
+        assert_eq!(options.output(), None);
         assert_eq!(options.demo(), None);
         assert_eq!(options.graphics(), GraphicsMode::Auto);
         assert!(!options.print_default_config());
@@ -560,5 +572,37 @@ mod tests {
             try_parse(&["sauva", "--demo", "glyph-disabled", "--graphics", "force"]).unwrap();
 
         assert_eq!(options.graphics(), GraphicsMode::Off);
+    }
+
+    #[rstest]
+    #[case("json-string", OutputFormat::JsonString)]
+    #[case("rust-string", OutputFormat::RustString)]
+    fn output_accepts_either_input_source(#[case] format: &str, #[case] expected: OutputFormat) {
+        for source in [&["41"][..], &["--text", "41"]] {
+            let mut arguments = vec!["sauva", "--output", format];
+            arguments.extend_from_slice(source);
+            let options = try_parse(&arguments).unwrap();
+
+            assert_eq!(options.output(), Some(expected));
+            assert_eq!(options.graphics(), GraphicsMode::Auto);
+        }
+    }
+
+    #[rstest]
+    #[case(&["--output", "json-string"], clap::error::ErrorKind::MissingRequiredArgument)]
+    #[case(&["--output", "json", "A"], clap::error::ErrorKind::InvalidValue)]
+    #[case(&["--output", "plain", "A"], clap::error::ErrorKind::InvalidValue)]
+    #[case(&["--output", "json-string", "A", "--graphics", "auto"], clap::error::ErrorKind::ArgumentConflict)]
+    #[case(&["--output", "json-string", "A", "-g", "off"], clap::error::ErrorKind::ArgumentConflict)]
+    #[case(&["--output", "json-string", "--demo", "glyph-basic"], clap::error::ErrorKind::ArgumentConflict)]
+    #[case(&["--output", "json-string", "A", "--print-default-config"], clap::error::ErrorKind::ArgumentConflict)]
+    fn output_enforces_its_argument_contract(
+        #[case] arguments: &[&str],
+        #[case] expected: clap::error::ErrorKind,
+    ) {
+        let error = Cli::try_parse_from(std::iter::once("sauva").chain(arguments.iter().copied()))
+            .unwrap_err();
+
+        assert_eq!(error.kind(), expected);
     }
 }

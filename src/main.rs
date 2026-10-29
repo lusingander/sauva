@@ -14,6 +14,7 @@ mod input;
 mod inspector;
 mod keybindings;
 mod normalization;
+mod output;
 mod preview;
 mod property;
 mod search;
@@ -23,7 +24,7 @@ mod ui;
 mod unicode;
 mod viewport;
 
-use std::{error::Error, process::ExitCode};
+use std::{error::Error, io, process::ExitCode};
 
 fn main() -> ExitCode {
     match run() {
@@ -39,6 +40,14 @@ fn run() -> Result<(), Box<dyn Error>> {
     let options = cli::parse()?;
     if options.print_default_config() {
         print!("{}", config::default_toml()?);
+        return Ok(());
+    }
+    if let Some(format) = options.output() {
+        output::write(
+            format,
+            options.target().expect("output requires an input source"),
+            io::stdout().lock(),
+        )?;
         return Ok(());
     }
     let config = config::load()?;

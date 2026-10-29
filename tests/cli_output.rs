@@ -37,6 +37,21 @@ fn prints_default_config_without_loading_local_config() {
 }
 
 #[rstest]
+#[case("json-string", r#""A\u0301\uD83D\uDE00""#)]
+#[case("rust-string", r#""A\u{301}\u{1F600}""#)]
+fn prints_string_literals_without_loading_config(#[case] format: &str, #[case] expected: &str) {
+    let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
+        .args(["--output", format, "--text", "A\u{301}😀"])
+        .env("SAUVA_CONFIG_FILE", "")
+        .output()
+        .unwrap();
+
+    assert!(output.status.success(), "status: {}", output.status);
+    assert!(output.stderr.is_empty());
+    assert_eq!(output.stdout, format!("{expected}\n").as_bytes());
+}
+
+#[rstest]
 #[case(&["-"], b"", "invalid input from stdin")]
 #[case(&["--text", "-"], b"", "text must not be empty")]
 #[case(&["-"], b"U+2192\n", "invalid input from stdin")]
