@@ -5,10 +5,12 @@ use std::{
 
 use rstest::rstest;
 
-#[test]
-fn prints_usage_and_command_name_for_help() {
+#[rstest]
+#[case(&["--help"])]
+#[case(&["--output", "json-string", "--help"])]
+fn prints_usage_and_supported_output_formats_for_help(#[case] arguments: &[&str]) {
     let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
-        .arg("--help")
+        .args(arguments)
         .output()
         .unwrap();
 
@@ -18,6 +20,27 @@ fn prints_usage_and_command_name_for_help() {
     let stdout = String::from_utf8(output.stdout).unwrap();
     assert!(stdout.contains("Usage:"));
     assert!(stdout.contains("sauva"));
+    assert!(stdout.contains("[possible values: json-string, rust-string]"));
+    assert!(!stdout.contains("possible values: plain"));
+    assert!(!stdout.contains("--format"));
+}
+
+#[rstest]
+#[case(&["--version"])]
+#[case(&["--output", "rust-string", "--version"])]
+fn prints_version_without_requiring_input(#[case] arguments: &[&str]) {
+    let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
+        .args(arguments)
+        .env("SAUVA_CONFIG_FILE", "")
+        .output()
+        .unwrap();
+
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    assert_eq!(
+        output.stdout,
+        concat!("sauva ", env!("CARGO_PKG_VERSION"), "\n").as_bytes()
+    );
 }
 
 #[test]
@@ -40,15 +63,98 @@ fn prints_default_config_without_loading_local_config() {
 #[case("json-string", r#""A\u0301\uD83D\uDE00""#)]
 #[case("rust-string", r#""A\u{301}\u{1F600}""#)]
 fn prints_string_literals_without_loading_config(#[case] format: &str, #[case] expected: &str) {
+    let mut config = tempfile::NamedTempFile::new().unwrap();
+    config
+        .write_all(
+            r#"[glyph_preview
+not valid TOML
+"#
+            .as_bytes(),
+        )
+        .unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
         .args(["--output", format, "--text", "A\u{301}😀"])
-        .env("SAUVA_CONFIG_FILE", "")
+        .env("SAUVA_CONFIG_FILE", config.path())
+        .env("XDG_DATA_HOME", config.path())
+        .env("TERM", "dumb")
+        .env_remove("DISPLAY")
+        .env_remove("WAYLAND_DISPLAY")
         .output()
         .unwrap();
 
     assert!(output.status.success(), "status: {}", output.status);
     assert!(output.stderr.is_empty());
     assert_eq!(output.stdout, format!("{expected}\n").as_bytes());
+}
+
+#[rstest]
+#[case(&["41"], r#""A""#, r#""A""#)]
+#[case(&["1"], r#""1""#, r#""1""#)]
+#[case(&["--text", "41"], r#""41""#, r#""41""#)]
+#[case(&["U+2192"], r#""\u2192""#, r#""\u{2192}""#)]
+#[case(&["--text", "U+2192"], r#""U+2192""#, r#""U+2192""#)]
+#[case(&["--text", r"\u0041"], r#""\\u0041""#, r#""\\u0041""#)]
+#[case(&["U+002D"], r#""-""#, r#""-""#)]
+#[case(&["input.txt"], r#""input.txt""#, r#""input.txt""#)]
+fn preserves_existing_argument_interpretation(
+    #[case] arguments: &[&str],
+    #[case] json: &str,
+    #[case] rust: &str,
+) {
+    for (format, expected) in [("json-string", json), ("rust-string", rust)] {
+        let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
+            .args(["--output", format])
+            .args(arguments)
+            .output()
+            .unwrap();
+
+        assert!(output.status.success());
+        assert!(output.stderr.is_empty());
+        assert_eq!(output.stdout, format!("{expected}\n").as_bytes());
+    }
+}
+
+#[rstest]
+#[case(&["-"], b"41", r#""A""#, r#""A""#)]
+#[case(&["--text", "-"], b"41", r#""41""#, r#""41""#)]
+#[case(&["--text", "-"], b"U+D800", r#""U+D800""#, r#""U+D800""#)]
+#[case(&["-"], b"-", r#""-""#, r#""-""#)]
+#[case(&["-"], "\u{feff} A\u{301}\r\n😀\0\n".as_bytes(), r#""\uFEFF A\u0301\r\n\uD83D\uDE00\u0000\n""#, r#""\u{FEFF} A\u{301}\r\n\u{1F600}\0\n""#)]
+#[case(&["--text", "-"], "\u{feff} A\u{301}\r\n😀\0\n".as_bytes(), r#""\uFEFF A\u0301\r\n\uD83D\uDE00\u0000\n""#, r#""\u{FEFF} A\u{301}\r\n\u{1F600}\0\n""#)]
+#[case(&["--text", "-"], "\u{378}\u{e000}\u{ffff}".as_bytes(), r#""\u0378\uE000\uFFFF""#, r#""\u{378}\u{E000}\u{FFFF}""#)]
+fn preserves_stdin_interpretation_and_contents(
+    #[case] arguments: &[&str],
+    #[case] input: &[u8],
+    #[case] json: &str,
+    #[case] rust: &str,
+) {
+    for (format, expected) in [("json-string", json), ("rust-string", rust)] {
+        let mut command = vec!["--output", format];
+        command.extend_from_slice(arguments);
+        let output = run_with_stdin(&command, input);
+
+        assert!(output.status.success());
+        assert!(output.stderr.is_empty());
+        assert_eq!(output.stdout, format!("{expected}\n").as_bytes());
+    }
+}
+
+#[rstest]
+#[case("json-string", r"\u3042")]
+#[case("rust-string", r"\u{3042}")]
+fn prints_long_inputs_in_full(#[case] format: &str, #[case] escaped: &str) {
+    let count = 32 * 1024;
+    let output = run_with_stdin(
+        &["--output", format, "--text", "-"],
+        "あ".repeat(count).as_bytes(),
+    );
+
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    assert_eq!(
+        output.stdout,
+        format!("\"{}\"\n", escaped.repeat(count)).as_bytes()
+    );
 }
 
 #[rstest]
