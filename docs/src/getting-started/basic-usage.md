@@ -56,4 +56,15 @@ sauva --text - < input.txt
 
 Whitespace and trailing newlines are preserved.
 
+## Print a String Literal
+
+Use `--output` to print a quoted JSON or Rust string literal and exit:
+
+```sh
+sauva --output json-string --text 'Á😀'
+sauva --output rust-string --text - < input.txt
+```
+
+This works without an interactive terminal. See [Output Formats](./command-line-options.md#--output-format) for examples and input and output rules.
+
 For all input rules and options, see [Command Line Options](./command-line-options.md). The complete controls are listed in [Keybindings](../keybindings/index.md).
