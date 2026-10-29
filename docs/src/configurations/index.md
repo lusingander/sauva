@@ -1,6 +1,6 @@
 # Configurations
 
-Sauva's TUI uses a TOML configuration file to customize colors, glyph preview fonts, presentation, and keybindings. The [`--output`](../getting-started/command-line-options.md#--output-format) mode does not load this file.
+Sauva's TUI uses a TOML configuration file to customize colors, glyph preview fonts, presentation, and keybindings. The [`--output`](../getting-started/non-interactive-usage.md) mode does not load this file.
 
 ## Configuration File Location
 

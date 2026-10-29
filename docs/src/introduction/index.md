@@ -13,7 +13,7 @@ Sauva is a terminal application for searching and browsing Unicode code points. 
 - Browse Unicode planes, ranges, blocks, and code points.
 - Analyze text as code points and grapheme clusters in Sequence mode.
 - Compare NFC, NFD, NFKC, and NFKD normalization forms.
-- Print [JSON and Rust string literals](../getting-started/command-line-options.md#--output-format) for use in code and scripts.
+- Print [JSON and Rust string literals](../getting-started/non-interactive-usage.md) for use in code and scripts.
 - Preview glyphs using installed fonts and a terminal graphics protocol.
 - Customize colors, fonts, and keybindings.
 

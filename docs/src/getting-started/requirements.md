@@ -10,7 +10,7 @@ The TUI requires an interactive terminal, including when the input is read from 
 
 The minimum terminal size for the TUI is 60 columns by 16 rows. A larger terminal, such as 100 columns by 30 rows, provides room for additional preview panels.
 
-Use [`--output`](./command-line-options.md#--output-format) to print a JSON or Rust string literal without an interactive terminal.
+Use [`--output`](./non-interactive-usage.md) to print a JSON or Rust string literal without an interactive terminal.
 
 ## Glyph Images
 

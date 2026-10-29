@@ -32,7 +32,7 @@ The following examples use `A` + U+0301 + `😀`:
 
 JSON String and Rust String include quotes and use ASCII escapes for non-ASCII characters and controls. Even one character is copied as a string literal.
 
-To print these string literals from the command line, use [`--output`](../getting-started/command-line-options.md#--output-format).
+To print these string literals from the command line, see [Non-interactive Usage](../getting-started/non-interactive-usage.md).
 
 Numeric sequences use uppercase hexadecimal values separated by spaces. UTF-8 Hex is text representing bytes; UTF-16 Units represents 16-bit code units without selecting a byte order.
 

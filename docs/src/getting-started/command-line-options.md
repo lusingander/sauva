@@ -10,7 +10,7 @@ Arguments:
 
 Options:
   -t, --text <TEXT>           Treat the input as literal text, without code point notation parsing; - reads stdin
-      --output <FORMAT>       Print a result and exit [possible values: json-string, rust-string]
+  -o, --output <FORMAT>       Print a result and exit [possible values: json-string, rust-string]
   -g, --graphics <MODE>       Control glyph preview graphics [default: auto] [possible values: auto, force, iterm2, off]
       --print-default-config  Print the complete default configuration to standard output
   -h, --help                  Print help
@@ -70,44 +70,13 @@ Sauva reads UTF-8 input until EOF. All whitespace, including trailing LF and CRL
 
 In particular, `echo U+2192 | sauva -` is rejected because the newline is part of the code point notation. Use `printf 'U+2192' | sauva -` for notation, or `echo U+2192 | sauva --text -` to inspect the literal text including its newline.
 
-Stdin is read only when `-` is explicitly supplied. The TUI still requires an interactive terminal for keyboard input. Use [`--output`](#--output-format) for noninteractive output.
+Stdin is read only when `-` is explicitly supplied. The TUI still requires an interactive terminal for keyboard input. See [Non-interactive Usage](./non-interactive-usage.md) to print string literals without a terminal.
 
 Since `-` selects stdin, use `sauva U+002D` to inspect the hyphen character itself.
 
-## `--output <FORMAT>`
+## `-o, --output <FORMAT>`
 
-Print one quoted string literal to stdout and exit:
-
-```sh
-sauva --output json-string U+2192
-sauva --output rust-string --text 'Á😀'
-sauva --output json-string --text - < input.txt > literal.json
-```
-
-The following examples use `A` + U+0301 + `😀`:
-
-| Format | Output |
-| --- | --- |
-| `json-string` | `"A\u0301\uD83D\uDE00"` |
-| `rust-string` | `"A\u{301}\u{1F600}"` |
-
-Both formats include double quotes and use ASCII escapes for non-ASCII characters and controls. A single character is also a string literal. The original text is preserved without normalization or decoding escape sequences.
-
-Input is required, using the same [`INPUT`](#input) and [`--text`](#-t---text-text) rules. Empty input is rejected. Surrogate code points such as `U+D800` cannot be output as strings.
-
-Each result ends with one LF outside the closing quote. Newlines from the input are escaped inside the literal. The literal matches the corresponding [copy dialog format](../features/copying.md#formats); clipboard copies do not include the extra LF.
-
-This mode requires no interactive terminal, fonts, or clipboard and does not load user configuration. It cannot be combined with an explicit `--graphics` option, including `--graphics auto`. Omitting `--output` starts the TUI, even when stdout is redirected.
-
-### Exit Codes
-
-These exit codes apply to `--output`. Successful output goes to stdout; errors go to stderr.
-
-| Code | Meaning |
-| --- | --- |
-| `0` | Success, including a downstream reader closing the output pipe |
-| `1` | Input or output I/O failure, invalid UTF-8, or a surrogate code point that cannot be output as a string |
-| `2` | Missing or invalid input or options, including empty input |
+Print a quoted JSON or Rust string literal and exit. See [Non-interactive Usage](./non-interactive-usage.md) for formats, examples, and exit codes.
 
 ## `-g, --graphics <MODE>`
 
