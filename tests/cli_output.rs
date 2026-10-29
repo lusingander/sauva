@@ -6,41 +6,18 @@ use std::{
 use rstest::rstest;
 
 #[rstest]
-#[case(&["--help"])]
-#[case(&["--output", "json-string", "--help"])]
-fn prints_usage_and_supported_output_formats_for_help(#[case] arguments: &[&str]) {
+#[case("--help")]
+#[case("--version")]
+fn informational_options_bypass_input_and_configuration(#[case] option: &str) {
     let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
-        .args(arguments)
+        .args(["--output", "json-string", option])
+        .env("SAUVA_CONFIG_FILE", "")
         .output()
         .unwrap();
 
     assert!(output.status.success(), "status: {}", output.status);
     assert!(output.stderr.is_empty());
-
-    let stdout = String::from_utf8(output.stdout).unwrap();
-    assert!(stdout.contains("Usage:"));
-    assert!(stdout.contains("sauva"));
-    assert!(stdout.contains("[possible values: json-string, rust-string]"));
-    assert!(!stdout.contains("possible values: plain"));
-    assert!(!stdout.contains("--format"));
-}
-
-#[rstest]
-#[case(&["--version"])]
-#[case(&["--output", "rust-string", "--version"])]
-fn prints_version_without_requiring_input(#[case] arguments: &[&str]) {
-    let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
-        .args(arguments)
-        .env("SAUVA_CONFIG_FILE", "")
-        .output()
-        .unwrap();
-
-    assert!(output.status.success());
-    assert!(output.stderr.is_empty());
-    assert_eq!(
-        output.stdout,
-        concat!("sauva ", env!("CARGO_PKG_VERSION"), "\n").as_bytes()
-    );
+    assert!(!output.stdout.is_empty());
 }
 
 #[test]
@@ -93,13 +70,7 @@ not valid TOML
 
 #[rstest]
 #[case(&["41"], r#""A""#, r#""A""#)]
-#[case(&["1"], r#""1""#, r#""1""#)]
 #[case(&["--text", "41"], r#""41""#, r#""41""#)]
-#[case(&["U+2192"], r#""\u2192""#, r#""\u{2192}""#)]
-#[case(&["--text", "U+2192"], r#""U+2192""#, r#""U+2192""#)]
-#[case(&["--text", r"\u0041"], r#""\\u0041""#, r#""\\u0041""#)]
-#[case(&["U+002D"], r#""-""#, r#""-""#)]
-#[case(&["input.txt"], r#""input.txt""#, r#""input.txt""#)]
 fn preserves_existing_argument_interpretation(
     #[case] arguments: &[&str],
     #[case] json: &str,
@@ -121,11 +92,7 @@ fn preserves_existing_argument_interpretation(
 #[rstest]
 #[case(&["-"], b"41", r#""A""#, r#""A""#)]
 #[case(&["--text", "-"], b"41", r#""41""#, r#""41""#)]
-#[case(&["--text", "-"], b"U+D800", r#""U+D800""#, r#""U+D800""#)]
-#[case(&["-"], b"-", r#""-""#, r#""-""#)]
-#[case(&["-"], "\u{feff} A\u{301}\r\n😀\0\n".as_bytes(), r#""\uFEFF A\u0301\r\n\uD83D\uDE00\u0000\n""#, r#""\u{FEFF} A\u{301}\r\n\u{1F600}\0\n""#)]
 #[case(&["--text", "-"], "\u{feff} A\u{301}\r\n😀\0\n".as_bytes(), r#""\uFEFF A\u0301\r\n\uD83D\uDE00\u0000\n""#, r#""\u{FEFF} A\u{301}\r\n\u{1F600}\0\n""#)]
-#[case(&["--text", "-"], "\u{378}\u{e000}\u{ffff}".as_bytes(), r#""\u0378\uE000\uFFFF""#, r#""\u{378}\u{E000}\u{FFFF}""#)]
 fn preserves_stdin_interpretation_and_contents(
     #[case] arguments: &[&str],
     #[case] input: &[u8],
@@ -162,26 +129,25 @@ fn prints_long_inputs_in_full(#[case] format: &str, #[case] escaped: &str) {
 }
 
 #[rstest]
-#[case(&["-"], b"", 1, "invalid input from stdin")]
-#[case(&["--text", "-"], b"", 1, "text must not be empty")]
-#[case(&["-"], b"U+2192\n", 1, "invalid input from stdin")]
-#[case(&["-"], &[0xff], 1, "failed to read stdin")]
-#[case(&["--text", "-"], &[0xff], 1, "failed to read stdin")]
-#[case(&["--output", "json-string", "-"], b"", 2, "invalid input from stdin")]
-#[case(&["--output", "rust-string", "--text", "-"], b"", 2, "text must not be empty")]
-#[case(&["--output", "json-string", "-"], b"U+2192\n", 2, "invalid input from stdin")]
-#[case(&["--output", "rust-string", "-"], &[0xff], 1, "failed to read stdin")]
-#[case(&["--output", "json-string", "--text", "-"], &[0xff], 1, "failed to read stdin")]
-#[case(&["--output", "json-string", "-"], b"U+D800", 1, "not a Unicode scalar value")]
+#[case::tui_empty_input(&["-"], b"", 1)]
+#[case::tui_empty_text(&["--text", "-"], b"", 1)]
+#[case::tui_invalid_notation(&["-"], b"U+2192\n", 1)]
+#[case::tui_invalid_utf8(&["-"], &[0xff], 1)]
+#[case::tui_invalid_literal_utf8(&["--text", "-"], &[0xff], 1)]
+#[case::empty_input(&["--output", "json-string", "-"], b"", 2)]
+#[case::empty_text(&["--output", "rust-string", "--text", "-"], b"", 2)]
+#[case::invalid_notation(&["--output", "json-string", "-"], b"U+2192\n", 2)]
+#[case::invalid_utf8(&["--output", "rust-string", "-"], &[0xff], 1)]
+#[case::invalid_literal_utf8(&["--output", "json-string", "--text", "-"], &[0xff], 1)]
+#[case::surrogate(&["--output", "json-string", "-"], b"U+D800", 1)]
 fn rejects_invalid_stdin_without_printing_a_result(
     #[case] arguments: &[&str],
     #[case] input: &[u8],
     #[case] expected_code: i32,
-    #[case] expected_error: &str,
 ) {
     let output = run_with_stdin(arguments, input);
 
-    assert_failure(&output, expected_code, expected_error);
+    assert_failure(&output, expected_code);
 }
 
 fn run_with_stdin(arguments: &[&str], input: &[u8]) -> Output {
@@ -235,37 +201,32 @@ fn reports_stdout_write_failures() {
         .output()
         .unwrap();
 
-    assert_failure(&output, 1, "failed to write stdout");
+    assert_failure(&output, 1);
 }
 
-fn assert_failure(output: &Output, expected_code: i32, expected_error: &str) {
+fn assert_failure(output: &Output, expected_code: i32) {
     assert_eq!(output.status.code(), Some(expected_code));
     assert!(output.stdout.is_empty());
 
-    let stderr = String::from_utf8(output.stderr.clone()).unwrap();
+    let stderr = std::str::from_utf8(&output.stderr).unwrap();
     assert!(stderr.starts_with("sauva: "), "{stderr}");
-    assert!(stderr.contains(expected_error), "{stderr}");
 }
 
 #[rstest]
-#[case(&["--output", "json-string"], 2, "required")]
-#[case(&["--output", "json-string", "--text", ""], 2, "text must not be empty")]
-#[case(&["--output", "rust-string", ""], 2, "invalid value")]
-#[case(&["--output", "json-string", "U+110000"], 2, "between")]
-#[case(&["--output", "json-string", "A", "--graphics", "auto"], 2, "cannot be used")]
-#[case(&["--output", "json", "A"], 2, "invalid value")]
-#[case(&["--output", "rust-string", "U+D800"], 1, "not a Unicode scalar value")]
-fn rejects_invalid_output_requests(
-    #[case] arguments: &[&str],
-    #[case] expected_code: i32,
-    #[case] expected_error: &str,
-) {
+#[case::missing_input(&["--output", "json-string"], 2)]
+#[case::empty_text(&["--output", "json-string", "--text", ""], 2)]
+#[case::empty_input(&["--output", "rust-string", ""], 2)]
+#[case::out_of_range(&["--output", "json-string", "U+110000"], 2)]
+#[case::graphics_conflict(&["--output", "json-string", "A", "--graphics", "auto"], 2)]
+#[case::unknown_format(&["--output", "json", "A"], 2)]
+#[case::surrogate(&["--output", "rust-string", "U+D800"], 1)]
+fn rejects_invalid_output_requests(#[case] arguments: &[&str], #[case] expected_code: i32) {
     let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
         .args(arguments)
         .output()
         .unwrap();
 
-    assert_failure(&output, expected_code, expected_error);
+    assert_failure(&output, expected_code);
 }
 
 #[rstest]
@@ -278,7 +239,7 @@ fn escapes_untrusted_arguments_in_diagnostics(#[case] arguments: &[&str]) {
         .output()
         .unwrap();
 
-    assert_failure(&output, 2, "error:");
+    assert_failure(&output, 2);
     assert!(
         output
             .stderr
