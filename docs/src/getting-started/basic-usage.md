@@ -1,5 +1,7 @@
 # Basic Usage
 
+The examples below use Sauva's interactive TUI.
+
 ## Inspect a Code Point
 
 Run Sauva without arguments to open the default code point:

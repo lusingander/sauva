@@ -14,7 +14,6 @@ Sauva is a terminal application for searching and browsing Unicode code points. 
 - Inspect Unicode properties, encodings, and glyph previews.
 - Search, browse, and bookmark code points.
 - Analyze strings by code point and grapheme cluster, and compare Unicode normalization forms.
-- Print JSON and Rust string literals without opening the TUI.
 - Customize colors, fonts, and keybindings.
 
 The bundled data is based on Unicode 17.0.0. See [Features](https://lusingander.github.io/sauva/features/) for details and screenshots.
@@ -63,15 +62,6 @@ printf 'Á👩‍💻' | sauva --text -
 
 See [Basic Usage](https://lusingander.github.io/sauva/getting-started/basic-usage.html) for more examples.
 
-### Print a string literal
-
-Use `--output` to print a quoted string literal and exit:
-
-```sh
-sauva --output json-string --text 'Á😀'
-sauva --output rust-string --text - < input.txt
-```
-
 For all command line options, run `sauva --help` or see [Command Line Options](https://lusingander.github.io/sauva/getting-started/command-line-options.html).
 
 ### Keybindings
@@ -91,6 +81,16 @@ See [Keybindings](https://lusingander.github.io/sauva/keybindings/) for all cont
 ### Config
 
 Customize colors, fonts, and keybindings in the [configuration file](https://lusingander.github.io/sauva/configurations/).
+
+## Non-interactive Output
+
+Use `-o` / `--output` to print a quoted JSON or Rust string literal and exit:
+
+```sh
+sauva -o json-string --text 'Á😀'
+```
+
+See [Non-interactive Usage](https://lusingander.github.io/sauva/getting-started/non-interactive-usage.html) for formats and examples.
 
 ## Compatibility
 
