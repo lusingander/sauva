@@ -60,9 +60,13 @@ fn prints_default_config_without_loading_local_config() {
 }
 
 #[rstest]
-#[case("json-string", r#""A\u0301\uD83D\uDE00""#)]
-#[case("rust-string", r#""A\u{301}\u{1F600}""#)]
-fn prints_string_literals_without_loading_config(#[case] format: &str, #[case] expected: &str) {
+#[case("--output", "json-string", r#""A\u0301\uD83D\uDE00""#)]
+#[case("-o", "rust-string", r#""A\u{301}\u{1F600}""#)]
+fn prints_string_literals_without_loading_config(
+    #[case] option: &str,
+    #[case] format: &str,
+    #[case] expected: &str,
+) {
     let mut config = tempfile::NamedTempFile::new().unwrap();
     config
         .write_all(
@@ -73,7 +77,7 @@ not valid TOML
         )
         .unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
-        .args(["--output", format, "--text", "A\u{301}😀"])
+        .args([option, format, "--text", "A\u{301}😀"])
         .env("SAUVA_CONFIG_FILE", config.path())
         .env("XDG_DATA_HOME", config.path())
         .env("TERM", "dumb")

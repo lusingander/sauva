@@ -81,7 +81,7 @@ struct Cli {
     text: Option<InputSource>,
 
     /// Print a result and exit
-    #[arg(long, value_enum, value_name = "FORMAT", requires = "source", conflicts_with_all = ["graphics", "demo"])]
+    #[arg(short, long, value_enum, value_name = "FORMAT", requires = "source", conflicts_with_all = ["graphics", "demo"])]
     output: Option<OutputFormat>,
 
     /// Control glyph preview graphics
@@ -691,11 +691,15 @@ mod tests {
     }
 
     #[rstest]
-    #[case("json-string", OutputFormat::JsonString)]
-    #[case("rust-string", OutputFormat::RustString)]
-    fn output_accepts_either_input_source(#[case] format: &str, #[case] expected: OutputFormat) {
+    #[case("--output", "json-string", OutputFormat::JsonString)]
+    #[case("-o", "rust-string", OutputFormat::RustString)]
+    fn output_accepts_either_input_source(
+        #[case] option: &str,
+        #[case] format: &str,
+        #[case] expected: OutputFormat,
+    ) {
         for source in [&["41"][..], &["--text", "41"]] {
-            let mut arguments = vec!["sauva", "--output", format];
+            let mut arguments = vec!["sauva", option, format];
             arguments.extend_from_slice(source);
             let options = try_parse(&arguments).unwrap();
 
