@@ -9,7 +9,7 @@ accent = "magenta"
 
 The sections below list the settings and their defaults. Use `sauva --print-default-config` to print the full configuration, including every default keybinding.
 
-The configuration structure is also described by [config.schema.json](https://github.com/lusingander/sauva/blob/master/config.schema.json). Sauva validates the configuration at startup, including terminal cell widths and keybinding conflicts.
+The configuration structure is also described by [config.schema.json](https://github.com/lusingander/sauva/blob/master/config.schema.json). Sauva validates the configuration when starting the TUI, including terminal cell widths and keybinding conflicts.
 
 ## `color`
 

@@ -48,7 +48,7 @@ Unavailable property values cannot be copied. See [Copying Values](../features/i
 
 ## Why does my configuration prevent startup?
 
-The startup error identifies the configuration file and the problem. Check the path in [Configurations](../configurations/index.md) and the reported setting in [Config File Format](../configurations/config-file-format.md). For binding errors, see [Custom Keybindings](../keybindings/custom-keybindings.md#conflicts-and-validation).
+The TUI startup error identifies the configuration file and the problem. Check the path in [Configurations](../configurations/index.md) and the reported setting in [Config File Format](../configurations/config-file-format.md). For binding errors, see [Custom Keybindings](../keybindings/custom-keybindings.md#conflicts-and-validation).
 
 Use `sauva --print-default-config` for a valid configuration reference.
 
