@@ -1,6 +1,13 @@
-use std::io::{self, Read};
+use std::{
+    error::Error,
+    fmt,
+    io::{self, Read},
+};
 
-use clap::{Parser, ValueEnum};
+use clap::{
+    Parser, ValueEnum,
+    error::{ContextKind, ContextValue},
+};
 
 use crate::{graphics::GraphicsMode, output::OutputFormat, unicode::CodePoint};
 
@@ -124,29 +131,116 @@ pub enum Demo {
     GlyphDisabled,
 }
 
-pub fn parse() -> io::Result<LaunchOptions> {
-    Cli::parse().resolve(io::stdin().lock())
+#[derive(Debug)]
+pub enum ParseError {
+    Arguments(clap::Error),
+    StdinRead(io::Error),
+    StdinInput {
+        message: String,
+        noninteractive: bool,
+    },
+}
+
+impl ParseError {
+    pub const fn exit_code(&self) -> u8 {
+        match self {
+            Self::Arguments(_)
+            | Self::StdinInput {
+                noninteractive: true,
+                ..
+            } => 2,
+            Self::StdinRead(_)
+            | Self::StdinInput {
+                noninteractive: false,
+                ..
+            } => 1,
+        }
+    }
+}
+
+impl fmt::Display for ParseError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Arguments(error) => error.fmt(formatter),
+            Self::StdinRead(error) => write!(formatter, "failed to read stdin: {error}"),
+            Self::StdinInput { message, .. } => {
+                write!(formatter, "invalid input from stdin: {message}")
+            }
+        }
+    }
+}
+
+impl Error for ParseError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::Arguments(error) => Some(error),
+            Self::StdinRead(error) => Some(error),
+            Self::StdinInput { .. } => None,
+        }
+    }
+}
+
+pub fn parse() -> Result<LaunchOptions, ParseError> {
+    Cli::try_parse()
+        .map_err(|error| ParseError::Arguments(escape_error_context(error)))?
+        .resolve(io::stdin().lock())
+}
+
+fn escape_error_context(mut error: clap::Error) -> clap::Error {
+    // Escape argument values and suggestions before clap adds its own line breaks.
+    let contexts: Vec<_> = error
+        .context()
+        .filter_map(|(kind, value)| {
+            let escaped = match value {
+                ContextValue::String(value) => ContextValue::String(escape_argument(value)),
+                ContextValue::Strings(values) => ContextValue::Strings(
+                    values.iter().map(|value| escape_argument(value)).collect(),
+                ),
+                ContextValue::StyledStr(value) if kind != ContextKind::Usage => {
+                    ContextValue::String(escape_argument(&value.to_string()))
+                }
+                ContextValue::StyledStrs(values) => ContextValue::Strings(
+                    values
+                        .iter()
+                        .map(|value| escape_argument(&value.to_string()))
+                        .collect(),
+                ),
+                _ => return None,
+            };
+            Some((kind, escaped))
+        })
+        .collect();
+    for (kind, value) in contexts {
+        error.insert(kind, value);
+    }
+    error
+}
+
+fn escape_argument(value: &str) -> String {
+    value
+        .chars()
+        .map(|character| match character {
+            ' '..='~' => character.to_string(),
+            _ => character.escape_default().to_string(),
+        })
+        .collect()
 }
 
 impl Cli {
-    fn resolve(self, stdin: impl Read) -> io::Result<LaunchOptions> {
+    fn resolve(self, stdin: impl Read) -> Result<LaunchOptions, ParseError> {
         let target = match self.input.or(self.text) {
             None => None,
             Some(InputSource::Target(target)) => Some(target),
             Some(InputSource::Stdin { literal }) => {
-                let input = io::read_to_string(stdin).map_err(|error| {
-                    io::Error::new(error.kind(), format!("failed to read stdin: {error}"))
-                })?;
+                let input = io::read_to_string(stdin).map_err(ParseError::StdinRead)?;
                 let target = if literal {
                     parse_text(&input)
                 } else {
                     parse_input(&input)
                 }
-                .map_err(|error| {
-                    io::Error::new(
-                        io::ErrorKind::InvalidInput,
-                        format!("invalid input from stdin: {error}"),
-                    )
+                .map_err(|message| ParseError::StdinInput {
+                    message,
+                    noninteractive: self.output.is_some(),
                 })?;
                 Some(target)
             }
@@ -439,7 +533,7 @@ mod tests {
             .resolve(input.as_bytes())
             .unwrap_err();
 
-        assert_eq!(error.kind(), io::ErrorKind::InvalidInput);
+        assert_eq!(error.exit_code(), 1);
         assert!(error.to_string().contains("invalid input from stdin"));
     }
 
@@ -450,7 +544,7 @@ mod tests {
             .resolve(io::empty())
             .unwrap_err();
 
-        assert_eq!(error.kind(), io::ErrorKind::InvalidInput);
+        assert_eq!(error.exit_code(), 1);
         assert!(error.to_string().contains("text must not be empty"));
     }
 
@@ -463,8 +557,30 @@ mod tests {
             .resolve([0xff].as_slice())
             .unwrap_err();
 
-        assert_eq!(error.kind(), io::ErrorKind::InvalidData);
+        assert!(matches!(
+            &error,
+            ParseError::StdinRead(source) if source.kind() == io::ErrorKind::InvalidData
+        ));
         assert!(error.to_string().contains("failed to read stdin"));
+    }
+
+    #[test]
+    fn stdin_read_failures_are_not_classified_as_usage_errors() {
+        struct FailedStdin;
+
+        impl Read for FailedStdin {
+            fn read(&mut self, _: &mut [u8]) -> io::Result<usize> {
+                Err(io::ErrorKind::InvalidInput.into())
+            }
+        }
+
+        let error = Cli::try_parse_from(["sauva", "--output", "json-string", "-"])
+            .unwrap()
+            .resolve(FailedStdin)
+            .unwrap_err();
+
+        assert!(matches!(&error, ParseError::StdinRead(_)));
+        assert_eq!(error.exit_code(), 1);
     }
 
     #[rstest]

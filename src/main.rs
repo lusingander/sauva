@@ -27,7 +27,15 @@ mod viewport;
 use std::{error::Error, io, process::ExitCode};
 
 fn main() -> ExitCode {
-    match run() {
+    let options = match cli::parse() {
+        Ok(options) => options,
+        Err(cli::ParseError::Arguments(error)) if !error.use_stderr() => error.exit(),
+        Err(error) => {
+            eprintln!("sauva: {error}");
+            return ExitCode::from(error.exit_code());
+        }
+    };
+    match run(options) {
         Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
             eprintln!("sauva: {error}");
@@ -36,8 +44,7 @@ fn main() -> ExitCode {
     }
 }
 
-fn run() -> Result<(), Box<dyn Error>> {
-    let options = cli::parse()?;
+fn run(options: cli::LaunchOptions) -> Result<(), Box<dyn Error>> {
     if options.print_default_config() {
         print!("{}", config::default_toml()?);
         return Ok(());
