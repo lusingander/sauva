@@ -167,6 +167,7 @@ fn run_with_stdin(arguments: &[&str], input: &[u8]) -> Output {
 #[rstest]
 #[case("json-string")]
 #[case("rust-string")]
+#[case("json")]
 fn treats_a_closed_stdout_pipe_as_success(#[case] format: &str) {
     let mut child = Command::new(env!("CARGO_BIN_EXE_sauva"))
         .args(["--output", format, "--text", "-"])
@@ -218,7 +219,7 @@ fn assert_failure(output: &Output, expected_code: i32) {
 #[case::empty_input(&["--output", "rust-string", ""], 2)]
 #[case::out_of_range(&["--output", "json-string", "U+110000"], 2)]
 #[case::graphics_conflict(&["--output", "json-string", "A", "--graphics", "auto"], 2)]
-#[case::unknown_format(&["--output", "json", "A"], 2)]
+#[case::unknown_format(&["--output", "unknown", "A"], 2)]
 #[case::surrogate(&["--output", "rust-string", "U+D800"], 1)]
 fn rejects_invalid_output_requests(#[case] arguments: &[&str], #[case] expected_code: i32) {
     let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
