@@ -123,12 +123,10 @@ mod tests {
     #[case(OutputFormat::RustString, false)]
     #[case(OutputFormat::RustString, true)]
     fn handles_write_and_flush_failures(#[case] format: OutputFormat, #[case] on_flush: bool) {
+        // Fill the output buffer so JSON also exercises errors during serialization.
+        let target = LaunchTarget::Sequence("A".repeat(32));
         for kind in [io::ErrorKind::Other, io::ErrorKind::BrokenPipe] {
-            let result = write(
-                format,
-                &LaunchTarget::Sequence("A".to_owned()),
-                FailingWriter { kind, on_flush },
-            );
+            let result = write(format, &target, FailingWriter { kind, on_flush });
 
             if kind == io::ErrorKind::BrokenPipe {
                 assert!(result.is_ok());
