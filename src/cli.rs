@@ -197,12 +197,12 @@ fn escape_error_context(mut error: clap::Error) -> clap::Error {
                     values.iter().map(|value| escape_argument(value)).collect(),
                 ),
                 ContextValue::StyledStr(value) if kind != ContextKind::Usage => {
-                    ContextValue::String(escape_argument(&value.to_string()))
+                    ContextValue::StyledStr(escape_argument(&value.to_string()).into())
                 }
-                ContextValue::StyledStrs(values) => ContextValue::Strings(
+                ContextValue::StyledStrs(values) => ContextValue::StyledStrs(
                     values
                         .iter()
-                        .map(|value| escape_argument(&value.to_string()))
+                        .map(|value| escape_argument(&value.to_string()).into())
                         .collect(),
                 ),
                 _ => return None,

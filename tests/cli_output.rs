@@ -230,10 +230,14 @@ fn rejects_invalid_output_requests(#[case] arguments: &[&str], #[case] expected_
 }
 
 #[rstest]
-#[case(&["--output", "json-string", "U+\u{1b}[31m\n"])]
-#[case(&["--output", "\u{202e}bad\r\n"])]
-#[case(&["--output", "json-string", "--bad\u{1b}[31m\t"])]
-fn escapes_untrusted_arguments_in_diagnostics(#[case] arguments: &[&str]) {
+#[case(&["--output", "json-string", "U+\u{1b}[31m\n"], None)]
+#[case(&["--output", "\u{202e}bad\r\n"], None)]
+#[case(&["--output", "json-string", "--bad\u{1b}[31m\t"], Some("-- --bad"))]
+#[case(&["--bad\u{1b}[31m\t"], Some("-- --bad"))]
+fn escapes_untrusted_arguments_in_diagnostics(
+    #[case] arguments: &[&str],
+    #[case] suggestion: Option<&str>,
+) {
     let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
         .args(arguments)
         .output()
@@ -246,5 +250,9 @@ fn escapes_untrusted_arguments_in_diagnostics(#[case] arguments: &[&str]) {
             .iter()
             .all(|byte| *byte == b'\n' || (b' '..=b'~').contains(byte))
     );
-    assert!(String::from_utf8(output.stderr).unwrap().contains(r"\u{"));
+    let stderr = String::from_utf8(output.stderr).unwrap();
+    assert!(stderr.contains(r"\u{"));
+    if let Some(suggestion) = suggestion {
+        assert!(stderr.contains(suggestion), "{stderr}");
+    }
 }
