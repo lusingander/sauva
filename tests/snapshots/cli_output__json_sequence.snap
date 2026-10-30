@@ -1,0 +1,256 @@
+---
+source: tests/cli_output.rs
+expression: snapshot
+---
+{
+  "schema_version": 1,
+  "sauva_version": "<version>",
+  "unicode_version": "17.0.0",
+  "text": "A\u0301\uD83D\uDE00",
+  "metrics": {
+    "code_points": 3,
+    "utf8_bytes": 7,
+    "utf16_units": 4,
+    "graphemes": 2
+  },
+  "code_points": [
+    {
+      "index": 0,
+      "value": 65,
+      "code_point": "U+0041",
+      "character": "A",
+      "utf8_range": [
+        0,
+        1
+      ],
+      "utf16_range": [
+        0,
+        1
+      ],
+      "grapheme_index": 0,
+      "properties": {
+        "name": "LATIN CAPITAL LETTER A",
+        "aliases": [],
+        "plane": 0,
+        "block": "Basic Latin",
+        "general_category": "Lu",
+        "script": "Latin",
+        "age": "1.1",
+        "east_asian_width": "Na",
+        "canonical_combining_class": 0,
+        "bidi_class": "L",
+        "default_ignorable": false,
+        "case_mapping": {
+          "uppercase": [
+            65
+          ],
+          "lowercase": [
+            97
+          ],
+          "titlecase": [
+            65
+          ],
+          "case_folding": [
+            97
+          ]
+        },
+        "numeric_type": "None",
+        "numeric_value": null,
+        "decomposition": null,
+        "encoding": {
+          "utf8": [
+            65
+          ],
+          "utf16": [
+            65
+          ]
+        }
+      }
+    },
+    {
+      "index": 1,
+      "value": 769,
+      "code_point": "U+0301",
+      "character": "\u0301",
+      "utf8_range": [
+        1,
+        3
+      ],
+      "utf16_range": [
+        1,
+        2
+      ],
+      "grapheme_index": 0,
+      "properties": {
+        "name": "COMBINING ACUTE ACCENT",
+        "aliases": [],
+        "plane": 0,
+        "block": "Combining Diacritical Marks",
+        "general_category": "Mn",
+        "script": "Inherited",
+        "age": "1.1",
+        "east_asian_width": "A",
+        "canonical_combining_class": 230,
+        "bidi_class": "NSM",
+        "default_ignorable": false,
+        "case_mapping": {
+          "uppercase": [
+            769
+          ],
+          "lowercase": [
+            769
+          ],
+          "titlecase": [
+            769
+          ],
+          "case_folding": [
+            769
+          ]
+        },
+        "numeric_type": "None",
+        "numeric_value": null,
+        "decomposition": null,
+        "encoding": {
+          "utf8": [
+            204,
+            129
+          ],
+          "utf16": [
+            769
+          ]
+        }
+      }
+    },
+    {
+      "index": 2,
+      "value": 128512,
+      "code_point": "U+1F600",
+      "character": "\uD83D\uDE00",
+      "utf8_range": [
+        3,
+        7
+      ],
+      "utf16_range": [
+        2,
+        4
+      ],
+      "grapheme_index": 1,
+      "properties": {
+        "name": "GRINNING FACE",
+        "aliases": [],
+        "plane": 1,
+        "block": "Emoticons",
+        "general_category": "So",
+        "script": "Common",
+        "age": "6.1",
+        "east_asian_width": "W",
+        "canonical_combining_class": 0,
+        "bidi_class": "ON",
+        "default_ignorable": false,
+        "case_mapping": {
+          "uppercase": [
+            128512
+          ],
+          "lowercase": [
+            128512
+          ],
+          "titlecase": [
+            128512
+          ],
+          "case_folding": [
+            128512
+          ]
+        },
+        "numeric_type": "None",
+        "numeric_value": null,
+        "decomposition": null,
+        "encoding": {
+          "utf8": [
+            240,
+            159,
+            152,
+            128
+          ],
+          "utf16": [
+            55357,
+            56832
+          ]
+        }
+      }
+    }
+  ],
+  "graphemes": [
+    {
+      "index": 0,
+      "code_point_range": [
+        0,
+        2
+      ],
+      "utf8_range": [
+        0,
+        3
+      ],
+      "utf16_range": [
+        0,
+        2
+      ]
+    },
+    {
+      "index": 1,
+      "code_point_range": [
+        2,
+        3
+      ],
+      "utf8_range": [
+        3,
+        7
+      ],
+      "utf16_range": [
+        2,
+        4
+      ]
+    }
+  ],
+  "normalization": {
+    "nfc": {
+      "changed": true,
+      "text": "\u00C1\uD83D\uDE00",
+      "metrics": {
+        "code_points": 2,
+        "utf8_bytes": 6,
+        "utf16_units": 3,
+        "graphemes": 2
+      }
+    },
+    "nfd": {
+      "changed": false,
+      "text": "A\u0301\uD83D\uDE00",
+      "metrics": {
+        "code_points": 3,
+        "utf8_bytes": 7,
+        "utf16_units": 4,
+        "graphemes": 2
+      }
+    },
+    "nfkc": {
+      "changed": true,
+      "text": "\u00C1\uD83D\uDE00",
+      "metrics": {
+        "code_points": 2,
+        "utf8_bytes": 6,
+        "utf16_units": 3,
+        "graphemes": 2
+      }
+    },
+    "nfkd": {
+      "changed": false,
+      "text": "A\u0301\uD83D\uDE00",
+      "metrics": {
+        "code_points": 3,
+        "utf8_bytes": 7,
+        "utf16_units": 4,
+        "graphemes": 2
+      }
+    }
+  }
+}

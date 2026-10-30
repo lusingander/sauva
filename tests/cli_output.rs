@@ -4,6 +4,103 @@ use std::{
 };
 
 use rstest::rstest;
+use serde_json::Value;
+
+#[rstest]
+#[case::fraction("json_fraction", &["U+00BD"])]
+#[case::sequence("json_sequence", &["--text", "A\u{301}😀"])]
+#[case::surrogate("json_surrogate", &["U+D800"])]
+#[case::unassigned("json_unassigned", &["U+2FE0"])]
+#[case::control("json_control", &["U+0000"])]
+fn prints_complete_json_report_snapshots(#[case] name: &str, #[case] arguments: &[&str]) {
+    let mut config = tempfile::NamedTempFile::new().unwrap();
+    config
+        .write_all(
+            r#"[glyph_preview
+not valid TOML
+"#
+            .as_bytes(),
+        )
+        .unwrap();
+    let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
+        .args(["--output", "json"])
+        .args(arguments)
+        .env("SAUVA_CONFIG_FILE", config.path())
+        .env("XDG_DATA_HOME", config.path())
+        .env("TERM", "dumb")
+        .env_remove("DISPLAY")
+        .env_remove("WAYLAND_DISPLAY")
+        .output()
+        .unwrap();
+
+    assert!(output.status.success(), "status: {}", output.status);
+    assert!(output.stderr.is_empty());
+    assert!(output.stdout.is_ascii());
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    assert!(stdout.ends_with("}\n"));
+    assert!(!stdout.ends_with("\n\n"));
+    // Keep snapshots useful across releases without pinning the binary version.
+    let snapshot = stdout.replacen(
+        &format!(r#""sauva_version": "{}""#, env!("CARGO_PKG_VERSION")),
+        r#""sauva_version": "<version>""#,
+        1,
+    );
+    insta::assert_snapshot!(name, snapshot);
+}
+
+#[rstest]
+#[case(&["41"], None, "A")]
+#[case(&["--text", "41"], None, "41")]
+#[case(&["-"], Some(b"41".as_slice()), "A")]
+#[case(&["--text", "-"], Some(b"41".as_slice()), "41")]
+fn json_reports_preserve_shared_input_interpretation(
+    #[case] arguments: &[&str],
+    #[case] input: Option<&[u8]>,
+    #[case] expected: &str,
+) {
+    let mut command = vec!["-o", "json"];
+    command.extend_from_slice(arguments);
+    let output = match input {
+        Some(input) => run_with_stdin(&command, input),
+        None => Command::new(env!("CARGO_BIN_EXE_sauva"))
+            .args(command)
+            .output()
+            .unwrap(),
+    };
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(report["text"], expected);
+}
+
+#[test]
+fn json_stdin_round_trips_controls_and_literal_escapes_without_normalizing() {
+    let source = "\u{feff} A\u{301}\r\n👩‍💻\0\u{1b}[31m\u{202e}\"\\u0041\n";
+    let output = run_with_stdin(&["--output", "json", "--text", "-"], source.as_bytes());
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    assert!(output.stdout.is_ascii());
+    let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(report["text"], source);
+    assert_ne!(report["normalization"]["nfc"]["text"], source);
+}
+
+#[test]
+fn prints_long_json_reports_without_truncating_occurrences_or_normalized_text() {
+    let count = 4096;
+    let source = "あ".repeat(count);
+    let output = run_with_stdin(&["--output", "json", "--text", "-"], source.as_bytes());
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(report["text"], source);
+    assert_eq!(report["code_points"].as_array().unwrap().len(), count);
+    assert_eq!(report["graphemes"].as_array().unwrap().len(), count);
+    assert_eq!(report["code_points"][count - 1]["index"], count - 1);
+    for form in ["nfc", "nfd", "nfkc", "nfkd"] {
+        assert_eq!(report["normalization"][form]["text"], source);
+    }
+}
 
 #[rstest]
 #[case("--help")]
@@ -140,6 +237,9 @@ fn prints_long_inputs_in_full(#[case] format: &str, #[case] escaped: &str) {
 #[case::invalid_utf8(&["--output", "rust-string", "-"], &[0xff], 1)]
 #[case::invalid_literal_utf8(&["--output", "json-string", "--text", "-"], &[0xff], 1)]
 #[case::surrogate(&["--output", "json-string", "-"], b"U+D800", 1)]
+#[case::json_empty(&["--output", "json", "--text", "-"], b"", 2)]
+#[case::json_invalid_notation(&["--output", "json", "-"], b"U+2192\n", 2)]
+#[case::json_invalid_utf8(&["--output", "json", "--text", "-"], &[0xff], 1)]
 fn rejects_invalid_stdin_without_printing_a_result(
     #[case] arguments: &[&str],
     #[case] input: &[u8],
@@ -189,10 +289,12 @@ fn treats_a_closed_stdout_pipe_as_success(#[case] format: &str) {
 }
 
 #[cfg(target_os = "linux")]
-#[test]
-fn reports_stdout_write_failures() {
+#[rstest]
+#[case("json-string")]
+#[case("json")]
+fn reports_stdout_write_failures(#[case] format: &str) {
     let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
-        .args(["--output", "json-string", "A"])
+        .args(["--output", format, "A"])
         .stdout(
             std::fs::OpenOptions::new()
                 .write(true)
@@ -221,6 +323,9 @@ fn assert_failure(output: &Output, expected_code: i32) {
 #[case::graphics_conflict(&["--output", "json-string", "A", "--graphics", "auto"], 2)]
 #[case::unknown_format(&["--output", "unknown", "A"], 2)]
 #[case::surrogate(&["--output", "rust-string", "U+D800"], 1)]
+#[case::json_missing_input(&["--output", "json"], 2)]
+#[case::json_empty_text(&["--output", "json", "--text", ""], 2)]
+#[case::json_out_of_range(&["--output", "json", "U+110000"], 2)]
 fn rejects_invalid_output_requests(#[case] arguments: &[&str], #[case] expected_code: i32) {
     let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
         .args(arguments)
@@ -256,4 +361,17 @@ fn escapes_untrusted_arguments_in_diagnostics(
     if let Some(suggestion) = suggestion {
         assert!(stderr.contains(suggestion), "{stderr}");
     }
+}
+
+#[cfg(unix)]
+#[test]
+fn rejects_invalid_utf8_json_arguments_with_usage_exit_code() {
+    use std::{ffi::OsString, os::unix::ffi::OsStringExt};
+
+    let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
+        .args(["--output", "json", "--text"])
+        .arg(OsString::from_vec(vec![0xff]))
+        .output()
+        .unwrap();
+    assert_failure(&output, 2);
 }

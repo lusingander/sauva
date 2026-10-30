@@ -1,0 +1,139 @@
+---
+source: tests/cli_output.rs
+expression: snapshot
+---
+{
+  "schema_version": 1,
+  "sauva_version": "<version>",
+  "unicode_version": "17.0.0",
+  "text": "\u0000",
+  "metrics": {
+    "code_points": 1,
+    "utf8_bytes": 1,
+    "utf16_units": 1,
+    "graphemes": 1
+  },
+  "code_points": [
+    {
+      "index": 0,
+      "value": 0,
+      "code_point": "U+0000",
+      "character": "\u0000",
+      "utf8_range": [
+        0,
+        1
+      ],
+      "utf16_range": [
+        0,
+        1
+      ],
+      "grapheme_index": 0,
+      "properties": {
+        "name": null,
+        "aliases": [
+          {
+            "name": "NULL",
+            "type": "control"
+          },
+          {
+            "name": "NUL",
+            "type": "abbreviation"
+          }
+        ],
+        "plane": 0,
+        "block": "Basic Latin",
+        "general_category": "Cc",
+        "script": "Common",
+        "age": "1.1",
+        "east_asian_width": "N",
+        "canonical_combining_class": 0,
+        "bidi_class": "BN",
+        "default_ignorable": false,
+        "case_mapping": {
+          "uppercase": [
+            0
+          ],
+          "lowercase": [
+            0
+          ],
+          "titlecase": [
+            0
+          ],
+          "case_folding": [
+            0
+          ]
+        },
+        "numeric_type": "None",
+        "numeric_value": null,
+        "decomposition": null,
+        "encoding": {
+          "utf8": [
+            0
+          ],
+          "utf16": [
+            0
+          ]
+        }
+      }
+    }
+  ],
+  "graphemes": [
+    {
+      "index": 0,
+      "code_point_range": [
+        0,
+        1
+      ],
+      "utf8_range": [
+        0,
+        1
+      ],
+      "utf16_range": [
+        0,
+        1
+      ]
+    }
+  ],
+  "normalization": {
+    "nfc": {
+      "changed": false,
+      "text": "\u0000",
+      "metrics": {
+        "code_points": 1,
+        "utf8_bytes": 1,
+        "utf16_units": 1,
+        "graphemes": 1
+      }
+    },
+    "nfd": {
+      "changed": false,
+      "text": "\u0000",
+      "metrics": {
+        "code_points": 1,
+        "utf8_bytes": 1,
+        "utf16_units": 1,
+        "graphemes": 1
+      }
+    },
+    "nfkc": {
+      "changed": false,
+      "text": "\u0000",
+      "metrics": {
+        "code_points": 1,
+        "utf8_bytes": 1,
+        "utf16_units": 1,
+        "graphemes": 1
+      }
+    },
+    "nfkd": {
+      "changed": false,
+      "text": "\u0000",
+      "metrics": {
+        "code_points": 1,
+        "utf8_bytes": 1,
+        "utf16_units": 1,
+        "graphemes": 1
+      }
+    }
+  }
+}
