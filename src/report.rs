@@ -431,8 +431,8 @@ mod tests {
     }
 
     #[test]
-    fn returns_full_case_mappings_and_canonical_decomposition_as_integers() {
-        let report = analyze(LaunchTarget::Sequence("ßİÁ".to_owned()));
+    fn returns_full_case_mappings_and_direct_decomposition_as_integers() {
+        let report = analyze(LaunchTarget::Sequence("ßİǺ각".to_owned()));
         let points = &report["code_points"];
         assert_eq!(
             points[0]["properties"]["case_mapping"],
@@ -450,7 +450,15 @@ mod tests {
         );
         assert_eq!(
             points[2]["properties"]["decomposition"],
-            json!({"type": "canonical", "mapping": [65, 769]})
+            json!({"type": "canonical", "mapping": [197, 769]})
+        );
+        assert_eq!(
+            points[3]["properties"]["decomposition"],
+            json!({"type": "canonical", "mapping": [44032, 4520]})
+        );
+        assert_eq!(
+            report["normalization"]["nfd"]["text"],
+            "ßI\u{307}A\u{30a}\u{301}각"
         );
     }
 

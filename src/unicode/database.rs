@@ -771,11 +771,6 @@ mod tests {
         DecompositionType::Canonical,
         &[0x1100, 0x1161]
     )]
-    #[case(
-        0xac01,
-        DecompositionType::Canonical,
-        &[0x1100, 0x1161, 0x11a8]
-    )]
     fn looks_up_direct_decompositions(
         #[case] value: u32,
         #[case] decomposition_type: DecompositionType,
