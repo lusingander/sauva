@@ -17,34 +17,15 @@ An explicit `--graphics` option cannot be combined with `--output`, including `-
 
 Each result ends with one LF. Input line endings are preserved in the parsed text and escaped inside JSON strings or string literals.
 
-## JSON Reports
-
-`json` prints one formatted JSON object containing the original text, code point (CP) and grapheme cluster (GC) counts, UTF-8 byte and UTF-16 code unit counts, every code point's Unicode properties and positions, extended grapheme cluster ranges, and NFC / NFD / NFKC / NFKD results with their counts. Unchanged normalization results are included in full. Normalization does not modify the original text.
-
-Code point and grapheme indices are zero-based. Ranges include the start and exclude the end, using offsets into the entire original text. UTF-16 positions and counts use code units, not bytes or terminal cells.
-
-The structure is the same for single characters and strings, and includes all properties regardless of the Inspector display mode. Surrogate code points such as `U+D800` return properties successfully; text, metrics, graphemes, normalization, and the code point's character, positions, and encoding are `null` because they require a Unicode scalar value.
-
-All JSON strings use ASCII escapes; parsing restores the Unicode text. The fields and types are defined in [output.schema.json](https://github.com/lusingander/sauva/blob/master/output.schema.json). `schema_version` identifies the report contract, while `unicode_version` identifies the Unicode data and algorithms. Additional fields may be introduced within the same schema version; consumers should ignore unknown fields. Key order and indentation are not part of the contract.
-
-To pass a normalization result to another command without adding a newline, use `jq -j`:
-
-```sh
-sauva -o json --text - < input.txt |
-  jq -j '.normalization.nfc.text' |
-  sauva -o rust-string --text -
-```
-
-## String Literals
-
-The following examples use `A` + U+0301 + `😀`:
+## Output Formats
 
 | Format | Output |
 | --- | --- |
-| `json-string` | `"A\u0301\uD83D\uDE00"` |
-| `rust-string` | `"A\u{301}\u{1F600}"` |
+| `json` | A Unicode analysis report; see [JSON Reports](./json-reports.md) for its contents and examples |
+| `json-string` | A quoted JSON string literal, such as `"A\u0301\uD83D\uDE00"` |
+| `rust-string` | A quoted Rust string literal, such as `"A\u{301}\u{1F600}"` |
 
-Both formats include double quotes and use ASCII escapes for non-ASCII characters and controls. A single character is also a string literal. The original text is preserved without normalization or decoding escape sequences. Surrogate code points cannot be output as strings.
+String literals use ASCII escapes for non-ASCII characters and controls. A single character is also a string literal. The original text is preserved without normalization or decoding escape sequences. Surrogate code points cannot be output as strings.
 
 The literal matches the corresponding [copy dialog format](../features/copying.md#formats); clipboard copies do not include the extra LF.
 
