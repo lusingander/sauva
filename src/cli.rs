@@ -72,7 +72,7 @@ struct Cli {
         value_name = "INPUT",
         value_parser = parse_input_source,
         group = "source",
-        conflicts_with_all = ["text", "demo"]
+        conflicts_with = "demo"
     )]
     input: Option<InputSource>,
 
