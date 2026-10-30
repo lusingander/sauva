@@ -34,5 +34,5 @@ Successful output goes to stdout; errors go to stderr.
 | Code | Meaning |
 | --- | --- |
 | `0` | Success, including a downstream reader closing the output pipe |
-| `1` | Input or output I/O failure, invalid UTF-8, or a surrogate code point that cannot be output as a string |
+| `1` | Input or output I/O failure, invalid UTF-8 on stdin, or a surrogate code point that cannot be output as a string |
 | `2` | Missing or invalid input or options, including empty input |
