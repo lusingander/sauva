@@ -17,6 +17,7 @@ mod normalization;
 mod output;
 mod preview;
 mod property;
+mod report;
 mod search;
 mod sequence;
 mod terminal;

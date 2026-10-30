@@ -49,7 +49,7 @@ impl TextFormat {
             .chain(text.chars().enumerate().map(move |(index, character)| {
                 let value = match self {
                     Self::Text => character.to_string(),
-                    Self::JsonString => escape_scalar(character, false),
+                    Self::JsonString => escape_json_scalar(character),
                     Self::RustString => escape_scalar(character, true),
                     Self::CodePointList => CodePoint::from(character).to_string(),
                     Self::Utf8Hex => {
@@ -71,6 +71,10 @@ impl TextFormat {
             }))
             .chain(quote)
     }
+}
+
+pub fn escape_json_scalar(character: char) -> String {
+    escape_scalar(character, false)
 }
 
 fn escape_scalar(character: char, rust: bool) -> String {

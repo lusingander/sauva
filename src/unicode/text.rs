@@ -1,5 +1,6 @@
 use std::ops::Range;
 
+use serde::Serialize;
 use unicode_normalization::UnicodeNormalization;
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -98,7 +99,7 @@ impl TextAnalysis {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub struct TextMetrics {
     pub code_points: usize,
     pub utf8_bytes: usize,
