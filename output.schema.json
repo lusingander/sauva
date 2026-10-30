@@ -1,0 +1,441 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "sauva JSON Analysis Report Schema v1",
+  "description": "Schema for sauva --output json. All defined fields are required. Additional fields are allowed within schema version 1; consumers must ignore unknown fields.",
+  "$comment": "This schema validates decoded JSON values. ASCII escaping, relationships between values, range arithmetic, Unicode properties, grapheme segmentation, and normalization correctness require separate implementation tests.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "sauva_version",
+    "unicode_version",
+    "text",
+    "metrics",
+    "code_points",
+    "graphemes",
+    "normalization"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "sauva_version": {
+      "description": "Version of the running sauva binary.",
+      "type": "string",
+      "minLength": 1
+    },
+    "unicode_version": {
+      "description": "Unicode version used for both bundled properties and text analysis.",
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$(?![\\s\\S])"
+    },
+    "text": {
+      "description": "Analyzed text, or null for a surrogate code point. Empty text has a defined report shape; accepting empty CLI input is a separate feature.",
+      "anyOf": [
+        { "$ref": "#/$defs/text" },
+        { "type": "null" }
+      ]
+    },
+    "metrics": {
+      "anyOf": [
+        { "$ref": "#/$defs/metrics" },
+        { "type": "null" }
+      ]
+    },
+    "code_points": {
+      "description": "Every code point occurrence in source order, including duplicates.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/codePoint" }
+    },
+    "graphemes": {
+      "description": "Extended grapheme clusters in source order, or null for a surrogate code point.",
+      "type": ["array", "null"],
+      "items": { "$ref": "#/$defs/grapheme" }
+    },
+    "normalization": {
+      "anyOf": [
+        { "$ref": "#/$defs/normalization" },
+        { "type": "null" }
+      ]
+    }
+  },
+  "additionalProperties": true,
+  "if": {
+    "properties": { "text": { "type": "null" } }
+  },
+  "then": {
+    "properties": {
+      "metrics": { "type": "null" },
+      "graphemes": { "type": "null" },
+      "normalization": { "type": "null" },
+      "code_points": {
+        "minItems": 1,
+        "maxItems": 1,
+        "items": {
+          "properties": {
+            "index": { "const": 0 },
+            "value": { "$ref": "#/$defs/surrogateValue" }
+          }
+        }
+      }
+    }
+  },
+  "else": {
+    "properties": {
+      "metrics": { "type": "object" },
+      "graphemes": { "type": "array" },
+      "normalization": { "type": "object" },
+      "code_points": {
+        "items": {
+          "properties": {
+            "value": { "not": { "$ref": "#/$defs/surrogateValue" } }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "text": {
+      "description": "A sequence of Unicode scalar values, without unpaired surrogates. JSON escapes decode to the original text.",
+      "type": "string",
+      "pattern": "^[^\\uD800-\\uDFFF]*$"
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "codePointValue": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1114111
+    },
+    "surrogateValue": {
+      "type": "integer",
+      "minimum": 55296,
+      "maximum": 57343
+    },
+    "range": {
+      "description": "[start, end]: zero-based, start-inclusive and end-exclusive offsets into the entire source. The containing field specifies the unit.",
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": { "$ref": "#/$defs/count" }
+    },
+    "metrics": {
+      "type": "object",
+      "required": ["code_points", "utf8_bytes", "utf16_units", "graphemes"],
+      "properties": {
+        "code_points": { "$ref": "#/$defs/count" },
+        "utf8_bytes": { "$ref": "#/$defs/count" },
+        "utf16_units": { "$ref": "#/$defs/count" },
+        "graphemes": { "$ref": "#/$defs/count" }
+      },
+      "additionalProperties": true
+    },
+    "codePoint": {
+      "type": "object",
+      "required": [
+        "index",
+        "value",
+        "code_point",
+        "character",
+        "utf8_range",
+        "utf16_range",
+        "grapheme_index",
+        "properties"
+      ],
+      "properties": {
+        "index": {
+          "description": "Zero-based code point occurrence index.",
+          "$ref": "#/$defs/count"
+        },
+        "value": { "$ref": "#/$defs/codePointValue" },
+        "code_point": {
+          "description": "U+ followed by uppercase hexadecimal digits, padded to at least four digits.",
+          "type": "string",
+          "pattern": "^U\\+(?:[0-9A-F]{4}|[1-9A-F][0-9A-F]{4}|10[0-9A-F]{4})$(?![\\s\\S])"
+        },
+        "character": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/text",
+              "minLength": 1,
+              "maxLength": 1
+            },
+            { "type": "null" }
+          ]
+        },
+        "utf8_range": {
+          "description": "UTF-8 byte range in the original text; null for a surrogate.",
+          "anyOf": [
+            { "$ref": "#/$defs/range" },
+            { "type": "null" }
+          ]
+        },
+        "utf16_range": {
+          "description": "UTF-16 code unit range in the original text; null for a surrogate.",
+          "anyOf": [
+            { "$ref": "#/$defs/range" },
+            { "type": "null" }
+          ]
+        },
+        "grapheme_index": {
+          "description": "Zero-based index of the containing grapheme; null for a surrogate.",
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "properties": { "$ref": "#/$defs/properties" }
+      },
+      "additionalProperties": true,
+      "if": {
+        "properties": { "value": { "$ref": "#/$defs/surrogateValue" } }
+      },
+      "then": {
+        "properties": {
+          "character": { "type": "null" },
+          "utf8_range": { "type": "null" },
+          "utf16_range": { "type": "null" },
+          "grapheme_index": { "type": "null" },
+          "properties": {
+            "properties": { "encoding": { "type": "null" } }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "character": { "type": "string" },
+          "utf8_range": { "type": "array" },
+          "utf16_range": { "type": "array" },
+          "grapheme_index": { "type": "integer" },
+          "properties": {
+            "properties": { "encoding": { "type": "object" } }
+          }
+        }
+      }
+    },
+    "grapheme": {
+      "type": "object",
+      "required": ["index", "code_point_range", "utf8_range", "utf16_range"],
+      "properties": {
+        "index": {
+          "description": "Zero-based extended grapheme cluster index.",
+          "$ref": "#/$defs/count"
+        },
+        "code_point_range": { "$ref": "#/$defs/range" },
+        "utf8_range": { "$ref": "#/$defs/range" },
+        "utf16_range": { "$ref": "#/$defs/range" }
+      },
+      "additionalProperties": true
+    },
+    "properties": {
+      "description": "Complete Unicode properties, independent of Inspector display filters.",
+      "type": "object",
+      "required": [
+        "name",
+        "aliases",
+        "plane",
+        "block",
+        "general_category",
+        "script",
+        "age",
+        "east_asian_width",
+        "canonical_combining_class",
+        "bidi_class",
+        "default_ignorable",
+        "case_mapping",
+        "numeric_type",
+        "numeric_value",
+        "decomposition",
+        "encoding"
+      ],
+      "properties": {
+        "name": {
+          "description": "Primary name, including algorithmically derived names; null when absent.",
+          "type": ["string", "null"],
+          "minLength": 1
+        },
+        "aliases": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/alias" }
+        },
+        "plane": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16
+        },
+        "block": {
+          "description": "UCD Block name, or null when no block contains this code point.",
+          "type": ["string", "null"],
+          "minLength": 1
+        },
+        "general_category": {
+          "type": "string",
+          "enum": [
+            "Lu", "Ll", "Lt", "Lm", "Lo", "Mn", "Mc", "Me",
+            "Nd", "Nl", "No", "Pc", "Pd", "Ps", "Pe", "Pi", "Pf", "Po",
+            "Sm", "Sc", "Sk", "So", "Zs", "Zl", "Zp", "Cc", "Cf", "Cs", "Co", "Cn"
+          ]
+        },
+        "script": {
+          "description": "UCD long Script value. Values are not restricted to one Unicode version.",
+          "type": "string",
+          "minLength": 1
+        },
+        "age": {
+          "description": "Unicode Age, or null when absent.",
+          "type": ["string", "null"],
+          "pattern": "^[0-9]+\\.[0-9]+$(?![\\s\\S])"
+        },
+        "east_asian_width": {
+          "type": "string",
+          "enum": ["A", "F", "H", "N", "Na", "W"]
+        },
+        "canonical_combining_class": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 254
+        },
+        "bidi_class": {
+          "type": "string",
+          "enum": [
+            "L", "R", "AL", "EN", "ES", "ET", "AN", "CS", "NSM", "BN",
+            "B", "S", "WS", "ON", "LRE", "LRO", "RLE", "RLO", "PDF",
+            "LRI", "RLI", "FSI", "PDI"
+          ]
+        },
+        "default_ignorable": { "type": "boolean" },
+        "case_mapping": { "$ref": "#/$defs/caseMapping" },
+        "numeric_type": {
+          "type": "string",
+          "enum": ["None", "Decimal", "Digit", "Numeric"]
+        },
+        "numeric_value": {
+          "description": "Exact integer or fraction, not a floating-point approximation; null exactly when numeric_type is None.",
+          "type": ["string", "null"],
+          "pattern": "^-?(?:0|[1-9][0-9]*)(?:/[1-9][0-9]*)?$(?![\\s\\S])"
+        },
+        "decomposition": {
+          "anyOf": [
+            { "$ref": "#/$defs/decomposition" },
+            { "type": "null" }
+          ]
+        },
+        "encoding": {
+          "anyOf": [
+            { "$ref": "#/$defs/encoding" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "additionalProperties": true,
+      "if": {
+        "properties": { "numeric_type": { "const": "None" } }
+      },
+      "then": {
+        "properties": { "numeric_value": { "type": "null" } }
+      },
+      "else": {
+        "properties": { "numeric_value": { "type": "string" } }
+      }
+    },
+    "alias": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "enum": ["correction", "control", "alternate", "figment", "abbreviation"]
+        }
+      },
+      "additionalProperties": true
+    },
+    "mapping": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/codePointValue" }
+    },
+    "caseMapping": {
+      "description": "Default full mappings for this code point, without locale or surrounding context. Identity mappings contain the original code point.",
+      "type": "object",
+      "required": ["uppercase", "lowercase", "titlecase", "case_folding"],
+      "properties": {
+        "uppercase": { "$ref": "#/$defs/mapping" },
+        "lowercase": { "$ref": "#/$defs/mapping" },
+        "titlecase": { "$ref": "#/$defs/mapping" },
+        "case_folding": { "$ref": "#/$defs/mapping" }
+      },
+      "additionalProperties": true
+    },
+    "decomposition": {
+      "description": "Direct decomposition mapping, separate from whole-text normalization.",
+      "type": "object",
+      "required": ["type", "mapping"],
+      "properties": {
+        "type": {
+          "description": "canonical, or the UCD compatibility decomposition tag without angle brackets.",
+          "type": "string",
+          "enum": [
+            "canonical", "font", "noBreak", "initial", "medial", "final", "isolated",
+            "circle", "super", "sub", "vertical", "wide", "narrow", "small",
+            "square", "fraction", "compat"
+          ]
+        },
+        "mapping": { "$ref": "#/$defs/mapping" }
+      },
+      "additionalProperties": true
+    },
+    "encoding": {
+      "type": "object",
+      "required": ["utf8", "utf16"],
+      "properties": {
+        "utf8": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        },
+        "utf16": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 65535
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "normalization": {
+      "type": "object",
+      "required": ["nfc", "nfd", "nfkc", "nfkd"],
+      "properties": {
+        "nfc": { "$ref": "#/$defs/normalizationResult" },
+        "nfd": { "$ref": "#/$defs/normalizationResult" },
+        "nfkc": { "$ref": "#/$defs/normalizationResult" },
+        "nfkd": { "$ref": "#/$defs/normalizationResult" }
+      },
+      "additionalProperties": true
+    },
+    "normalizationResult": {
+      "description": "The complete result and metrics are present even when changed is false.",
+      "type": "object",
+      "required": ["changed", "text", "metrics"],
+      "properties": {
+        "changed": { "type": "boolean" },
+        "text": { "$ref": "#/$defs/text" },
+        "metrics": { "$ref": "#/$defs/metrics" }
+      },
+      "additionalProperties": true
+    }
+  }
+}
