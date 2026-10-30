@@ -1,5 +1,9 @@
 # Basic Usage
 
+The examples below use Sauva's interactive TUI.
+
+For all input rules and options, see [Command Line Options](./command-line-options.md). The complete controls are listed in [Keybindings](../keybindings/index.md).
+
 ## Inspect a Code Point
 
 Run Sauva without arguments to open the default code point:
@@ -55,5 +59,3 @@ sauva --text - < input.txt
 ```
 
 Whitespace and trailing newlines are preserved.
-
-For all input rules and options, see [Command Line Options](./command-line-options.md). The complete controls are listed in [Keybindings](../keybindings/index.md).

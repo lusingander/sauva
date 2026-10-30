@@ -5,6 +5,7 @@
   - [Requirements](./getting-started/requirements.md)
   - [Installation](./getting-started/installation.md)
   - [Basic Usage](./getting-started/basic-usage.md)
+  - [Non-interactive Usage](./getting-started/non-interactive-usage.md)
   - [Command Line Options](./getting-started/command-line-options.md)
   - [Compatibility](./getting-started/compatibility.md)
 - [Configurations](./configurations/index.md)

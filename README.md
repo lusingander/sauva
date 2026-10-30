@@ -34,6 +34,8 @@ Homebrew and pre-built binaries are also available. See [Installation](https://l
 
 ## Usage
 
+See [Basic Usage](https://lusingander.github.io/sauva/getting-started/basic-usage.html) for more examples. For all command line options, run `sauva --help` or see [Command Line Options](https://lusingander.github.io/sauva/getting-started/command-line-options.html).
+
 ### Inspect a code point
 
 Run `sauva` without arguments, or specify a character or code point:
@@ -60,10 +62,6 @@ Use `--text -` to read literal UTF-8 text from stdin:
 printf 'Á👩‍💻' | sauva --text -
 ```
 
-See [Basic Usage](https://lusingander.github.io/sauva/getting-started/basic-usage.html) for more examples.
-
-For all command line options, run `sauva --help` or see [Command Line Options](https://lusingander.github.io/sauva/getting-started/command-line-options.html).
-
 ### Keybindings
 
 | Key | Description |
@@ -81,6 +79,16 @@ See [Keybindings](https://lusingander.github.io/sauva/keybindings/) for all cont
 ### Config
 
 Customize colors, fonts, and keybindings in the [configuration file](https://lusingander.github.io/sauva/configurations/).
+
+## Non-interactive Output
+
+Use `-o` / `--output` to print a quoted JSON or Rust string literal and exit:
+
+```sh
+sauva -o json-string --text 'Á😀'
+```
+
+See [Non-interactive Usage](https://lusingander.github.io/sauva/getting-started/non-interactive-usage.html) for formats and examples.
 
 ## Compatibility
 

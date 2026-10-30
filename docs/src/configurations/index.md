@@ -1,6 +1,6 @@
 # Configurations
 
-Sauva uses a TOML configuration file to customize colors, glyph preview fonts, presentation, and keybindings.
+Sauva's TUI uses a TOML configuration file to customize colors, glyph preview fonts, presentation, and keybindings. The [`--output`](../getting-started/non-interactive-usage.md) mode does not load this file.
 
 ## Configuration File Location
 
@@ -12,7 +12,7 @@ The configuration path is selected in this order:
 
 Only the selected file is loaded. For example, when `XDG_CONFIG_HOME` is set, Sauva does not look in `$HOME/.config` if that file is missing.
 
-If the default file does not exist, all built-in settings are used. An empty `SAUVA_CONFIG_FILE`, a missing file explicitly selected with it, or an invalid configuration causes startup to fail.
+If the default file does not exist, all built-in settings are used. An empty `SAUVA_CONFIG_FILE`, a missing file explicitly selected with it, or an invalid configuration prevents the TUI from starting.
 
 All settings are optional. Unspecified settings keep their built-in defaults. Unknown fields are rejected, so misspelled setting names cause an error instead of being ignored.
 
