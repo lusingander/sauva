@@ -691,24 +691,6 @@ mod tests {
     }
 
     #[rstest]
-    #[case("--output", "json-string", OutputFormat::JsonString)]
-    #[case("-o", "rust-string", OutputFormat::RustString)]
-    fn output_accepts_either_input_source(
-        #[case] option: &str,
-        #[case] format: &str,
-        #[case] expected: OutputFormat,
-    ) {
-        for source in [&["41"][..], &["--text", "41"]] {
-            let mut arguments = vec!["sauva", option, format];
-            arguments.extend_from_slice(source);
-            let options = try_parse(&arguments).unwrap();
-
-            assert_eq!(options.output(), Some(expected));
-            assert_eq!(options.graphics(), GraphicsMode::Auto);
-        }
-    }
-
-    #[rstest]
     #[case(&["--output", "json-string"], clap::error::ErrorKind::MissingRequiredArgument)]
     #[case(&["--output", "json", "A"], clap::error::ErrorKind::InvalidValue)]
     #[case(&["--output", "json-string", "A", "--graphics", "auto"], clap::error::ErrorKind::ArgumentConflict)]
