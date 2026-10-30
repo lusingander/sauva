@@ -14,6 +14,7 @@ pub struct TextAnalysis {
     source: Box<str>,
     code_points: Vec<AnalyzedCodePoint>,
     graphemes: Vec<GraphemeCluster>,
+    metrics: TextMetrics,
     normalization: NormalizationAnalysis,
 }
 
@@ -23,29 +24,42 @@ impl TextAnalysis {
         let source = source.into_boxed_str();
         let mut code_points = Vec::new();
         let mut graphemes = Vec::new();
+        let mut utf16_offset = 0;
 
         for (grapheme_index, (byte_start, text)) in source.grapheme_indices(true).enumerate() {
             let code_point_start = code_points.len();
+            let utf16_start = utf16_offset;
             for (index_in_grapheme, (offset, character)) in text.char_indices().enumerate() {
                 let start = byte_start + offset;
+                let utf16_end = utf16_offset + character.len_utf16();
                 code_points.push(AnalyzedCodePoint {
                     code_point: CodePoint::from(character),
                     byte_range: start..start + character.len_utf8(),
+                    utf16_range: utf16_offset..utf16_end,
                     grapheme_index,
                     index_in_grapheme,
                 });
+                utf16_offset = utf16_end;
             }
             graphemes.push(GraphemeCluster {
                 byte_range: byte_start..byte_start + text.len(),
                 code_point_range: code_point_start..code_points.len(),
+                utf16_range: utf16_start..utf16_offset,
             });
         }
 
-        let normalization = NormalizationAnalysis::new(&source);
+        let metrics = TextMetrics {
+            code_points: code_points.len(),
+            utf8_bytes: source.len(),
+            utf16_units: utf16_offset,
+            graphemes: graphemes.len(),
+        };
+        let normalization = NormalizationAnalysis::new(&source, metrics);
         Self {
             source,
             code_points,
             graphemes,
+            metrics,
             normalization,
         }
     }
@@ -66,6 +80,10 @@ impl TextAnalysis {
         &self.graphemes
     }
 
+    pub const fn metrics(&self) -> TextMetrics {
+        self.metrics
+    }
+
     pub const fn normalization(&self) -> &NormalizationAnalysis {
         &self.normalization
     }
@@ -80,10 +98,33 @@ impl TextAnalysis {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct TextMetrics {
+    pub code_points: usize,
+    pub utf8_bytes: usize,
+    pub utf16_units: usize,
+    pub graphemes: usize,
+}
+
+impl TextMetrics {
+    fn new(text: &str) -> Self {
+        let (code_points, utf16_units) = text.chars().fold((0, 0), |(points, units), character| {
+            (points + 1, units + character.len_utf16())
+        });
+        Self {
+            code_points,
+            utf8_bytes: text.len(),
+            utf16_units,
+            graphemes: text.graphemes(true).count(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AnalyzedCodePoint {
     code_point: CodePoint,
     byte_range: Range<usize>,
+    utf16_range: Range<usize>,
     grapheme_index: usize,
     index_in_grapheme: usize,
 }
@@ -95,6 +136,10 @@ impl AnalyzedCodePoint {
 
     pub fn byte_range(&self) -> Range<usize> {
         self.byte_range.clone()
+    }
+
+    pub fn utf16_range(&self) -> Range<usize> {
+        self.utf16_range.clone()
     }
 
     pub const fn grapheme_index(&self) -> usize {
@@ -110,6 +155,7 @@ impl AnalyzedCodePoint {
 pub struct GraphemeCluster {
     byte_range: Range<usize>,
     code_point_range: Range<usize>,
+    utf16_range: Range<usize>,
 }
 
 impl GraphemeCluster {
@@ -119,6 +165,10 @@ impl GraphemeCluster {
 
     pub fn code_point_range(&self) -> Range<usize> {
         self.code_point_range.clone()
+    }
+
+    pub fn utf16_range(&self) -> Range<usize> {
+        self.utf16_range.clone()
     }
 }
 
@@ -152,12 +202,12 @@ pub struct NormalizationAnalysis {
 }
 
 impl NormalizationAnalysis {
-    fn new(source: &str) -> Self {
+    fn new(source: &str, metrics: TextMetrics) -> Self {
         Self {
-            nfc: NormalizationResult::new(source, source.nfc()),
-            nfd: NormalizationResult::new(source, source.nfd()),
-            nfkc: NormalizationResult::new(source, source.nfkc()),
-            nfkd: NormalizationResult::new(source, source.nfkd()),
+            nfc: NormalizationResult::new(source, metrics, source.nfc()),
+            nfd: NormalizationResult::new(source, metrics, source.nfd()),
+            nfkc: NormalizationResult::new(source, metrics, source.nfkc()),
+            nfkd: NormalizationResult::new(source, metrics, source.nfkd()),
         }
     }
 
@@ -176,16 +226,24 @@ pub struct NormalizationResult {
     /// `None` means byte-for-byte equality with the source, avoiding retention
     /// of a duplicate string for unchanged results.
     output: Option<Box<str>>,
-    code_point_count: usize,
+    metrics: TextMetrics,
 }
 
 impl NormalizationResult {
-    fn new(source: &str, characters: impl Iterator<Item = char>) -> Self {
+    fn new(
+        source: &str,
+        source_metrics: TextMetrics,
+        characters: impl Iterator<Item = char>,
+    ) -> Self {
         let output = characters.collect::<String>();
-        let code_point_count = output.chars().count();
+        let metrics = if output == source {
+            source_metrics
+        } else {
+            TextMetrics::new(&output)
+        };
         Self {
             output: (output != source).then(|| output.into_boxed_str()),
-            code_point_count,
+            metrics,
         }
     }
 
@@ -198,7 +256,11 @@ impl NormalizationResult {
     }
 
     pub const fn code_point_count(&self) -> usize {
-        self.code_point_count
+        self.metrics.code_points
+    }
+
+    pub const fn metrics(&self) -> TextMetrics {
+        self.metrics
     }
 }
 
@@ -243,18 +305,29 @@ mod tests {
         assert_eq!(analysis.byte_count(), 15);
         assert_eq!(analysis.code_points().len(), 6);
         assert_eq!(analysis.graphemes().len(), 3);
+        assert_eq!(
+            analysis.metrics(),
+            TextMetrics {
+                code_points: 6,
+                utf8_bytes: 15,
+                utf16_units: 8,
+                graphemes: 3,
+            }
+        );
         let expected = [
-            (0x0041, 0..1, 0, 0),
-            (0x0301, 1..3, 0, 1),
-            (0x0020, 3..4, 1, 0),
-            (0x1f469, 4..8, 2, 0),
-            (0x200d, 8..11, 2, 1),
-            (0x1f4bb, 11..15, 2, 2),
+            (0x0041, 0..1, 0..1, 0, 0),
+            (0x0301, 1..3, 1..2, 0, 1),
+            (0x0020, 3..4, 2..3, 1, 0),
+            (0x1f469, 4..8, 3..5, 2, 0),
+            (0x200d, 8..11, 5..6, 2, 1),
+            (0x1f4bb, 11..15, 6..8, 2, 2),
         ];
-        for (point, (value, bytes, grapheme, member)) in analysis.code_points().iter().zip(expected)
+        for (point, (value, bytes, units, grapheme, member)) in
+            analysis.code_points().iter().zip(expected)
         {
             assert_eq!(point.code_point().value(), value);
             assert_eq!(point.byte_range(), bytes);
+            assert_eq!(point.utf16_range(), units);
             assert_eq!(point.grapheme_index(), grapheme);
             assert_eq!(point.index_in_grapheme(), member);
             assert_eq!(
@@ -262,24 +335,34 @@ mod tests {
                 point.code_point().to_char().unwrap().to_string()
             );
         }
-        for (cluster, (bytes, points)) in
-            analysis
-                .graphemes()
-                .iter()
-                .zip([(0..3, 0..2), (3..4, 2..3), (4..15, 3..6)])
-        {
+        for (cluster, (bytes, points, units)) in analysis.graphemes().iter().zip([
+            (0..3, 0..2, 0..2),
+            (3..4, 2..3, 2..3),
+            (4..15, 3..6, 3..8),
+        ]) {
             assert_eq!(cluster.byte_range(), bytes);
             assert_eq!(cluster.code_point_range(), points);
+            assert_eq!(cluster.utf16_range(), units);
         }
 
         let nfc = analysis.normalization().get(NormalizationForm::Nfc);
         assert!(nfc.is_changed());
         assert_eq!(nfc.code_point_count(), 5);
+        assert_eq!(
+            nfc.metrics(),
+            TextMetrics {
+                code_points: 5,
+                utf8_bytes: 14,
+                utf16_units: 7,
+                graphemes: 3,
+            }
+        );
         assert_eq!(analysis.normalized_text(NormalizationForm::Nfc), "Á 👩‍💻");
         let nfd = analysis.normalization().get(NormalizationForm::Nfd);
         assert!(!nfd.is_changed());
         assert_eq!(nfd.changed_text(), None);
         assert_eq!(nfd.code_point_count(), 6);
+        assert_eq!(nfd.metrics(), analysis.metrics());
         assert_eq!(analysis.normalized_text(NormalizationForm::Nfd), source);
     }
 
@@ -305,6 +388,10 @@ mod tests {
         assert_eq!(analysis.byte_count(), source.len());
         assert_eq!(analysis.code_points().len(), source.chars().count());
         assert_eq!(
+            analysis.metrics().utf16_units,
+            source.encode_utf16().count()
+        );
+        assert_eq!(
             analysis
                 .graphemes()
                 .iter()
@@ -313,20 +400,30 @@ mod tests {
             expected
         );
         let mut byte_end = 0;
+        let mut utf16_end = 0;
         for (cluster_index, cluster) in analysis.graphemes().iter().enumerate() {
             let cluster_text = &source[cluster.byte_range()];
             let members = &analysis.code_points()[cluster.code_point_range()];
             assert_eq!(cluster.byte_range().start, byte_end);
+            assert_eq!(cluster.utf16_range().start, utf16_end);
             assert_eq!(cluster_text.chars().count(), members.len());
             for (member_index, point) in members.iter().enumerate() {
                 assert_eq!(point.grapheme_index(), cluster_index);
                 assert_eq!(point.index_in_grapheme(), member_index);
                 assert_eq!(point.byte_range().start, byte_end);
                 byte_end = point.byte_range().end;
+                assert_eq!(point.utf16_range().start, utf16_end);
+                assert_eq!(
+                    point.utf16_range().len(),
+                    point.code_point().to_char().unwrap().len_utf16()
+                );
+                utf16_end = point.utf16_range().end;
             }
             assert_eq!(cluster.byte_range().end, byte_end);
+            assert_eq!(cluster.utf16_range().end, utf16_end);
         }
         assert_eq!(byte_end, source.len());
+        assert_eq!(utf16_end, source.encode_utf16().count());
     }
 
     #[rstest]
@@ -349,6 +446,15 @@ mod tests {
             let result = analysis.normalization().get(form);
             assert_eq!(analysis.normalized_text(form), text);
             assert_eq!(result.code_point_count(), text.chars().count());
+            assert_eq!(
+                result.metrics(),
+                TextMetrics {
+                    code_points: text.chars().count(),
+                    utf8_bytes: text.len(),
+                    utf16_units: text.encode_utf16().count(),
+                    graphemes: text.graphemes(true).count(),
+                }
+            );
             assert_eq!(result.is_changed(), text != source);
             assert_eq!(result.changed_text(), (text != source).then_some(text));
             let normalized = TextAnalysis::new(text.to_owned());
