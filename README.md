@@ -82,9 +82,10 @@ Customize colors, fonts, and keybindings in the [configuration file](https://lus
 
 ## Non-interactive Output
 
-Use `-o` / `--output` to print a quoted JSON or Rust string literal and exit:
+Use `-o` / `--output` to print a JSON analysis report or a quoted JSON or Rust string literal and exit:
 
 ```sh
+sauva -o json --text 'Á😀'
 sauva -o json-string --text 'Á😀'
 ```
 

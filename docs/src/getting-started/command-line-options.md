@@ -10,7 +10,7 @@ Arguments:
 
 Options:
   -t, --text <TEXT>           Treat the input as literal text, without code point notation parsing; - reads stdin
-  -o, --output <FORMAT>       Print a result and exit [possible values: json-string, rust-string]
+  -o, --output <FORMAT>       Print a result and exit [possible values: json, json-string, rust-string]
   -g, --graphics <MODE>       Control glyph preview graphics [default: auto] [possible values: auto, force, iterm2, off]
       --print-default-config  Print the complete default configuration to standard output
   -h, --help                  Print help
@@ -70,13 +70,13 @@ Sauva reads UTF-8 input until EOF. All whitespace, including trailing LF and CRL
 
 In particular, `echo U+2192 | sauva -` is rejected because the newline is part of the code point notation. Use `printf 'U+2192' | sauva -` for notation, or `echo U+2192 | sauva --text -` to inspect the literal text including its newline.
 
-Stdin is read only when `-` is explicitly supplied. The TUI still requires an interactive terminal for keyboard input. See [Non-interactive Usage](./non-interactive-usage.md) to print string literals without a terminal.
+Stdin is read only when `-` is explicitly supplied. The TUI still requires an interactive terminal for keyboard input. See [Non-interactive Usage](./non-interactive-usage.md) to print reports or string literals without a terminal.
 
 Since `-` selects stdin, use `sauva U+002D` to inspect the hyphen character itself.
 
 ## `-o, --output <FORMAT>`
 
-Print a quoted JSON or Rust string literal and exit. See [Non-interactive Usage](./non-interactive-usage.md) for formats, examples, and exit codes.
+Print a JSON analysis report or a quoted JSON or Rust string literal and exit. See [Non-interactive Usage](./non-interactive-usage.md) for formats, examples, and exit codes.
 
 ## `-g, --graphics <MODE>`
 
