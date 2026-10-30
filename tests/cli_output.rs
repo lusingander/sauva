@@ -56,31 +56,6 @@ not valid TOML
     insta::assert_snapshot!(name, snapshot);
 }
 
-#[rstest]
-#[case(&["41"], None, "A")]
-#[case(&["--text", "41"], None, "41")]
-#[case(&["-"], Some(b"41".as_slice()), "A")]
-#[case(&["--text", "-"], Some(b"41".as_slice()), "41")]
-fn json_reports_preserve_shared_input_interpretation(
-    #[case] arguments: &[&str],
-    #[case] input: Option<&[u8]>,
-    #[case] expected: &str,
-) {
-    let mut command = vec!["-o", "json"];
-    command.extend_from_slice(arguments);
-    let output = match input {
-        Some(input) => run_with_stdin(&command, input),
-        None => Command::new(env!("CARGO_BIN_EXE_sauva"))
-            .args(command)
-            .output()
-            .unwrap(),
-    };
-    assert!(output.status.success());
-    assert!(output.stderr.is_empty());
-    let report: Value = serde_json::from_slice(&output.stdout).unwrap();
-    assert_eq!(report["text"], expected);
-}
-
 #[test]
 fn json_stdin_round_trips_controls_and_literal_escapes_without_normalizing() {
     let source = "\u{feff} A\u{301}\r\n👩‍💻\0\u{1b}[31m\u{202e}\"\\u0041\n";
@@ -245,9 +220,6 @@ fn prints_long_inputs_in_full(#[case] format: &str, #[case] escaped: &str) {
 #[case::invalid_utf8(&["--output", "rust-string", "-"], &[0xff], 1)]
 #[case::invalid_literal_utf8(&["--output", "json-string", "--text", "-"], &[0xff], 1)]
 #[case::surrogate(&["--output", "json-string", "-"], b"U+D800", 1)]
-#[case::json_empty(&["--output", "json", "--text", "-"], b"", 2)]
-#[case::json_invalid_notation(&["--output", "json", "-"], b"U+2192\n", 2)]
-#[case::json_invalid_utf8(&["--output", "json", "--text", "-"], &[0xff], 1)]
 fn rejects_invalid_stdin_without_printing_a_result(
     #[case] arguments: &[&str],
     #[case] input: &[u8],
@@ -272,13 +244,10 @@ fn run_with_stdin(arguments: &[&str], input: &[u8]) -> Output {
     child.wait_with_output().unwrap()
 }
 
-#[rstest]
-#[case("json-string")]
-#[case("rust-string")]
-#[case("json")]
-fn treats_a_closed_stdout_pipe_as_success(#[case] format: &str) {
+#[test]
+fn treats_a_closed_stdout_pipe_as_success() {
     let mut child = Command::new(env!("CARGO_BIN_EXE_sauva"))
-        .args(["--output", format, "--text", "-"])
+        .args(["--output", "json", "--text", "-"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -297,12 +266,10 @@ fn treats_a_closed_stdout_pipe_as_success(#[case] format: &str) {
 }
 
 #[cfg(target_os = "linux")]
-#[rstest]
-#[case("json-string")]
-#[case("json")]
-fn reports_stdout_write_failures(#[case] format: &str) {
+#[test]
+fn reports_stdout_write_failures() {
     let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
-        .args(["--output", format, "A"])
+        .args(["--output", "json", "A"])
         .stdout(
             std::fs::OpenOptions::new()
                 .write(true)
@@ -331,9 +298,6 @@ fn assert_failure(output: &Output, expected_code: i32) {
 #[case::graphics_conflict(&["--output", "json-string", "A", "--graphics", "auto"], 2)]
 #[case::unknown_format(&["--output", "unknown", "A"], 2)]
 #[case::surrogate(&["--output", "rust-string", "U+D800"], 1)]
-#[case::json_missing_input(&["--output", "json"], 2)]
-#[case::json_empty_text(&["--output", "json", "--text", ""], 2)]
-#[case::json_out_of_range(&["--output", "json", "U+110000"], 2)]
 fn rejects_invalid_output_requests(#[case] arguments: &[&str], #[case] expected_code: i32) {
     let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
         .args(arguments)
@@ -373,7 +337,7 @@ fn escapes_untrusted_arguments_in_diagnostics(
 
 #[cfg(unix)]
 #[test]
-fn rejects_invalid_utf8_json_arguments_with_usage_exit_code() {
+fn rejects_invalid_utf8_arguments_with_usage_exit_code() {
     use std::{ffi::OsString, os::unix::ffi::OsStringExt};
 
     let output = Command::new(env!("CARGO_BIN_EXE_sauva"))

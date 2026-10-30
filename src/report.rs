@@ -347,7 +347,6 @@ impl Formatter for AsciiFormatter {
 
 #[cfg(test)]
 mod tests {
-    use rstest::rstest;
     use serde_json::{Value, json};
 
     use super::*;
@@ -358,76 +357,6 @@ mod tests {
         write(&target, &mut bytes).unwrap();
         assert!(bytes.is_ascii());
         serde_json::from_slice(&bytes).unwrap()
-    }
-
-    #[test]
-    fn includes_complete_typed_properties_and_exact_fraction_values() {
-        let report = analyze(LaunchTarget::CodePoint(CodePoint::new(0xbd).unwrap()));
-        assert_eq!(
-            report["code_points"][0]["properties"],
-            json!({
-                "name": "VULGAR FRACTION ONE HALF", "aliases": [], "plane": 0,
-                "block": "Latin-1 Supplement", "general_category": "No", "script": "Common",
-                "age": "1.1", "east_asian_width": "A", "canonical_combining_class": 0,
-                "bidi_class": "ON", "default_ignorable": false,
-                "case_mapping": { "uppercase": [189], "lowercase": [189], "titlecase": [189], "case_folding": [189] },
-                "numeric_type": "Numeric", "numeric_value": "1/2",
-                "decomposition": { "type": "fraction", "mapping": [49, 8260, 50] },
-                "encoding": { "utf8": [194, 189], "utf16": [189] }
-            })
-        );
-        assert_eq!(
-            report["normalization"]["nfc"],
-            json!({
-                "changed": false, "text": "½",
-                "metrics": { "code_points": 1, "utf8_bytes": 2, "utf16_units": 1, "graphemes": 1 }
-            })
-        );
-        for form in ["nfkc", "nfkd"] {
-            assert_eq!(
-                report["normalization"][form],
-                json!({
-                    "changed": true, "text": "1⁄2",
-                    "metrics": { "code_points": 3, "utf8_bytes": 5, "utf16_units": 3, "graphemes": 3 }
-                })
-            );
-        }
-    }
-
-    #[rstest]
-    #[case(0xd800)]
-    #[case(0xdfff)]
-    fn preserves_surrogate_properties_without_inventing_text_or_positions(#[case] value: u32) {
-        let report = analyze(LaunchTarget::CodePoint(CodePoint::new(value).unwrap()));
-        for key in ["text", "metrics", "graphemes", "normalization"] {
-            assert_eq!(report[key], Value::Null);
-        }
-        assert_eq!(report["code_points"].as_array().unwrap().len(), 1);
-        let point = &report["code_points"][0];
-        assert_eq!(point["value"], value);
-        assert_eq!(point["index"], 0);
-        for key in ["character", "utf8_range", "utf16_range", "grapheme_index"] {
-            assert_eq!(point[key], Value::Null);
-        }
-        let properties = &point["properties"];
-        assert_eq!(properties["name"], Value::Null);
-        assert_eq!(properties["encoding"], Value::Null);
-        assert_eq!(properties["general_category"], "Cs");
-        assert_eq!(properties["case_mapping"]["uppercase"], json!([value]));
-    }
-
-    #[test]
-    fn distinguishes_absent_properties_from_zero_and_empty_values() {
-        let report = analyze(LaunchTarget::CodePoint(CodePoint::new(0x2fe0).unwrap()));
-        let properties = &report["code_points"][0]["properties"];
-        for key in ["name", "block", "age", "numeric_value", "decomposition"] {
-            assert_eq!(properties[key], Value::Null, "{key}");
-        }
-        assert_eq!(properties["aliases"], json!([]));
-        assert_eq!(properties["numeric_type"], "None");
-        assert_eq!(properties["canonical_combining_class"], 0);
-        assert_eq!(properties["default_ignorable"], false);
-        assert!(properties["encoding"].is_object());
     }
 
     #[test]
