@@ -97,8 +97,9 @@
   "$defs": {
     "text": {
       "description": "A sequence of Unicode scalar values, without unpaired surrogates. JSON escapes decode to the original text.",
+      "$comment": "The upper endpoint U+10FFFF is encoded as a surrogate pair in this JSON string so the regex only contains scalar endpoints.",
       "type": "string",
-      "pattern": "^[^\\uD800-\\uDFFF]*$"
+      "pattern": "^[\\u0000-\\uD7FF\\uE000-\uDBFF\uDFFF]*$"
     },
     "count": {
       "type": "integer",

@@ -1,6 +1,7 @@
 use std::{
     io::Write,
     process::{Command, Output, Stdio},
+    sync::LazyLock,
 };
 
 use rstest::rstest;
@@ -13,6 +14,11 @@ use serde_json::Value;
 #[case::unassigned("json_unassigned", &["U+2FE0"])]
 #[case::control("json_control", &["U+0000"])]
 fn prints_complete_json_report_snapshots(#[case] name: &str, #[case] arguments: &[&str]) {
+    static SCHEMA: LazyLock<jsonschema::Validator> = LazyLock::new(|| {
+        let schema: Value = serde_json::from_str(include_str!("../output.schema.json"))
+            .expect("output.schema.json must contain valid JSON");
+        jsonschema::validator_for(&schema).expect("output.schema.json must be a valid schema")
+    });
     let mut config = tempfile::NamedTempFile::new().unwrap();
     config
         .write_all(
@@ -37,6 +43,8 @@ not valid TOML
     assert!(output.stderr.is_empty());
     assert!(output.stdout.is_ascii());
     let stdout = String::from_utf8(output.stdout).unwrap();
+    let report: Value = serde_json::from_str(&stdout).unwrap();
+    SCHEMA.validate(&report).unwrap();
     assert!(stdout.ends_with("}\n"));
     assert!(!stdout.ends_with("\n\n"));
     // Keep snapshots useful across releases without pinning the binary version.
