@@ -1,0 +1,29 @@
+---
+source: tests/cli_output.rs
+expression: stdout
+---
+Identity
+  Character: Not available — not a Unicode scalar value
+  Code Point: U+D800
+  Primary Name: No Primary Name
+  Plane: 0 — Basic Multilingual Plane
+  Block: High Surrogates
+
+Classification
+  General Category: Cs — Surrogate
+  Script: Unknown
+  Age: 2.0
+  East Asian Width: N — Neutral
+  Bidi Class: L — Left To Right
+
+Encoding
+  Not available — not a Unicode scalar value
+
+Data
+  Unicode Version: 17.0.0
+
+Text Analysis
+  Not available — not a Unicode scalar value
+
+Normalization Forms
+  Not available — not a Unicode scalar value

@@ -1,0 +1,38 @@
+---
+source: tests/cli_output.rs
+expression: stdout
+---
+Identity
+  Character: "\u2FE0"
+  Code Point: U+2FE0
+  Primary Name: Unassigned
+  Plane: 0 — Basic Multilingual Plane
+  Block: No Block
+
+Classification
+  General Category: Cn — Unassigned
+  Script: Unknown
+  Age: Unassigned
+  East Asian Width: N — Neutral
+  Bidi Class: L — Left To Right
+
+Encoding
+  UTF-8: E2 BF A0
+  UTF-16: 2FE0
+  HTML Decimal: &#12256;
+  HTML Hex: &#x2FE0;
+  Rust char: '\u{2FE0}'
+  Unicode Escape: \u2FE0
+
+Data
+  Unicode Version: 17.0.0
+
+Text Analysis
+  CP: 1  UTF-8 Bytes: 3  UTF-16 Units: 1  GC: 1
+
+Normalization Forms
+  Form  State      CP  UTF-8 Bytes  UTF-16 Units  GC  Result
+  NFC   unchanged  1   3            1             1   "\u2FE0"
+  NFD   unchanged  1   3            1             1   "\u2FE0"
+  NFKC  unchanged  1   3            1             1   "\u2FE0"
+  NFKD  unchanged  1   3            1             1   "\u2FE0"

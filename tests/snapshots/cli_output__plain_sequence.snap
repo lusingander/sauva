@@ -1,0 +1,21 @@
+---
+source: tests/cli_output.rs
+expression: stdout
+---
+Input: "A\u0301\uD83D\uDE00"
+CP: 3  UTF-8 Bytes: 7  UTF-16 Units: 4  GC: 2
+
+Positions: CP# / GC# are 1-based; byte / unit ranges are 0-based, end-exclusive.
+CP#  GC#  Code Point  UTF-8 Bytes  UTF-16 Units  Name
+1    1    U+0041      [0,1)        [0,1)         LATIN CAPITAL LETTER A
+2    1    U+0301      [1,3)        [1,2)         COMBINING ACUTE ACCENT
+3    2    U+1F600     [3,7)        [2,4)         GRINNING FACE
+
+Normalization Forms
+  Form  State      CP  UTF-8 Bytes  UTF-16 Units  GC  Result
+  NFC   changed    2   6            3             2   "\u00C1\uD83D\uDE00"
+  NFD   unchanged  3   7            4             2   "A\u0301\uD83D\uDE00"
+  NFKC  changed    2   6            3             2   "\u00C1\uD83D\uDE00"
+  NFKD  unchanged  3   7            4             2   "A\u0301\uD83D\uDE00"
+
+Unicode Version: 17.0.0
