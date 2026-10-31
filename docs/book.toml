@@ -9,3 +9,5 @@ description = "Sauva Documentation"
 git-repository-url = "https://github.com/lusingander/sauva"
 site-url = "/sauva/"
 default-theme = "rust"
+sidebar-header-nav = false
+smart-punctuation = false
