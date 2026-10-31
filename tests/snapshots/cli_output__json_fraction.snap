@@ -1,0 +1,138 @@
+---
+source: tests/cli_output.rs
+expression: snapshot
+---
+{
+  "schema_version": 1,
+  "sauva_version": "<version>",
+  "unicode_version": "17.0.0",
+  "text": "\u00BD",
+  "metrics": {
+    "code_points": 1,
+    "utf8_bytes": 2,
+    "utf16_units": 1,
+    "graphemes": 1
+  },
+  "code_points": [
+    {
+      "index": 0,
+      "value": 189,
+      "code_point": "U+00BD",
+      "character": "\u00BD",
+      "utf8_range": [
+        0,
+        2
+      ],
+      "utf16_range": [
+        0,
+        1
+      ],
+      "grapheme_index": 0,
+      "properties": {
+        "name": "VULGAR FRACTION ONE HALF",
+        "aliases": [],
+        "plane": 0,
+        "block": "Latin-1 Supplement",
+        "general_category": "No",
+        "script": "Common",
+        "age": "1.1",
+        "east_asian_width": "A",
+        "canonical_combining_class": 0,
+        "bidi_class": "ON",
+        "default_ignorable": false,
+        "case_mapping": {
+          "uppercase": [
+            189
+          ],
+          "lowercase": [
+            189
+          ],
+          "titlecase": [
+            189
+          ],
+          "case_folding": [
+            189
+          ]
+        },
+        "numeric_type": "Numeric",
+        "numeric_value": "1/2",
+        "decomposition": {
+          "type": "fraction",
+          "mapping": [
+            49,
+            8260,
+            50
+          ]
+        },
+        "encoding": {
+          "utf8": [
+            194,
+            189
+          ],
+          "utf16": [
+            189
+          ]
+        }
+      }
+    }
+  ],
+  "graphemes": [
+    {
+      "index": 0,
+      "code_point_range": [
+        0,
+        1
+      ],
+      "utf8_range": [
+        0,
+        2
+      ],
+      "utf16_range": [
+        0,
+        1
+      ]
+    }
+  ],
+  "normalization": {
+    "nfc": {
+      "changed": false,
+      "text": "\u00BD",
+      "metrics": {
+        "code_points": 1,
+        "utf8_bytes": 2,
+        "utf16_units": 1,
+        "graphemes": 1
+      }
+    },
+    "nfd": {
+      "changed": false,
+      "text": "\u00BD",
+      "metrics": {
+        "code_points": 1,
+        "utf8_bytes": 2,
+        "utf16_units": 1,
+        "graphemes": 1
+      }
+    },
+    "nfkc": {
+      "changed": true,
+      "text": "1\u20442",
+      "metrics": {
+        "code_points": 3,
+        "utf8_bytes": 5,
+        "utf16_units": 3,
+        "graphemes": 3
+      }
+    },
+    "nfkd": {
+      "changed": true,
+      "text": "1\u20442",
+      "metrics": {
+        "code_points": 3,
+        "utf8_bytes": 5,
+        "utf16_units": 3,
+        "graphemes": 3
+      }
+    }
+  }
+}

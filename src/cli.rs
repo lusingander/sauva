@@ -692,7 +692,7 @@ mod tests {
 
     #[rstest]
     #[case(&["--output", "json-string"], clap::error::ErrorKind::MissingRequiredArgument)]
-    #[case(&["--output", "json", "A"], clap::error::ErrorKind::InvalidValue)]
+    #[case(&["--output", "unknown", "A"], clap::error::ErrorKind::InvalidValue)]
     #[case(&["--output", "json-string", "A", "--graphics", "auto"], clap::error::ErrorKind::ArgumentConflict)]
     #[case(&["--output", "json-string", "A", "-g", "off"], clap::error::ErrorKind::ArgumentConflict)]
     #[case(&["--output", "json-string", "--demo", "glyph-basic"], clap::error::ErrorKind::ArgumentConflict)]

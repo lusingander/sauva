@@ -37,21 +37,23 @@ impl Decomposition {
             return None;
         }
 
-        let leading = HANGUL_LEADING_JAMO_BASE + syllable_index / HANGUL_SYLLABLES_PER_LEADING;
-        let vowel = HANGUL_VOWEL_JAMO_BASE
-            + syllable_index % HANGUL_SYLLABLES_PER_LEADING / HANGUL_TRAILING_COUNT;
         let trailing_index = syllable_index % HANGUL_TRAILING_COUNT;
-        let mut values = [leading, vowel, 0];
-        let length = if trailing_index == 0 {
-            2
+        let values = if trailing_index == 0 {
+            let leading = HANGUL_LEADING_JAMO_BASE + syllable_index / HANGUL_SYLLABLES_PER_LEADING;
+            let vowel = HANGUL_VOWEL_JAMO_BASE
+                + syllable_index % HANGUL_SYLLABLES_PER_LEADING / HANGUL_TRAILING_COUNT;
+            [leading, vowel]
         } else {
-            values[2] = HANGUL_TRAILING_JAMO_BASE + trailing_index;
-            3
+            // LVT syllables map directly to LV + T; decomposing LV is a later step.
+            [
+                code_point.value() - trailing_index,
+                HANGUL_TRAILING_JAMO_BASE + trailing_index,
+            ]
         };
 
         Some(Self {
             decomposition_type: DecompositionType::Canonical,
-            mapping: DecompositionMapping::Hangul { values, length },
+            mapping: DecompositionMapping::Hangul(values),
         })
     }
 
@@ -68,7 +70,7 @@ impl Decomposition {
     fn mapping_values(&self) -> &[u32] {
         match &self.mapping {
             DecompositionMapping::Generated(values) => values,
-            DecompositionMapping::Hangul { values, length } => &values[..usize::from(*length)],
+            DecompositionMapping::Hangul(values) => values,
         }
     }
 }
@@ -76,7 +78,7 @@ impl Decomposition {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum DecompositionMapping {
     Generated(&'static [u32]),
-    Hangul { values: [u32; 3], length: u8 },
+    Hangul([u32; 2]),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -102,8 +104,8 @@ mod tests {
 
     #[rstest]
     #[case(0xac00, &[0x1100, 0x1161])]
-    #[case(0xac01, &[0x1100, 0x1161, 0x11a8])]
-    #[case(0xd7a3, &[0x1112, 0x1175, 0x11c2])]
+    #[case(0xac01, &[0xac00, 0x11a8])]
+    #[case(0xd7a3, &[0xd788, 0x11c2])]
     fn decomposes_hangul_syllables_directly(#[case] value: u32, #[case] expected: &[u32]) {
         let decomposition = Decomposition::hangul(CodePoint::new(value).unwrap()).unwrap();
 

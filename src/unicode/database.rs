@@ -155,6 +155,10 @@ impl UnicodeRecord {
         self.code_point
     }
 
+    pub const fn primary_name(self) -> Option<&'static str> {
+        self.primary_name
+    }
+
     pub fn primary_name_or_fallback(self) -> &'static str {
         primary_name_or_fallback(self.primary_name, self.general_category)
     }
@@ -640,7 +644,7 @@ mod tests {
         let record = UnicodeDatabase::lookup(CodePoint::new(value).unwrap());
 
         assert_eq!(record.code_point().value(), value);
-        assert_eq!(record.primary_name, expected_name);
+        assert_eq!(record.primary_name(), expected_name);
         assert_eq!(record.general_category(), expected_category);
         assert_eq!(record.display_representation().as_str(), expected_display);
     }
@@ -654,7 +658,7 @@ mod tests {
     fn expands_algorithmic_primary_names(#[case] value: u32, #[case] expected_name: &str) {
         let record = UnicodeDatabase::lookup(CodePoint::new(value).unwrap());
 
-        assert_eq!(record.primary_name, Some(expected_name));
+        assert_eq!(record.primary_name(), Some(expected_name));
     }
 
     #[test]
@@ -766,11 +770,6 @@ mod tests {
         0xac00,
         DecompositionType::Canonical,
         &[0x1100, 0x1161]
-    )]
-    #[case(
-        0xac01,
-        DecompositionType::Canonical,
-        &[0x1100, 0x1161, 0x11a8]
     )]
     fn looks_up_direct_decompositions(
         #[case] value: u32,

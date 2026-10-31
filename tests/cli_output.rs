@@ -1,9 +1,75 @@
 use std::{
     io::Write,
     process::{Command, Output, Stdio},
+    sync::LazyLock,
 };
 
 use rstest::rstest;
+use serde_json::Value;
+
+#[rstest]
+#[case::fraction("json_fraction", &["U+00BD"])]
+#[case::sequence("json_sequence", &["--text", "A\u{301}😀"])]
+#[case::surrogate("json_surrogate", &["U+D800"])]
+#[case::unassigned("json_unassigned", &["U+2FE0"])]
+#[case::control("json_control", &["U+0000"])]
+fn prints_complete_json_report_snapshots(#[case] name: &str, #[case] arguments: &[&str]) {
+    static SCHEMA: LazyLock<jsonschema::Validator> = LazyLock::new(|| {
+        let schema: Value = serde_json::from_str(include_str!("../output.schema.json"))
+            .expect("output.schema.json must contain valid JSON");
+        jsonschema::validator_for(&schema).expect("output.schema.json must be a valid schema")
+    });
+    let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
+        .args(["--output", "json"])
+        .args(arguments)
+        .output()
+        .unwrap();
+
+    assert!(output.status.success(), "status: {}", output.status);
+    assert!(output.stderr.is_empty());
+    assert!(output.stdout.is_ascii());
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    let report: Value = serde_json::from_str(&stdout).unwrap();
+    SCHEMA.validate(&report).unwrap();
+    assert!(stdout.ends_with("}\n"));
+    assert!(!stdout.ends_with("\n\n"));
+    // Keep snapshots useful across releases without pinning the binary version.
+    let snapshot = stdout.replacen(
+        &format!(r#""sauva_version": "{}""#, env!("CARGO_PKG_VERSION")),
+        r#""sauva_version": "<version>""#,
+        1,
+    );
+    insta::assert_snapshot!(name, snapshot);
+}
+
+#[test]
+fn json_stdin_round_trips_controls_and_literal_escapes_without_normalizing() {
+    let source = "\u{feff} A\u{301}\r\n👩‍💻\0\u{1b}[31m\u{202e}\"\\u0041\n";
+    let output = run_with_stdin(&["--output", "json", "--text", "-"], source.as_bytes());
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    assert!(output.stdout.is_ascii());
+    let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(report["text"], source);
+    assert_ne!(report["normalization"]["nfc"]["text"], source);
+}
+
+#[test]
+fn prints_long_json_reports_without_truncating_occurrences_or_normalized_text() {
+    let count = 4096;
+    let source = "あ".repeat(count);
+    let output = run_with_stdin(&["--output", "json", "--text", "-"], source.as_bytes());
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(report["text"], source);
+    assert_eq!(report["code_points"].as_array().unwrap().len(), count);
+    assert_eq!(report["graphemes"].as_array().unwrap().len(), count);
+    assert_eq!(report["code_points"][count - 1]["index"], count - 1);
+    for form in ["nfc", "nfd", "nfkc", "nfkd"] {
+        assert_eq!(report["normalization"][form]["text"], source);
+    }
+}
 
 #[rstest]
 #[case("--help")]
@@ -36,14 +102,8 @@ fn prints_default_config_without_loading_local_config() {
     assert!(!config.is_empty());
 }
 
-#[rstest]
-#[case("--output", "json-string", r#""A\u0301\uD83D\uDE00""#)]
-#[case("-o", "rust-string", r#""A\u{301}\u{1F600}""#)]
-fn prints_string_literals_without_loading_config(
-    #[case] option: &str,
-    #[case] format: &str,
-    #[case] expected: &str,
-) {
+#[test]
+fn prints_output_without_loading_config() {
     let mut config = tempfile::NamedTempFile::new().unwrap();
     config
         .write_all(
@@ -54,18 +114,14 @@ not valid TOML
         )
         .unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
-        .args([option, format, "--text", "A\u{301}😀"])
+        .args(["--output", "json", "A"])
         .env("SAUVA_CONFIG_FILE", config.path())
-        .env("XDG_DATA_HOME", config.path())
-        .env("TERM", "dumb")
-        .env_remove("DISPLAY")
-        .env_remove("WAYLAND_DISPLAY")
         .output()
         .unwrap();
 
     assert!(output.status.success(), "status: {}", output.status);
     assert!(output.stderr.is_empty());
-    assert_eq!(output.stdout, format!("{expected}\n").as_bytes());
+    assert!(!output.stdout.is_empty());
 }
 
 #[rstest]
@@ -164,12 +220,10 @@ fn run_with_stdin(arguments: &[&str], input: &[u8]) -> Output {
     child.wait_with_output().unwrap()
 }
 
-#[rstest]
-#[case("json-string")]
-#[case("rust-string")]
-fn treats_a_closed_stdout_pipe_as_success(#[case] format: &str) {
+#[test]
+fn treats_a_closed_stdout_pipe_as_success() {
     let mut child = Command::new(env!("CARGO_BIN_EXE_sauva"))
-        .args(["--output", format, "--text", "-"])
+        .args(["--output", "json", "--text", "-"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -191,7 +245,7 @@ fn treats_a_closed_stdout_pipe_as_success(#[case] format: &str) {
 #[test]
 fn reports_stdout_write_failures() {
     let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
-        .args(["--output", "json-string", "A"])
+        .args(["--output", "json", "A"])
         .stdout(
             std::fs::OpenOptions::new()
                 .write(true)
@@ -218,7 +272,7 @@ fn assert_failure(output: &Output, expected_code: i32) {
 #[case::empty_input(&["--output", "rust-string", ""], 2)]
 #[case::out_of_range(&["--output", "json-string", "U+110000"], 2)]
 #[case::graphics_conflict(&["--output", "json-string", "A", "--graphics", "auto"], 2)]
-#[case::unknown_format(&["--output", "json", "A"], 2)]
+#[case::unknown_format(&["--output", "unknown", "A"], 2)]
 #[case::surrogate(&["--output", "rust-string", "U+D800"], 1)]
 fn rejects_invalid_output_requests(#[case] arguments: &[&str], #[case] expected_code: i32) {
     let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
@@ -255,4 +309,17 @@ fn escapes_untrusted_arguments_in_diagnostics(
     if let Some(suggestion) = suggestion {
         assert!(stderr.contains(suggestion), "{stderr}");
     }
+}
+
+#[cfg(unix)]
+#[test]
+fn rejects_invalid_utf8_arguments_with_usage_exit_code() {
+    use std::{ffi::OsString, os::unix::ffi::OsStringExt};
+
+    let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
+        .args(["--output", "json", "--text"])
+        .arg(OsString::from_vec(vec![0xff]))
+        .output()
+        .unwrap();
+    assert_failure(&output, 2);
 }

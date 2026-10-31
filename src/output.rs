@@ -2,18 +2,20 @@ use std::{
     borrow::Cow,
     error::Error,
     fmt,
-    io::{self, Write},
+    io::{self, BufWriter, Write},
 };
 
 use clap::ValueEnum;
 
 use crate::{
     cli::LaunchTarget,
+    report,
     unicode::{CodePoint, representation::TextFormat},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 pub enum OutputFormat {
+    Json,
     JsonString,
     RustString,
 }
@@ -50,20 +52,32 @@ pub fn write(
     target: &LaunchTarget,
     writer: impl Write,
 ) -> Result<(), OutputError> {
-    let text = match target {
-        LaunchTarget::CodePoint(point) => Cow::Owned(
-            point
-                .to_char()
-                .ok_or(OutputError::NonScalar(*point))?
-                .to_string(),
-        ),
-        LaunchTarget::Sequence(text) => Cow::Borrowed(text.as_str()),
-    };
-    let format = match format {
-        OutputFormat::JsonString => TextFormat::JsonString,
-        OutputFormat::RustString => TextFormat::RustString,
-    };
-    match write_literal(format, &text, writer) {
+    let mut writer = BufWriter::new(writer);
+    let result = match format {
+        OutputFormat::Json => report::write(target, &mut writer),
+        OutputFormat::JsonString | OutputFormat::RustString => {
+            let text = match target {
+                LaunchTarget::CodePoint(point) => Cow::Owned(
+                    point
+                        .to_char()
+                        .ok_or(OutputError::NonScalar(*point))?
+                        .to_string(),
+                ),
+                LaunchTarget::Sequence(text) => Cow::Borrowed(text.as_str()),
+            };
+            let format = match format {
+                OutputFormat::JsonString => TextFormat::JsonString,
+                OutputFormat::RustString => TextFormat::RustString,
+                OutputFormat::Json => unreachable!(),
+            };
+            write_literal(format, &text, &mut writer)
+        }
+    }
+    .and_then(|()| {
+        writer.write_all(b"\n")?;
+        writer.flush()
+    });
+    match result {
         Err(error) if error.kind() == io::ErrorKind::BrokenPipe => Ok(()),
         result => result.map_err(OutputError::Write),
     }
@@ -73,8 +87,7 @@ fn write_literal(format: TextFormat, text: &str, mut writer: impl Write) -> io::
     for atom in format.atoms(text) {
         writer.write_all(atom.as_bytes())?;
     }
-    writer.write_all(b"\n")?;
-    writer.flush()
+    Ok(())
 }
 
 #[cfg(test)]
@@ -103,13 +116,15 @@ mod tests {
     }
 
     #[rstest]
-    #[case(false)]
-    #[case(true)]
+    #[case::write(false)]
+    #[case::flush(true)]
     fn handles_write_and_flush_failures(#[case] on_flush: bool) {
+        // Fill the output buffer so JSON also exercises errors during serialization.
+        let target = LaunchTarget::Sequence("A".repeat(32));
         for kind in [io::ErrorKind::Other, io::ErrorKind::BrokenPipe] {
             let result = write(
-                OutputFormat::JsonString,
-                &LaunchTarget::Sequence("A".to_owned()),
+                OutputFormat::Json,
+                &target,
                 FailingWriter { kind, on_flush },
             );
 

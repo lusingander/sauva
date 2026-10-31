@@ -1,0 +1,55 @@
+---
+source: tests/cli_output.rs
+expression: snapshot
+---
+{
+  "schema_version": 1,
+  "sauva_version": "<version>",
+  "unicode_version": "17.0.0",
+  "text": null,
+  "metrics": null,
+  "code_points": [
+    {
+      "index": 0,
+      "value": 55296,
+      "code_point": "U+D800",
+      "character": null,
+      "utf8_range": null,
+      "utf16_range": null,
+      "grapheme_index": null,
+      "properties": {
+        "name": null,
+        "aliases": [],
+        "plane": 0,
+        "block": "High Surrogates",
+        "general_category": "Cs",
+        "script": "Unknown",
+        "age": "2.0",
+        "east_asian_width": "N",
+        "canonical_combining_class": 0,
+        "bidi_class": "L",
+        "default_ignorable": false,
+        "case_mapping": {
+          "uppercase": [
+            55296
+          ],
+          "lowercase": [
+            55296
+          ],
+          "titlecase": [
+            55296
+          ],
+          "case_folding": [
+            55296
+          ]
+        },
+        "numeric_type": "None",
+        "numeric_value": null,
+        "decomposition": null,
+        "encoding": null
+      }
+    }
+  ],
+  "graphemes": null,
+  "normalization": null
+}

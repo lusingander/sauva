@@ -27,6 +27,7 @@ open = "5.4.4"
 png = "0.18.1"
 ratatui = { version = "0.30.2", default-features = false, features = ["crossterm_0_29", "serde"] }
 serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
 smart-default = "0.7.1"
 swash = "0.2.10"
 tempfile = "3.27.0"
@@ -48,5 +49,6 @@ yeslogic-fontconfig-sys = { version = "6.0.1", features = ["dlopen"] }
 
 [dev-dependencies]
 insta = { version = "1.49.0", default-features = false }
+jsonschema = { version = "0.60.2", default-features = false }
 rstest = { version = "0.28.0", default-features = false }
 termlens = { version = "0.11.6", default-features = false }

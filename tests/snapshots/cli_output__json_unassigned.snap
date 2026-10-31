@@ -1,0 +1,132 @@
+---
+source: tests/cli_output.rs
+expression: snapshot
+---
+{
+  "schema_version": 1,
+  "sauva_version": "<version>",
+  "unicode_version": "17.0.0",
+  "text": "\u2FE0",
+  "metrics": {
+    "code_points": 1,
+    "utf8_bytes": 3,
+    "utf16_units": 1,
+    "graphemes": 1
+  },
+  "code_points": [
+    {
+      "index": 0,
+      "value": 12256,
+      "code_point": "U+2FE0",
+      "character": "\u2FE0",
+      "utf8_range": [
+        0,
+        3
+      ],
+      "utf16_range": [
+        0,
+        1
+      ],
+      "grapheme_index": 0,
+      "properties": {
+        "name": null,
+        "aliases": [],
+        "plane": 0,
+        "block": null,
+        "general_category": "Cn",
+        "script": "Unknown",
+        "age": null,
+        "east_asian_width": "N",
+        "canonical_combining_class": 0,
+        "bidi_class": "L",
+        "default_ignorable": false,
+        "case_mapping": {
+          "uppercase": [
+            12256
+          ],
+          "lowercase": [
+            12256
+          ],
+          "titlecase": [
+            12256
+          ],
+          "case_folding": [
+            12256
+          ]
+        },
+        "numeric_type": "None",
+        "numeric_value": null,
+        "decomposition": null,
+        "encoding": {
+          "utf8": [
+            226,
+            191,
+            160
+          ],
+          "utf16": [
+            12256
+          ]
+        }
+      }
+    }
+  ],
+  "graphemes": [
+    {
+      "index": 0,
+      "code_point_range": [
+        0,
+        1
+      ],
+      "utf8_range": [
+        0,
+        3
+      ],
+      "utf16_range": [
+        0,
+        1
+      ]
+    }
+  ],
+  "normalization": {
+    "nfc": {
+      "changed": false,
+      "text": "\u2FE0",
+      "metrics": {
+        "code_points": 1,
+        "utf8_bytes": 3,
+        "utf16_units": 1,
+        "graphemes": 1
+      }
+    },
+    "nfd": {
+      "changed": false,
+      "text": "\u2FE0",
+      "metrics": {
+        "code_points": 1,
+        "utf8_bytes": 3,
+        "utf16_units": 1,
+        "graphemes": 1
+      }
+    },
+    "nfkc": {
+      "changed": false,
+      "text": "\u2FE0",
+      "metrics": {
+        "code_points": 1,
+        "utf8_bytes": 3,
+        "utf16_units": 1,
+        "graphemes": 1
+      }
+    },
+    "nfkd": {
+      "changed": false,
+      "text": "\u2FE0",
+      "metrics": {
+        "code_points": 1,
+        "utf8_bytes": 3,
+        "utf16_units": 1,
+        "graphemes": 1
+      }
+    }
+  }
+}
