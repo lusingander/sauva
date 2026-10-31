@@ -108,6 +108,6 @@ CP counts code points; GC counts [extended grapheme clusters](../features/sequen
 
 Each [normalization form](../features/normalization.md#forms) includes its changed or unchanged state, complete result, and all four counts. A single character's Decomposition property is its direct mapping, separate from the whole-text normalization results. Numeric values preserve exact fractions such as `1/2`.
 
-Input, Character, and normalized text use the same quoted representation as `json-string`, escaping non-ASCII characters and controls. Reports use English labels, contain no colors or terminal control sequences, and retain all entries and text regardless of terminal width.
+Input, Character, and normalized text use the same quoted representation as `json-string`, escaping non-ASCII characters and controls.
 
-Use [JSON Reports](./json-reports.md) for scripts or complete properties for every code point. Plain report alignment and explanatory wording are not a compatibility contract.
+Use [JSON Reports](./json-reports.md) for scripts or complete properties for every code point.
