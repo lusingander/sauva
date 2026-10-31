@@ -2,13 +2,77 @@
 
 Use `--output plain` to read a Unicode analysis report without starting the TUI. See [Non-interactive Usage](./non-interactive-usage.md) for input, redirection, and exit codes.
 
-## Example
+## Examples
+
+### Single Code Point
+
+```sh
+sauva -o plain U+00BD
+```
+
+<details>
+<summary>Show the complete plain output</summary>
+
+```text
+Identity
+  Character: "\u00BD"
+  Code Point: U+00BD
+  Primary Name: VULGAR FRACTION ONE HALF
+  Plane: 0 — Basic Multilingual Plane
+  Block: Latin-1 Supplement
+
+Classification
+  General Category: No — Other Number
+  Script: Common
+  Age: 1.1
+  East Asian Width: A — Ambiguous
+  Bidi Class: ON — Other Neutral
+
+Numeric
+  Numeric Type: Numeric
+  Numeric Value: 1/2
+
+Encoding
+  UTF-8: C2 BD
+  UTF-16: 00BD
+  HTML Decimal: &#189;
+  HTML Hex: &#xBD;
+  Rust char: '\u{BD}'
+  Unicode Escape: \u00BD
+
+Normalization
+  Decomposition Type: Compatibility — fraction
+  Decomposition:
+    U+0031 DIGIT ONE
+    U+2044 FRACTION SLASH
+    U+0032 DIGIT TWO
+
+Data
+  Unicode Version: 17.0.0
+
+Text Analysis
+  CP: 1  UTF-8 Bytes: 2  UTF-16 Units: 1  GC: 1
+
+Normalization Forms
+  Form  State      CP  UTF-8 Bytes  UTF-16 Units  GC  Result
+  NFC   unchanged  1   2            1             1   "\u00BD"
+  NFD   unchanged  1   2            1             1   "\u00BD"
+  NFKC  changed    3   5            3             3   "1\u20442"
+  NFKD  changed    3   5            3             3   "1\u20442"
+```
+
+</details>
+
+### Text
 
 The accent below is U+0301 following U+0041:
 
 ```sh
 sauva -o plain --text 'Á😀'
 ```
+
+<details>
+<summary>Show the complete plain output</summary>
 
 ```text
 Input: "A\u0301\uD83D\uDE00"
@@ -29,6 +93,8 @@ Normalization Forms
 
 Unicode Version: 17.0.0
 ```
+
+</details>
 
 ## Report Contents
 
