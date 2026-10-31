@@ -18,7 +18,7 @@ Sauva is a terminal application for searching and browsing Unicode code points. 
 
 For example, use Sauva to identify an invisible character, find a symbol by name, or examine how an emoji or accented letter is represented in a string.
 
-For scripts, Sauva also provides [non-interactive JSON and Rust string output](../getting-started/non-interactive-usage.md).
+Sauva also provides [non-interactive reports and string literals](../getting-started/non-interactive-usage.md) for terminal output and scripts.
 
 ## Unicode Data
 

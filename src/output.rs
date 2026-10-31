@@ -15,6 +15,7 @@ use crate::{
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 pub enum OutputFormat {
+    Plain,
     Json,
     JsonString,
     RustString,
@@ -54,6 +55,7 @@ pub fn write(
 ) -> Result<(), OutputError> {
     let mut writer = BufWriter::new(writer);
     let result = match format {
+        OutputFormat::Plain => report::plain::write(target, &mut writer),
         OutputFormat::Json => report::write(target, &mut writer),
         OutputFormat::JsonString | OutputFormat::RustString => {
             let text = match target {
@@ -68,7 +70,7 @@ pub fn write(
             let format = match format {
                 OutputFormat::JsonString => TextFormat::JsonString,
                 OutputFormat::RustString => TextFormat::RustString,
-                OutputFormat::Json => unreachable!(),
+                OutputFormat::Plain | OutputFormat::Json => unreachable!(),
             };
             write_literal(format, &text, &mut writer)
         }

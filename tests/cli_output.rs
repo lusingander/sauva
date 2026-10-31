@@ -42,16 +42,50 @@ fn prints_complete_json_report_snapshots(#[case] name: &str, #[case] arguments: 
     insta::assert_snapshot!(name, snapshot);
 }
 
-#[test]
-fn json_stdin_round_trips_controls_and_literal_escapes_without_normalizing() {
+#[rstest]
+#[case::fraction("plain_fraction", &["U+00BD"])]
+#[case::sequence("plain_sequence", &["--text", "A\u{301}😀"])]
+#[case::surrogate("plain_surrogate", &["U+D800"])]
+#[case::unassigned("plain_unassigned", &["U+2FE0"])]
+#[case::control("plain_control", &["U+0000"])]
+fn prints_complete_plain_report_snapshots(#[case] name: &str, #[case] arguments: &[&str]) {
+    let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
+        .args(["--output", "plain"])
+        .args(arguments)
+        .output()
+        .unwrap();
+
+    assert!(output.status.success(), "status: {}", output.status);
+    assert!(output.stderr.is_empty());
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    assert!(stdout.ends_with('\n'));
+    assert!(!stdout.ends_with("\n\n"));
+    insta::assert_snapshot!(name, stdout);
+}
+
+#[rstest]
+#[case("json")]
+#[case("plain")]
+fn report_stdin_round_trips_controls_and_literal_escapes_without_normalizing(#[case] format: &str) {
     let source = "\u{feff} A\u{301}\r\n👩‍💻\0\u{1b}[31m\u{202e}\"\\u0041\n";
-    let output = run_with_stdin(&["--output", "json", "--text", "-"], source.as_bytes());
+    let output = run_with_stdin(&["--output", format, "--text", "-"], source.as_bytes());
     assert!(output.status.success());
     assert!(output.stderr.is_empty());
     assert!(output.stdout.is_ascii());
-    let report: Value = serde_json::from_slice(&output.stdout).unwrap();
-    assert_eq!(report["text"], source);
-    assert_ne!(report["normalization"]["nfc"]["text"], source);
+    if format == "json" {
+        let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+        assert_eq!(report["text"], source);
+        assert_ne!(report["normalization"]["nfc"]["text"], source);
+    } else {
+        let stdout = String::from_utf8(output.stdout).unwrap();
+        let input = stdout
+            .lines()
+            .next()
+            .unwrap()
+            .strip_prefix("Input: ")
+            .unwrap();
+        assert_eq!(serde_json::from_str::<String>(input).unwrap(), source);
+    }
 }
 
 #[test]
@@ -69,6 +103,37 @@ fn prints_long_json_reports_without_truncating_occurrences_or_normalized_text() 
     for form in ["nfc", "nfd", "nfkc", "nfkd"] {
         assert_eq!(report["normalization"][form]["text"], source);
     }
+}
+
+#[test]
+fn prints_long_plain_reports_without_truncating_occurrences_or_normalized_text() {
+    let count = 4096;
+    let source = "あ".repeat(count);
+    let output = run_with_stdin(&["--output", "plain", "--text", "-"], source.as_bytes());
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    let stdout = String::from_utf8(output.stdout).unwrap();
+    let quoted = format!(r#""{}""#, r"\u3042".repeat(count));
+    assert_eq!(
+        stdout
+            .lines()
+            .filter(|line| line.ends_with(&quoted))
+            .count(),
+        5
+    );
+    let rows: Vec<_> = stdout
+        .lines()
+        .filter(|line| line.split_whitespace().nth(2) == Some("U+3042"))
+        .collect();
+    assert_eq!(rows.len(), count);
+    assert_eq!(
+        rows.last()
+            .unwrap()
+            .split_whitespace()
+            .take(5)
+            .collect::<Vec<_>>(),
+        ["4096", "4096", "U+3042", "[12285,12288)", "[4095,4096)"]
+    );
 }
 
 #[rstest]
@@ -114,7 +179,7 @@ not valid TOML
         )
         .unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_sauva"))
-        .args(["--output", "json", "A"])
+        .args(["--output", "plain", "A"])
         .env("SAUVA_CONFIG_FILE", config.path())
         .output()
         .unwrap();

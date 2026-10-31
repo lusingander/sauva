@@ -1,3 +1,5 @@
+pub mod plain;
+
 use std::{
     io::{self, Write},
     ops::Range,

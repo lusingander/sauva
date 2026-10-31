@@ -10,7 +10,7 @@ Arguments:
 
 Options:
   -t, --text <TEXT>           Treat the input as literal text, without code point notation parsing; - reads stdin
-  -o, --output <FORMAT>       Print a result and exit [possible values: json, json-string, rust-string]
+  -o, --output <FORMAT>       Print a result and exit [possible values: plain, json, json-string, rust-string]
   -g, --graphics <MODE>       Control glyph preview graphics [default: auto] [possible values: auto, force, iterm2, off]
       --print-default-config  Print the complete default configuration to standard output
   -h, --help                  Print help
@@ -76,7 +76,7 @@ Since `-` selects stdin, use `sauva U+002D` to inspect the hyphen character itse
 
 ## `-o, --output <FORMAT>`
 
-Print a JSON analysis report or a quoted JSON or Rust string literal and exit. See [Non-interactive Usage](./non-interactive-usage.md) for formats, examples, and exit codes.
+Print a plain or JSON analysis report, or a quoted JSON or Rust string literal and exit. See [Non-interactive Usage](./non-interactive-usage.md) for formats, examples, and exit codes.
 
 ## `-g, --graphics <MODE>`
 

@@ -1,0 +1,41 @@
+---
+source: tests/cli_output.rs
+expression: stdout
+---
+Identity
+  Character: "\u0000"
+  Code Point: U+0000
+  Primary Name: No Primary Name
+  Aliases:
+    NULL — control
+    NUL — abbreviation
+  Plane: 0 — Basic Multilingual Plane
+  Block: Basic Latin
+
+Classification
+  General Category: Cc — Control
+  Script: Common
+  Age: 1.1
+  East Asian Width: N — Neutral
+  Bidi Class: BN — Boundary Neutral
+
+Encoding
+  UTF-8: 00
+  UTF-16: 0000
+  HTML Decimal: &#0;
+  HTML Hex: &#x0;
+  Rust char: '\u{0}'
+  Unicode Escape: \u0000
+
+Data
+  Unicode Version: 17.0.0
+
+Text Analysis
+  CP: 1  UTF-8 Bytes: 1  UTF-16 Units: 1  GC: 1
+
+Normalization Forms
+  Form  State      CP  UTF-8 Bytes  UTF-16 Units  GC  Result
+  NFC   unchanged  1   1            1             1   "\u0000"
+  NFD   unchanged  1   1            1             1   "\u0000"
+  NFKC  unchanged  1   1            1             1   "\u0000"
+  NFKD  unchanged  1   1            1             1   "\u0000"

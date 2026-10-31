@@ -6,6 +6,7 @@
   - [Installation](./getting-started/installation.md)
   - [Basic Usage](./getting-started/basic-usage.md)
   - [Non-interactive Usage](./getting-started/non-interactive-usage.md)
+    - [Plain Reports](./getting-started/plain-reports.md)
     - [JSON Reports](./getting-started/json-reports.md)
   - [Command Line Options](./getting-started/command-line-options.md)
   - [Compatibility](./getting-started/compatibility.md)

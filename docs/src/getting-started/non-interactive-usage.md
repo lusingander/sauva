@@ -1,10 +1,11 @@
 # Non-interactive Usage
 
-Use `-o, --output <FORMAT>` to print a JSON analysis report or a quoted JSON or Rust string literal and exit. This requires no interactive terminal, fonts, or clipboard and does not load user configuration.
+Use `-o, --output <FORMAT>` to print a plain or JSON analysis report, or a quoted JSON or Rust string literal and exit. This requires no interactive terminal, fonts, or clipboard and does not load user configuration.
 
 ## Usage
 
 ```sh
+sauva -o plain U+00BD
 sauva -o json U+00BD
 sauva -o json --text - < input.txt > report.json
 sauva -o json-string U+2192
@@ -15,12 +16,13 @@ Input is required and follows the shared [input interpretation](./command-line-o
 
 An explicit `--graphics` option cannot be combined with `--output`, including `--graphics auto`. Omitting `--output` starts the TUI, even when stdout is redirected.
 
-Each result ends with one LF. Input line endings are preserved in the parsed text and escaped inside JSON strings or string literals.
+Each result ends with one LF. Input line endings are preserved in the parsed text and escaped inside reports or string literals.
 
 ## Output Formats
 
 | Format | Output |
 | --- | --- |
+| `plain` | A human-readable Unicode analysis report; see [Plain Reports](./plain-reports.md) for its contents and an example |
 | `json` | A Unicode analysis report; see [JSON Reports](./json-reports.md) for its contents and examples |
 | `json-string` | A quoted JSON string literal, such as `"A\u0301\uD83D\uDE00"` |
 | `rust-string` | A quoted Rust string literal, such as `"A\u{301}\u{1F600}"` |
